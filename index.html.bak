@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tchapot de Ghislain</title>
+	
+	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+	
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none !important; }
+		.modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        .modal-text {
+            color: #4b5563;
+            line-height: 1.6;
+            white-space: pre-line;
+            margin-bottom: 20px;
+        }
+		.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+.custom-modal-box {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s ease;
+}
+.custom-modal-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 16px;
+    color: #1f2937;
+    border-bottom: 2px solid #10b981;
+    padding-bottom: 8px;
+}
+.custom-modal-content {
+    color: #4b5563;
+    line-height: 1.8;
+    white-space: pre-line;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+.custom-modal-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.custom-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.flex {
+    display: flex;
+}
+.gap-2 {
+    gap: 0.5rem;
+}
+.bg-gray-400 {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+}
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app"></div>
+	<script>
+	
+	const firebaseConfig = {
+        apiKey: "AIzaSyBkbF5yO293N2ovfjw1NzlN8N28qqaUI3E",
+        authDomain: "tchapot-de-ghislain.firebaseapp.com",
+        projectId: "tchapot-de-ghislain",
+        storageBucket: "tchapot-de-ghislain.firebasestorage.app",
+        messagingSenderId: "317977253522",
+        appId: "1:317977253522:web:bec4af0edec1949174384b"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+	
+        const TYPES_BATIMENT = ['Élevage', 'Stockage fourrage', 'Silos'];
+        const TYPES_ANIMAUX = ['Brebis', 'Agnelle', 'Béliers', 'Agneaux', 'Vache', 'Génisse', 'Broutard', 'Poulet'];
+        const TYPES_FOURRAGE = ['Ray-grass trèfles', 'Enrubannage', 'Dactyle', 'Luzerne', 'Foin de prairie', 'Perfo 100', 'Perfo 300', 'Paille'];
+        const TYPES_ALIMENT = ['Rumifirst', 'Minéraux classique', 'Minéraux flushing', 'Ovirecord', 'Démarrage', 'Croissance', 'Croissance NRJ', 'Finition', 'Finition NRJ', 'Retrait'];
+
+        let state = {
+            activeTab: 'tableau-bord',
+            activeSubTab: 'rdv-pattounes',
+            data: {
+                batiments: [],
+                lots: [],
+                rations: [],
+                consoFourrage: [],
+                entreesBat: [],
+                sortiesBat: [],
+                evenements: []
+            }
+        };
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const jour = String(date.getDate()).padStart(2, '0');
+            const mois = String(date.getMonth() + 1).padStart(2, '0');
+            const annee = date.getFullYear();
+            return jour + '/' + mois + '/' + annee;
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('tchapot-data');
+                if (saved) {
+                    state.data = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Erreur chargement:', e);
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('tchapot-data', JSON.stringify(state.data));
+            } catch (e) {
+                console.error('Erreur sauvegarde:', e);
+            }
+        }
+
+        function getNomBat(id) {
+            const bat = state.data.batiments.find(b => b.id === id);
+            return bat ? bat.nom : 'N/A';
+        }
+
+        function getNomLot(id) {
+            const lot = state.data.lots.find(l => l.id === id);
+            return lot ? lot.nom : 'N/A';
+        }
+
+        function calculerStockBatiment(batId) {
+            const bat = state.data.batiments.find(b => b.id === batId);
+            if (!bat) return 0;
+
+            if (bat.type === 'Élevage') {
+                return state.data.lots
+                    .filter(l => l.lieuActuel === batId)
+                    .reduce((sum, l) => sum + parseFloat(l.nombreTetes || 0), 0);
+            }
+
+            if (bat.type === 'Stockage fourrage') {
+                const entrees = state.data.entreesBat
+                    .filter(e => e.batimentId === batId)
+                    .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
+                const sorties = state.data.sortiesBat
+                    .filter(s => s.batimentId === batId)
+                    .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
+                const conso = state.data.consoFourrage
+                    .filter(c => c.batimentId === batId)
+                    .reduce((sum, c) => sum + parseFloat(c.nombreBalles || 0), 0);
+                return parseFloat(bat.stockInitial || 0) + entrees - sorties - conso;
+            }
+
+            if (bat.type === 'Silos') {
+                const entrees = state.data.entreesBat
+                    .filter(e => e.batimentId === batId)
+                    .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
+                const sorties = state.data.sortiesBat
+                    .filter(s => s.batimentId === batId)
+                    .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
+                const rations = state.data.rations
+                    .filter(r => r.batimentId === batId)
+                    .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
+                return parseFloat(bat.stockInitial || 0) + entrees - sorties - rations;
+            }
+
+            return 0;
+        }function renderTableauBord() {
+            const parts = [];
+            parts.push('<div class="p-4"><h2 class="text-2xl font-bold mb-4">Tableau de Bord</h2>');
+            
+            parts.push('<div class="mb-4 flex gap-2 overflow-x-auto">');
+            const subtabs = ['rdv-pattounes', 'graines-piaf', 'miam-miam'];
+            const labels = ['Tchapot de Bête', 'Graines de Piaf', 'Miam Miam'];
+            subtabs.forEach((tab, i) => {
+                const active = state.activeSubTab === tab;
+                const cls = active ? 'bg-green-600 text-white' : 'bg-white text-gray-700';
+                parts.push('<button onclick="window.changeSubTab(\'' + tab + '\')" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ' + cls + '">');
+                parts.push(labels[i]);
+                parts.push('</button>');
+            });
+            parts.push('</div>');
+
+            if (state.activeSubTab === 'rdv-pattounes') {
+                parts.push('<h3 class="text-xl font-bold mb-3">Lots d\'animaux</h3>');
+                parts.push('<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">');
+                
+                state.data.lots.forEach(lot => {
+                    // Trouver la dernière ration
+                    const derniereRation = state.data.rations
+                        .filter(r => r.lotId === lot.id)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    
+                    // Trouver le dernier fourrage
+                    const dernierFourrage = state.data.consoFourrage
+                        .filter(c => c.lotId === lot.id)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    
+                    parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
+                    parts.push('<div class="font-bold">' + lot.nom + '</div>');
+                    parts.push('<div class="text-sm text-gray-600">' + lot.type + ' • ' + lot.nombreTetes + ' têtes</div>');
+                    parts.push('<div class="text-xs text-gray-500 mt-1">Lieu: ' + getNomBat(lot.lieuActuel) + '</div>');
+                    
+                    if (derniereRation) {
+                        parts.push('<div class="text-xs text-blue-600 mt-1">Dernière ration: ' + derniereRation.typeAliment + ' (' + formatDate(derniereRation.date) + ')</div>');
+                    }
+                    
+                    if (dernierFourrage) {
+                        parts.push('<div class="text-xs text-green-600 mt-1">Dernier fourrage: ' + dernierFourrage.typeFourrage + ' (' + formatDate(dernierFourrage.date) + ')</div>');
+                    }
+                    
+                    parts.push('<button onclick="window.showHistoriqueLot(\'' + lot.id + '\')" class="mt-2 text-xs text-gray-500 underline hover:text-gray-700">Voir historique</button>');
+                    parts.push('</div>');
+                });
+                
+                if (state.data.lots.length === 0) {
+                    parts.push('<p class="text-gray-500 col-span-2">Aucun lot créé</p>');
+                }
+                parts.push('</div>');
+
+                parts.push('<h3 class="text-xl font-bold mb-3">Bâtiments d\'élevage</h3>');
+                parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-4">');
+                
+                const batsElev = state.data.batiments.filter(b => b.type === 'Élevage');
+                batsElev.forEach(bat => {
+                    const stock = calculerStockBatiment(bat.id);
+                    const pct = bat.capacite ? ((stock / bat.capacite) * 100).toFixed(0) : 0;
+                    parts.push('<div class="flex justify-between py-2 border-b">');
+                    parts.push('<span class="font-medium">' + bat.nom + '</span>');
+                    parts.push('<span class="font-bold">' + stock + '/' + (bat.capacite || '?') + ' têtes (' + pct + '%)</span>');
+                    parts.push('</div>');
+                });
+                
+                if (batsElev.length === 0) {
+                    parts.push('<p class="text-gray-500">Aucun bâtiment d\'élevage</p>');
+                }
+                parts.push('</div>');
+            }
+
+            if (state.activeSubTab === 'graines-piaf') {
+                parts.push('<h3 class="text-xl font-bold mb-3">Stocks</h3>');
+                
+                // Colonne Silos
+                parts.push('<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">');
+                
+                parts.push('<div class="border-2 border-blue-200 rounded-lg p-3 bg-blue-50">');
+                parts.push('<h4 class="font-bold text-lg mb-3 text-blue-800">Silos (Aliments)</h4>');
+                parts.push('<div class="space-y-3">');
+                
+                const silos = state.data.batiments.filter(b => b.type === 'Silos');
+                if (silos.length > 0) {
+                    silos.forEach(bat => {
+                        const stock = calculerStockBatiment(bat.id);
+                        parts.push('<div class="bg-white border border-blue-300 rounded-lg p-3">');
+                        parts.push('<div class="font-bold">' + bat.nom + '</div>');
+                        if (bat.typeAliment) {
+                            parts.push('<div class="text-xs text-gray-500">' + bat.typeAliment + '</div>');
+                        }
+                        parts.push('<div class="mt-2 flex justify-between">');
+                        parts.push('<span class="text-sm">Stock actuel:</span>');
+                        parts.push('<span class="font-bold">' + stock.toFixed(3) + ' kg</span>');
+                        parts.push('</div></div>');
+                    });
+                } else {
+                    parts.push('<p class="text-gray-500 text-sm">Aucun silo</p>');
+                }
+                parts.push('</div></div>');
+                
+                // Colonne Stockage fourrage
+                parts.push('<div class="border-2 border-green-200 rounded-lg p-3 bg-green-50">');
+                parts.push('<h4 class="font-bold text-lg mb-3 text-green-800">Stockage Fourrage</h4>');
+                parts.push('<div class="space-y-3">');
+                
+                const stockages = state.data.batiments.filter(b => b.type === 'Stockage fourrage');
+                if (stockages.length > 0) {
+                    stockages.forEach(bat => {
+                        const stock = calculerStockBatiment(bat.id);
+                        parts.push('<div class="bg-white border border-green-300 rounded-lg p-3">');
+                        parts.push('<div class="font-bold">' + bat.nom + '</div>');
+                        if (bat.typeFourrage) {
+                            parts.push('<div class="text-xs text-gray-500">' + bat.typeFourrage + '</div>');
+                        }
+                        parts.push('<div class="mt-2 flex justify-between">');
+                        parts.push('<span class="text-sm">Stock actuel:</span>');
+                        parts.push('<span class="font-bold">' + stock.toFixed(0) + ' balles</span>');
+                        parts.push('</div></div>');
+                    });
+                } else {
+                    parts.push('<p class="text-gray-500 text-sm">Aucun stockage</p>');
+                }
+                parts.push('</div></div>');
+                
+                parts.push('</div>');
+            }
+
+			if (state.activeSubTab === 'miam-miam') {
+                const today = new Date();
+                const debutMois = new Date(today.getFullYear(), today.getMonth(), 1);
+                
+                parts.push('<h3 class="text-xl font-bold mb-3">Rations aliment du mois</h3>');
+                
+                // Calculer par type d'aliment
+                const parTypeAliment = {};
+                state.data.rations.filter(r => new Date(r.date) >= debutMois).forEach(r => {
+                    const type = r.typeAliment;
+                    if (!parTypeAliment[type]) parTypeAliment[type] = 0;
+                    parTypeAliment[type] += parseFloat(r.quantiteTotale || 0);
+                });
+
+                if (Object.keys(parTypeAliment).length > 0) {
+                    parts.push('<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">');
+                    
+                    Object.keys(parTypeAliment).sort().forEach(type => {
+                        // Calculer le stock restant pour cet aliment par silo
+                        const silosAliment = state.data.batiments.filter(b => b.type === 'Silos' && b.typeAliment === type);
+                        
+                        parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
+                        parts.push('<div class="font-bold text-blue-700">' + type + '</div>');
+                        parts.push('<div class="text-sm mt-1">Consommé: <span class="font-semibold">' + parTypeAliment[type].toFixed(3) + ' kg</span></div>');
+                        
+                        if (silosAliment.length > 0) {
+                            parts.push('<div class="text-sm text-green-600 mt-2 font-medium">Stock restant:</div>');
+                            silosAliment.forEach(silo => {
+                                const stock = calculerStockBatiment(silo.id);
+                                parts.push('<div class="text-xs text-gray-600 ml-2">• ' + silo.nom + ': <span class="font-semibold">' + stock.toFixed(3) + ' kg</span></div>');
+                            });
+                            const stockTotal = silosAliment.reduce((sum, silo) => sum + calculerStockBatiment(silo.id), 0);
+                            parts.push('<div class="text-sm text-green-700 font-bold mt-1">Total: ' + stockTotal.toFixed(3) + ' kg</div>');
+                        } else {
+                            parts.push('<div class="text-sm text-gray-500">Pas de silo configuré</div>');
+                        }
+                        parts.push('</div>');
+                    });
+                    
+                    parts.push('</div>');
+                    
+                    // Total général
+                    const totalRations = Object.values(parTypeAliment).reduce((sum, val) => sum + val, 0);
+                    parts.push('<div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">');
+                    parts.push('<div class="text-sm text-blue-600 font-medium">Total du mois</div>');
+                    parts.push('<div class="text-2xl font-bold text-blue-900">' + totalRations.toFixed(3) + ' kg</div>');
+                    parts.push('</div>');
+                } else {
+                    parts.push('<p class="text-gray-600">Enregistrez des rations pour voir les totaux ici</p>');
+                }
+            }
+            
+
+            parts.push('</div>');
+            return parts.join('');
+        }
+
+        function renderBatiments() {
+            const parts = [];
+            parts.push('<div class="p-4 space-y-4">');
+            parts.push('<h2 class="text-2xl font-bold">Stockage</h2>');
+
+            parts.push('<form id="form-bat" class="bg-white border-2 border-gray-200 rounded-lg p-4 space-y-3">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Nom</label>');
+            parts.push('<input type="text" id="bat-nom" class="w-full px-3 py-2 border rounded-lg" required></div>');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1">Type</label>');
+            parts.push('<select id="bat-type" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            TYPES_BATIMENT.forEach(t => {
+                parts.push('<option value="' + t + '">' + t + '</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<div id="bat-fields"></div>');
+            parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Ajouter</button>');
+            parts.push('</form>');
+
+            parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
+            parts.push('<table class="w-full text-sm"><thead class="bg-gray-50"><tr>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Nom</th>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Type</th>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Capacité</th>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Stock</th>');
+            parts.push('<th class="px-3 py-2 text-right font-semibold">Actions</th>');
+            parts.push('</tr></thead><tbody class="divide-y">');
+
+            // Trier par type : Silos, Stockage fourrage, Élevage
+            const ordre = {'Silos': 1, 'Stockage fourrage': 2, 'Élevage': 3};
+            const batimentsTries = [...state.data.batiments].sort((a, b) => {
+                return (ordre[a.type] || 999) - (ordre[b.type] || 999);
+            });
+            
+            batimentsTries.forEach(b => {
+                const stock = calculerStockBatiment(b.id);
+                const unite = b.type === 'Élevage' ? 'têtes' : b.type === 'Silos' ? 'kg' : 'balles';
+                parts.push('<tr>');
+                parts.push('<td class="px-3 py-2">');
+                parts.push('<div class="font-medium">' + b.nom + '</div>');
+                if (b.typeAliment) {
+                    parts.push('<div class="text-xs text-blue-600">' + b.typeAliment + '</div>');
+                }
+                if (b.typeFourrage) {
+                    parts.push('<div class="text-xs text-green-600">' + b.typeFourrage + '</div>');
+                }
+                parts.push('</td>');
+                parts.push('<td class="px-3 py-2">' + b.type + '</td>');
+                parts.push('<td class="px-3 py-2">' + (b.capacite || '-') + '</td>');
+                const decimales = b.type === 'Élevage' ? 0 : b.type === 'Silos' ? 3 : 0;
+                parts.push('<td class="px-3 py-2 font-bold">' + stock.toFixed(decimales) + ' ' + unite + '</td>');
+                parts.push('<td class="px-3 py-2 text-right">');
+                if (b.type !== 'Élevage') {
+                    parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'entree\')" class="text-green-600 font-bold text-lg mr-2" title="Entrée">+</button>');
+                    parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'sortie\')" class="text-orange-600 font-bold text-lg mr-2" title="Sortie">−</button>');
+                }
+                parts.push('<button onclick="window.deleteBatiment(\'' + b.id + '\')" class="text-red-600 font-bold text-xl">×</button>');
+                parts.push('</td></tr>');
+            });
+
+            if (state.data.batiments.length === 0) {
+                parts.push('<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Aucun bâtiment</td></tr>');
+            }
+
+            parts.push('</tbody></table></div></div>');
+            return parts.join('');
+        }
+
+        function renderLots() {
+            const parts = [];
+            parts.push('<div class="p-4 space-y-4">');
+            parts.push('<h2 class="text-2xl font-bold">Élevage</h2>');
+
+            parts.push('<form id="form-lot" class="bg-white border-2 rounded-lg p-4 space-y-3">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Nom du lot</label>');
+            parts.push('<input type="text" id="lot-nom" class="w-full px-3 py-2 border rounded-lg" required></div>');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1">Type d\'animaux</label>');
+            parts.push('<select id="lot-type" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            TYPES_ANIMAUX.forEach(t => {
+                parts.push('<option value="' + t + '">' + t + '</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de têtes</label>');
+            parts.push('<input type="number" id="lot-tetes" class="w-full px-3 py-2 border rounded-lg" required></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Lieu actuel</label>');
+            parts.push('<select id="lot-lieu" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            state.data.batiments.filter(b => b.type === 'Élevage').forEach(b => {
+                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Ajouter</button>');
+            parts.push('</form>');
+
+            parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
+            parts.push('<table class="w-full text-sm"><thead class="bg-gray-50"><tr>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Nom</th>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Type</th>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Têtes</th>');
+            parts.push('<th class="px-3 py-2 text-left font-semibold">Lieu</th>');
+            parts.push('<th class="px-3 py-2 text-right font-semibold">Actions</th>');
+            parts.push('</tr></thead><tbody class="divide-y">');
+
+            // Trier les lots par bâtiment
+            const lotsTries = [...state.data.lots].sort((a, b) => {
+                const nomBatA = getNomBat(a.lieuActuel);
+                const nomBatB = getNomBat(b.lieuActuel);
+                return nomBatA.localeCompare(nomBatB);
+            });
+            
+            lotsTries.forEach(l => {
+                parts.push('<tr>');
+                parts.push('<td class="px-3 py-2">' + l.nom + '</td>');
+                parts.push('<td class="px-3 py-2">' + l.type + '</td>');
+                parts.push('<td class="px-3 py-2">' + l.nombreTetes + '</td>');
+                parts.push('<td class="px-3 py-2">' + getNomBat(l.lieuActuel) + '</td>');
+                 parts.push('<td class="px-3 py-2 text-right">');
+                parts.push('<button onclick="window.editLot(\'' + l.id + '\')" class="text-blue-600 font-bold text-lg mr-2" title="Modifier">✎</button>');
+                parts.push('<button onclick="window.deleteLot(\'' + l.id + '\')" class="text-red-600 font-bold text-xl">×</button>');
+                parts.push('</td></tr>');
+            });
+
+            if (state.data.lots.length === 0) {
+                parts.push('<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Aucun lot</td></tr>');
+            }
+
+            parts.push('</tbody></table></div></div>');
+            return parts.join('');
+        }
+
+        function renderRations() {
+            const today = new Date().toISOString().split('T')[0];
+            const parts = [];
+            parts.push('<div class="p-4 space-y-4">');
+            parts.push('<h2 class="text-2xl font-bold">Rations d\'aliment</h2>');
+
+            parts.push('<form id="form-ration" class="bg-white border-2 rounded-lg p-4 space-y-3">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Date</label>');
+            parts.push('<input type="date" id="ration-date" value="' + today + '" class="w-full px-3 py-2 border rounded-lg" required></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Lot d\'animaux</label>');
+            parts.push('<select id="ration-lot" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            state.data.lots.forEach(l => {
+                parts.push('<option value="' + l.id + '" data-tetes="' + l.nombreTetes + '">' + l.nom + ' (' + l.nombreTetes + ' têtes)</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
+            parts.push('<select id="ration-bat" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            state.data.batiments.filter(b => b.type === 'Silos').forEach(b => {
+                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
+            });
+            parts.push('</select></div>');
+
+            // ALIMENT 1
+            parts.push('<div class="bg-gray-50 p-3 rounded-lg">');
+            parts.push('<h4 class="font-semibold mb-2">Aliment 1</h4>');
+            parts.push('<div class="space-y-2">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Type d\'aliment</label>');
+            parts.push('<select id="ration-aliment1" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            TYPES_ALIMENT.forEach(a => {
+                parts.push('<option value="' + a + '">' + a + '</option>');
+            });
+            parts.push('</select></div>');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
+            parts.push('<select id="ration-mode1" class="w-full px-3 py-2 border rounded-lg">');
+            parts.push('<option value="partete">Poids par tête (kg)</option>');
+            parts.push('<option value="total">Poids total (kg)</option>');
+            parts.push('</select></div>');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-label1">Poids par tête (kg)</label>');
+            parts.push('<input type="number" step="0.001" id="ration-poids1" class="w-full px-3 py-2 border rounded-lg" required></div>');
+            
+            parts.push('<div id="ration-calc1" class="text-sm text-blue-600 font-medium hidden"></div>');
+            parts.push('</div></div>');
+
+			// ALIMENT 2 (optionnel)
+            parts.push('<div class="bg-gray-50 p-3 rounded-lg">');
+            parts.push('<h4 class="font-semibold mb-2">Aliment 2 (optionnel)</h4>');
+            parts.push('<div class="space-y-2">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Type d\'aliment</label>');
+            parts.push('<select id="ration-aliment2" class="w-full px-3 py-2 border rounded-lg">');
+            parts.push('<option value="">Aucun</option>');
+            TYPES_ALIMENT.forEach(a => {
+                parts.push('<option value="' + a + '">' + a + '</option>');
+            });
+            parts.push('</select></div>');
+            
+            parts.push('<div id="ration-fields2" class="hidden space-y-2">');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
+            parts.push('<select id="ration-bat2" class="w-full px-3 py-2 border rounded-lg">');
+            parts.push('<option value="">Sélectionner...</option>');
+            state.data.batiments.filter(b => b.type === 'Silos').forEach(b => {
+                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
+            });
+            parts.push('</select></div>');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
+            parts.push('<select id="ration-mode2" class="w-full px-3 py-2 border rounded-lg">');
+            parts.push('<option value="partete">Poids par tête (kg)</option>');
+            parts.push('<option value="total">Poids total (kg)</option>');
+            parts.push('</select></div>');
+            
+            parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-label2">Poids par tête (kg)</label>');
+            parts.push('<input type="number" step="0.001" id="ration-poids2" class="w-full px-3 py-2 border rounded-lg"></div>');
+            
+            parts.push('<div id="ration-calc2" class="text-sm text-blue-600 font-medium hidden"></div>');
+            parts.push('</div></div></div>');
+
+            parts.push('<div id="ration-total" class="hidden bg-blue-50 border-2 border-blue-200 rounded-lg p-3">');
+            parts.push('<p class="text-sm text-blue-700"><strong>Quantité totale:</strong> <span id="ration-total-val">0</span> kg</p>');
+            parts.push('</div>');
+
+            parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Enregistrer</button>');
+            parts.push('</form>');
+
+            parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
+            parts.push('<table class="w-full text-xs"><thead class="bg-gray-50"><tr>');
+            parts.push('<th class="px-2 py-2 text-left">Date</th>');
+            parts.push('<th class="px-2 py-2 text-left">Lot</th>');
+            parts.push('<th class="px-2 py-2 text-left">Aliment(s)</th>');
+            parts.push('<th class="px-2 py-2 text-left">kg/tête</th>');
+            parts.push('<th class="px-2 py-2 text-left">Total kg</th>');
+            parts.push('<th class="px-2 py-2 text-right">Act.</th>');
+            parts.push('</tr></thead><tbody class="divide-y">');
+
+            state.data.rations.slice().reverse().slice(0, 20).forEach(r => {
+                parts.push('<tr>');
+                parts.push('<td class="px-2 py-2">' + formatDate(r.date) + '</td>');
+                parts.push('<td class="px-2 py-2">' + getNomLot(r.lotId) + '</td>');
+                parts.push('<td class="px-2 py-2">' + r.typeAliment + '</td>');
+                parts.push('<td class="px-2 py-2">' + r.poidsParTete + '</td>');
+                parts.push('<td class="px-2 py-2 font-bold">' + r.quantiteTotale + '</td>');
+                parts.push('<td class="px-2 py-2 text-right">');
+                parts.push('<button onclick="window.deleteRation(\'' + r.id + '\')" class="text-red-600 font-bold text-lg">×</button>');
+                parts.push('</td></tr>');
+            });
+
+            if (state.data.rations.length === 0) {
+                parts.push('<tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">Aucune ration</td></tr>');
+            }
+
+            parts.push('</tbody></table></div></div>');
+            return parts.join('');
+        }
+
+        function renderFourrage() {
+            const today = new Date().toISOString().split('T')[0];
+            const parts = [];
+            parts.push('<div class="p-4 space-y-4">');
+            parts.push('<h2 class="text-2xl font-bold">Consommation fourrage</h2>');
+
+            parts.push('<form id="form-fourrage" class="bg-white border-2 rounded-lg p-4 space-y-3">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Date</label>');
+            parts.push('<input type="date" id="cf-date" value="' + today + '" class="w-full px-3 py-2 border rounded-lg" required></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Lot d\'animaux</label>');
+            parts.push('<select id="cf-lot" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            state.data.lots.forEach(l => {
+                parts.push('<option value="' + l.id + '">' + l.nom + '</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (stockage)</label>');
+            parts.push('<select id="cf-bat" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            state.data.batiments.filter(b => b.type === 'Stockage fourrage').forEach(b => {
+                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
+            parts.push('<select id="cf-type" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            TYPES_FOURRAGE.forEach(f => {
+                parts.push('<option value="' + f + '">' + f + '</option>');
+            });
+            parts.push('</select></div>');
+
+            parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de balles</label>');
+            parts.push('<input type="number" step="0.1" id="cf-nombre" class="w-full px-3 py-2 border rounded-lg" required></div>');
+
+            parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Enregistrer</button>');
+            parts.push('</form>');
+
+            parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
+            parts.push('<table class="w-full text-xs"><thead class="bg-gray-50"><tr>');
+            parts.push('<th class="px-2 py-2 text-left">Date</th>');
+            parts.push('<th class="px-2 py-2 text-left">Lot</th>');
+            parts.push('<th class="px-2 py-2 text-left">Type</th>');
+            parts.push('<th class="px-2 py-2 text-left">Balles</th>');
+            parts.push('<th class="px-2 py-2 text-right">Act.</th>');
+            parts.push('</tr></thead><tbody class="divide-y">');
+
+            state.data.consoFourrage.slice().reverse().slice(0, 20).forEach(c => {
+                parts.push('<tr>');
+                parts.push('<td class="px-2 py-2">' + formatDate(c.date) + '</td>');
+                parts.push('<td class="px-2 py-2">' + getNomLot(c.lotId) + '</td>');
+                parts.push('<td class="px-2 py-2">' + c.typeFourrage + '</td>');
+                parts.push('<td class="px-2 py-2 font-bold">' + c.nombreBalles + '</td>');
+                parts.push('<td class="px-2 py-2 text-right">');
+                parts.push('<button onclick="window.deleteConsoFourrage(\'' + c.id + '\')" class="text-red-600 font-bold text-lg">×</button>');
+                parts.push('</td></tr>');
+            });
+
+            if (state.data.consoFourrage.length === 0) {
+                parts.push('<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Aucune consommation</td></tr>');
+            }
+
+            parts.push('</tbody></table></div></div>');
+            return parts.join('');
+        }
+
+		function renderCalendrier() {
+            const parts = [];
+            parts.push('<div class="p-4 space-y-4">');
+            parts.push('<h2 class="text-2xl font-bold mb-4">Calendrier</h2>');
+            parts.push('<button onclick="window.showModal()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold mb-4">+ Ajouter un événement</button>');
+            
+            // Conteneur principal avec 2 colonnes
+            parts.push('<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">');
+            
+            // COLONNE GAUCHE - Liste des événements à venir
+            parts.push('<div class="bg-white border-2 rounded-lg p-4">');
+            parts.push('<h3 class="text-lg font-bold mb-3">Événements à venir</h3>');
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const evtsAvenir = state.data.evenements
+                .filter(e => new Date(e.date) >= today && !e.valide)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            if (evtsAvenir.length > 0) {
+                evtsAvenir.forEach(evt => {
+                    const date = new Date(evt.date);
+                    const isPast = date < new Date();
+                    const borderColor = evt.valide ? 'border-green-500' : isPast ? 'border-gray-400' : 'border-blue-500';
+                    const bgColor = evt.valide ? 'bg-green-50' : isPast ? 'bg-gray-50' : 'bg-white';
+                    
+                    parts.push('<div class="border-l-4 ' + borderColor + ' ' + bgColor + ' p-3 mb-2">');
+                    parts.push('<div class="flex justify-between">');
+                    parts.push('<div class="flex-1">');
+                    parts.push('<div class="font-bold">' + evt.titre + '</div>');
+                    parts.push('<div class="text-sm text-gray-600">' + date.toLocaleDateString('fr-FR') + (evt.heure ? ' • ' + evt.heure : '') + '</div>');
+                    parts.push('<div class="text-xs text-gray-500">' + evt.categorie + '</div>');
+                    if (evt.description) parts.push('<div class="text-sm mt-1">' + evt.description + '</div>');
+                    parts.push('</div>');
+                    parts.push('<div class="flex gap-2">');
+                    parts.push('<button onclick="window.validerEvt(\'' + evt.id + '\')" class="text-green-600 text-xl" title="Valider">✓</button>');
+                    parts.push('<button onclick="window.deleteEvt(\'' + evt.id + '\')" class="text-red-600 text-xl">×</button>');
+                    parts.push('</div></div></div>');
+                });
+            } else {
+                parts.push('<p class="text-gray-500">Aucun événement à venir</p>');
+            }
+
+            // Historique des événements validés
+            parts.push('<h3 class="text-lg font-bold mb-3 mt-6">Événements validés</h3>');
+            const evtsValides = state.data.evenements
+                .filter(e => e.valide)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 10);
+            
+            if (evtsValides.length > 0) {
+                evtsValides.forEach(evt => {
+                    const date = new Date(evt.date);
+                    parts.push('<div class="border-l-4 border-green-500 bg-green-50 p-3 mb-2">');
+                    parts.push('<div class="flex justify-between">');
+                    parts.push('<div class="flex-1">');
+                    parts.push('<div class="font-bold">' + evt.titre + '</div>');
+                    parts.push('<div class="text-sm text-gray-600">' + date.toLocaleDateString('fr-FR') + (evt.heure ? ' • ' + evt.heure : '') + '</div>');
+                    parts.push('<div class="text-xs text-gray-500">' + evt.categorie + '</div>');
+                    parts.push('</div>');
+                    parts.push('<div class="flex gap-2">');
+                    parts.push('<button onclick="window.invaliderEvt(\'' + evt.id + '\')" class="text-orange-600 text-xl" title="Annuler">↶</button>');
+                    parts.push('<button onclick="window.deleteEvt(\'' + evt.id + '\')" class="text-red-600 text-xl">×</button>');
+                    parts.push('</div></div></div>');
+                });
+            } else {
+                parts.push('<p class="text-gray-500">Aucun événement validé</p>');
+            }
+
+            parts.push('</div>');
+            
+            // COLONNE DROITE - Calendrier mensuel
+            parts.push('<div class="bg-white border-2 rounded-lg p-4">');
+            parts.push('<div class="flex justify-between items-center mb-4">');
+            parts.push('<button onclick="window.changeMonth(-1)" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">◀</button>');
+            parts.push('<h3 class="text-lg font-bold" id="month-title"></h3>');
+            parts.push('<button onclick="window.changeMonth(1)" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">▶</button>');
+            parts.push('</div>');
+            
+            // Calendrier
+            parts.push('<div class="grid grid-cols-7 gap-1" id="calendar-grid">');
+            parts.push('</div>');
+            
+            parts.push('</div>');
+            
+            parts.push('</div>'); // Fin du grid 2 colonnes
+
+            // Modal
+            parts.push('<div id="modal-evt" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">');
+            parts.push('<div class="bg-white rounded-lg p-6 max-w-md w-full max-h-screen overflow-y-auto">');
+            parts.push('<h3 class="text-xl font-bold mb-4">Nouvel événement</h3>');
+            parts.push('<form id="form-evt" class="space-y-3">');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Catégorie</label>');
+            parts.push('<select id="evt-cat" class="w-full px-3 py-2 border rounded-lg" required>');
+            parts.push('<option value="">Sélectionner...</option>');
+            parts.push('<option value="Stockage">Stockage</option>');
+            parts.push('<option value="Élevage">Élevage</option>');
+            parts.push('<option value="Autre">Autre</option>');
+            parts.push('</select></div>');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Titre</label>');
+            parts.push('<input type="text" id="evt-titre" class="w-full px-3 py-2 border rounded-lg" required></div>');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Date</label>');
+            parts.push('<input type="date" id="evt-date" class="w-full px-3 py-2 border rounded-lg" required></div>');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Heure (optionnel)</label>');
+            parts.push('<input type="time" id="evt-heure" class="w-full px-3 py-2 border rounded-lg"></div>');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Description</label>');
+            parts.push('<textarea id="evt-desc" class="w-full px-3 py-2 border rounded-lg" rows="3"></textarea></div>');
+            parts.push('<div class="flex gap-2">');
+            parts.push('<button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">Ajouter</button>');
+            parts.push('<button type="button" onclick="window.hideModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold">Annuler</button>');
+            parts.push('</div></form></div></div>');
+
+            parts.push('</div>');
+            return parts.join('');
+        }
+        function render() {
+            const tabs = [
+                { id: 'tableau-bord', label: 'Tableau de Bord', fn: renderTableauBord },
+                { id: 'batiments', label: 'Stockage', fn: renderBatiments },
+                { id: 'lots', label: 'Élevage', fn: renderLots },
+                { id: 'rations', label: 'Rations', fn: renderRations },
+                { id: 'fourrage', label: 'Fourrage', fn: renderFourrage },
+                { id: 'calendrier', label: 'Calendrier', fn: renderCalendrier }
+            ];
+
+            const parts = [];
+            parts.push('<div class="bg-green-700 text-white p-4 shadow-lg">');
+            parts.push('<h1 class="text-xl font-bold">Tchapot de Ghislain</h1>');
+            parts.push('</div>');
+            parts.push('<div class="bg-gray-100 p-2 overflow-x-auto">');
+            parts.push('<div class="flex gap-1">');
+
+            tabs.forEach(tab => {
+                const active = state.activeTab === tab.id;
+                const cls = active ? 'bg-green-600 text-white' : 'bg-white text-gray-700';
+                parts.push('<button onclick="window.changeTab(\'' + tab.id + '\')" class="relative px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap ' + cls + '">');
+                parts.push(tab.label);
+                parts.push('</button>');
+            });
+
+            parts.push('</div></div>');
+
+            const activeRender = tabs.find(t => t.id === state.activeTab)?.fn || renderTableauBord;
+            parts.push(activeRender());
+
+            document.getElementById('app').innerHTML = parts.join('');
+            attachEventListeners();
+        }
+
+        function attachEventListeners() {
+            const formBat = document.getElementById('form-bat');
+            if (formBat) {
+                formBat.onsubmit = (e) => {
+                    e.preventDefault();
+                    const type = document.getElementById('bat-type').value;
+                    const newBat = {
+                        id: Date.now().toString(),
+                        nom: document.getElementById('bat-nom').value,
+                        type: type,
+                        capacite: document.getElementById('bat-capacite')?.value || null,
+                        stockInitial: type !== 'Élevage' ? (document.getElementById('bat-stock')?.value || 0) : 0,
+                        typeAliment: type === 'Silos' ? (document.getElementById('bat-aliment')?.value || null) : null,
+                        typeFourrage: type === 'Stockage fourrage' ? (document.getElementById('bat-fourrage')?.value || null) : null
+                    };
+                    state.data.batiments.push(newBat);
+                    saveData();
+                    render();
+                };
+
+                const batType = document.getElementById('bat-type');
+                if (batType) {
+                    batType.onchange = () => {
+                        const type = batType.value;
+                        const fieldsDiv = document.getElementById('bat-fields');
+                        if (!type) {
+                            fieldsDiv.innerHTML = '';
+                            return;
+                        }
+
+                        const unite = type === 'Élevage' ? 'têtes' : type === 'Silos' ? 'kg' : 'balles';
+                        const fparts = [];
+                        fparts.push('<div><label class="block text-sm font-medium mb-1">Capacité (' + unite + ')</label>');
+                        fparts.push('<input type="number" step="0.1" id="bat-capacite" class="w-full px-3 py-2 border rounded-lg"></div>');
+                        
+                        if (type !== 'Élevage') {
+                            fparts.push('<div><label class="block text-sm font-medium mb-1">Stock initial (' + unite + ')</label>');
+                            fparts.push('<input type="number" step="0.1" id="bat-stock" class="w-full px-3 py-2 border rounded-lg"></div>');
+                        }
+                        
+                        if (type === 'Silos') {
+                            fparts.push('<div><label class="block text-sm font-medium mb-1">Type d\'aliment</label>');
+                            fparts.push('<select id="bat-aliment" class="w-full px-3 py-2 border rounded-lg">');
+                            fparts.push('<option value="">Sélectionner...</option>');
+                            TYPES_ALIMENT.forEach(a => fparts.push('<option value="' + a + '">' + a + '</option>'));
+                            fparts.push('</select></div>');
+                        }
+                        
+                        if (type === 'Stockage fourrage') {
+                            fparts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
+                            fparts.push('<select id="bat-fourrage" class="w-full px-3 py-2 border rounded-lg">');
+                            fparts.push('<option value="">Sélectionner...</option>');
+                            TYPES_FOURRAGE.forEach(f => fparts.push('<option value="' + f + '">' + f + '</option>'));
+                            fparts.push('</select></div>');
+                        }
+                        
+                        fieldsDiv.innerHTML = fparts.join('');
+                    };
+                }
+            }
+
+            const formLot = document.getElementById('form-lot');
+            if (formLot) {
+                formLot.onsubmit = (e) => {
+                    e.preventDefault();
+                    state.data.lots.push({
+                        id: Date.now().toString(),
+                        nom: document.getElementById('lot-nom').value,
+                        type: document.getElementById('lot-type').value,
+                        nombreTetes: Math.round(document.getElementById('lot-tetes').value),
+                        lieuActuel: document.getElementById('lot-lieu').value,
+                        dateCreation: new Date().toISOString().split('T')[0]
+                    });
+                    saveData();
+                    render();
+                };
+            }
+			
+			const formRation = document.getElementById('form-ration');
+            if (formRation) {
+                const rationLot = document.getElementById('ration-lot');
+                const rationMode1 = document.getElementById('ration-mode1');
+                const rationPoids1 = document.getElementById('ration-poids1');
+                const rationLabel1 = document.getElementById('ration-label1');
+                const rationCalc1 = document.getElementById('ration-calc1');
+                
+                const rationAliment2 = document.getElementById('ration-aliment2');
+                const rationFields2 = document.getElementById('ration-fields2');
+                const rationMode2 = document.getElementById('ration-mode2');
+                const rationPoids2 = document.getElementById('ration-poids2');
+                const rationLabel2 = document.getElementById('ration-label2');
+                const rationCalc2 = document.getElementById('ration-calc2');
+                
+                const rationTotal = document.getElementById('ration-total');
+                const rationTotalVal = document.getElementById('ration-total-val');
+
+                // Préremplir avec ration de la veille
+                if (rationLot) {
+                    rationLot.onchange = () => {
+                        const lotId = rationLot.value;
+                        if (!lotId) return;
+
+                        const dateStr = document.getElementById('ration-date').value;
+                        const dateSelectionnee = new Date(dateStr);
+                        dateSelectionnee.setDate(dateSelectionnee.getDate() - 1);
+                        const dateVeille = dateSelectionnee.toISOString().split('T')[0];
+
+                        const rationsVeille = state.data.rations
+                            .filter(r => r.lotId === lotId && r.date === dateVeille)
+                            .sort((a, b) => parseInt(b.id) - parseInt(a.id));
+
+                        if (rationsVeille.length > 0) {
+                            // Aliment 1
+                            const ration1 = rationsVeille[0];
+                            document.getElementById('ration-bat').value = ration1.batimentId;
+                            document.getElementById('ration-aliment1').value = ration1.typeAliment;
+                            document.getElementById('ration-poids1').value = ration1.poidsParTete;
+
+                            // Aliment 2 si existe
+                            if (rationsVeille.length > 1) {
+                                const ration2 = rationsVeille[1];
+                                document.getElementById('ration-aliment2').value = ration2.typeAliment;
+                                rationFields2.classList.remove('hidden');
+                                document.getElementById('ration-bat2').value = ration2.batimentId;
+                                document.getElementById('ration-poids2').value = ration2.poidsParTete;
+                            }
+
+                            updateTotaux();
+                        }
+                    };
+                }
+
+                // Afficher/masquer aliment 2
+                if (rationAliment2) {
+                    rationAliment2.onchange = () => {
+                        if (rationAliment2.value) {
+                            rationFields2.classList.remove('hidden');
+                        } else {
+                            rationFields2.classList.add('hidden');
+                        }
+                        updateTotaux();
+                    };
+                }
+
+                // Changer label selon mode aliment 1
+                if (rationMode1) {
+                    rationMode1.onchange = () => {
+                        if (rationMode1.value === 'partete') {
+                            rationLabel1.textContent = 'Poids par tête (kg)';
+                        } else {
+                            rationLabel1.textContent = 'Poids total (kg)';
+                        }
+                        rationPoids1.value = '';
+                        updateTotaux();
+                    };
+                }
+
+                // Changer label selon mode aliment 2
+                if (rationMode2) {
+                    rationMode2.onchange = () => {
+                        if (rationMode2.value === 'partete') {
+                            rationLabel2.textContent = 'Poids par tête (kg)';
+                        } else {
+                            rationLabel2.textContent = 'Poids total (kg)';
+                        }
+                        rationPoids2.value = '';
+                        updateTotaux();
+                    };
+                }
+
+                const updateTotaux = () => {
+                    if (!rationLot || !rationLot.value) {
+                        rationTotal.classList.add('hidden');
+                        return;
+                    }
+
+                    const tetes = parseFloat(rationLot.options[rationLot.selectedIndex].getAttribute('data-tetes'));
+                    let totalKg = 0;
+
+                    // Aliment 1
+                    if (rationPoids1.value) {
+                        const poids1 = parseFloat(rationPoids1.value);
+                        if (rationMode1.value === 'partete') {
+                            const total1 = tetes * poids1;
+                            totalKg += total1;
+                            rationCalc1.textContent = 'Total: ' + total1.toFixed(3) + ' kg';
+                            rationCalc1.classList.remove('hidden');
+                        } else {
+                            const parTete1 = poids1 / tetes;
+                            totalKg += poids1;
+                            rationCalc1.textContent = 'Par tête: ' + parTete1.toFixed(3) + ' kg';
+                            rationCalc1.classList.remove('hidden');
+                        }
+                    } else {
+                        rationCalc1.classList.add('hidden');
+                    }
+
+                    // Aliment 2
+                    if (rationAliment2.value && rationPoids2.value) {
+                        const poids2 = parseFloat(rationPoids2.value);
+                        if (rationMode2.value === 'partete') {
+                            const total2 = tetes * poids2;
+                            totalKg += total2;
+                            rationCalc2.textContent = 'Total: ' + total2.toFixed(3) + ' kg';
+                            rationCalc2.classList.remove('hidden');
+                        } else {
+                            const parTete2 = poids2 / tetes;
+                            totalKg += poids2;
+                            rationCalc2.textContent = 'Par tête: ' + parTete2.toFixed(3) + ' kg';
+                            rationCalc2.classList.remove('hidden');
+                        }
+                    } else {
+                        rationCalc2.classList.add('hidden');
+                    }
+
+                    if (totalKg > 0) {
+                        rationTotalVal.textContent = totalKg.toFixed(3);
+                        rationTotal.classList.remove('hidden');
+                    } else {
+                        rationTotal.classList.add('hidden');
+                    }
+                };
+
+                if (rationLot) rationLot.onchange();
+                if (rationPoids1) rationPoids1.addEventListener('input', updateTotaux);
+                if (rationPoids2) rationPoids2.addEventListener('input', updateTotaux);
+
+                formRation.onsubmit = (e) => {
+                    e.preventDefault();
+                    const lotSelect = document.getElementById('ration-lot');
+                    const tetes = parseFloat(lotSelect.options[lotSelect.selectedIndex].getAttribute('data-tetes'));
+                    
+                    // Aliment 1
+                    const poids1 = parseFloat(document.getElementById('ration-poids1').value);
+                    const mode1 = document.getElementById('ration-mode1').value;
+                    const aliment1 = document.getElementById('ration-aliment1').value;
+                    
+                    let poidsParTete1, total1;
+                    if (mode1 === 'partete') {
+                        poidsParTete1 = poids1;
+                        total1 = (tetes * poids1).toFixed(3);
+                    } else {
+                        total1 = poids1.toFixed(3);
+                        poidsParTete1 = (poids1 / tetes).toFixed(3);
+                    }
+                    
+                    state.data.rations.push({
+                        id: Date.now().toString(),
+                        date: document.getElementById('ration-date').value,
+                        lotId: lotSelect.value,
+                        batimentId: document.getElementById('ration-bat').value,
+                        typeAliment: aliment1,
+                        poidsParTete: poidsParTete1,
+                        quantiteTotale: total1
+                    });
+                    
+                    // Aliment 2 (si renseigné)
+                    const aliment2 = document.getElementById('ration-aliment2').value;
+                    if (aliment2) {
+                        const poids2 = parseFloat(document.getElementById('ration-poids2').value);
+                        const mode2 = document.getElementById('ration-mode2').value;
+                        
+                        let poidsParTete2, total2;
+                        if (mode2 === 'partete') {
+                            poidsParTete2 = poids2;
+                            total2 = (tetes * poids2).toFixed(3);
+                        } else {
+                            total2 = poids2.toFixed(3);
+                            poidsParTete2 = (poids2 / tetes).toFixed(3);
+                        }
+                        
+                        state.data.rations.push({
+                            id: (Date.now() + 1).toString(),
+                            date: document.getElementById('ration-date').value,
+                            lotId: lotSelect.value,
+                            batimentId: document.getElementById('ration-bat2').value,
+                            typeAliment: aliment2,
+                            poidsParTete: poidsParTete2,
+                            quantiteTotale: total2
+                        });
+                    }
+                    
+                    saveData();
+                    render();
+                };
+            }
+
+            const formFourrage = document.getElementById('form-fourrage');
+            if (formFourrage) {
+                formFourrage.onsubmit = (e) => {
+                    e.preventDefault();
+                    state.data.consoFourrage.push({
+                        id: Date.now().toString(),
+                        date: document.getElementById('cf-date').value,
+                        lotId: document.getElementById('cf-lot').value,
+                        batimentId: document.getElementById('cf-bat').value,
+                        typeFourrage: document.getElementById('cf-type').value,
+                        nombreBalles: document.getElementById('cf-nombre').value
+                    });
+                    saveData();
+                    render();
+                };
+            }
+
+            const formEvt = document.getElementById('form-evt');
+            if (formEvt) {
+                formEvt.onsubmit = (e) => {
+                    e.preventDefault();
+                    state.data.evenements.push({
+                        id: Date.now().toString(),
+                        categorie: document.getElementById('evt-cat').value,
+                        titre: document.getElementById('evt-titre').value,
+                        date: document.getElementById('evt-date').value,
+                        heure: document.getElementById('evt-heure').value || '',
+                        description: document.getElementById('evt-desc').value || '',
+                        valide: false
+                    });
+                    saveData();
+                    window.hideModal();
+                    render();
+                };
+            } // Rendu du calendrier si on est sur l'onglet calendrier
+            if (state.activeTab === 'calendrier') {
+                renderCalendarGrid();
+            }
+        }
+
+        window.changeTab = (tab) => {
+            state.activeTab = tab;
+            render();
+        };
+
+        window.changeSubTab = (tab) => {
+            state.activeSubTab = tab;
+            render();
+        };
+
+        window.deleteBatiment = (id) => {
+            if (confirm('Supprimer ce bâtiment ?')) {
+                state.data.batiments = state.data.batiments.filter(b => b.id !== id);
+                saveData();
+                render();
+            }
+        };
+
+        window.deleteLot = (id) => {
+            if (confirm('Supprimer ce lot ?')) {
+                state.data.lots = state.data.lots.filter(l => l.id !== id);
+                saveData();
+                render();
+            }
+        };
+
+        window.deleteRation = (id) => {
+            if (confirm('Supprimer cette ration ?')) {
+                state.data.rations = state.data.rations.filter(r => r.id !== id);
+                saveData();
+                render();
+            }
+        };
+
+        window.deleteConsoFourrage = (id) => {
+            if (confirm('Supprimer cette consommation ?')) {
+                state.data.consoFourrage = state.data.consoFourrage.filter(c => c.id !== id);
+                saveData();
+                render();
+            }
+        };
+
+        window.deleteEvt = (id) => {
+            if (confirm('Supprimer cet événement ?')) {
+                state.data.evenements = state.data.evenements.filter(e => e.id !== id);
+                saveData();
+                render();
+            }
+        };
+
+        window.validerEvt = (id) => {
+            const evt = state.data.evenements.find(e => e.id === id);
+            if (evt) {
+                evt.valide = true;
+                saveData();
+                render();
+            }
+        };
+
+        window.invaliderEvt = (id) => {
+            const evt = state.data.evenements.find(e => e.id === id);
+            if (evt) {
+                evt.valide = false;
+                saveData();
+                render();
+            }
+        };
+
+window.showCustomModal = (title, content) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title">${title}</div>
+            <div class="custom-modal-content">${content}</div>
+            <button class="custom-modal-btn">Fermer</button>
+        </div>
+    `;
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay || e.target.classList.contains('custom-modal-btn')) {
+            overlay.remove();
+        }
+    };
+    
+    document.body.appendChild(overlay);
+};
+
+        window.showModal = () => {
+            const modal = document.getElementById('modal-evt');
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.hideModal = () => {
+            const modal = document.getElementById('modal-evt');
+            if (modal) modal.classList.add('hidden');
+        };
+		// Variables pour le calendrier
+        if (!window.currentCalendarMonth) {
+            window.currentCalendarMonth = new Date().getMonth();
+            window.currentCalendarYear = new Date().getFullYear();
+        }
+		
+window.handleDayClick = (dateStr) => {
+    const evts = state.data.evenements.filter(e => {
+        const evtDate = new Date(e.date).toISOString().split('T')[0];
+        const clickDate = dateStr.split('T')[0];
+        return evtDate === clickDate;
+    });
+    
+    if (evts.length === 0) {
+        // Proposer de créer un événement avec modal personnalisé
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        
+        overlay.innerHTML = `
+            <div class="custom-modal-box">
+                <div class="custom-modal-title">Aucun événement</div>
+                <div class="custom-modal-content">Aucun événement ce jour.\n\nVoulez-vous créer un événement pour le ${new Date(dateStr).toLocaleDateString('fr-FR')} ?</div>
+                <div class="flex gap-2">
+                    <button class="custom-modal-btn bg-green-600" onclick="
+                        document.getElementById('evt-date').value = '${dateStr}';
+                        window.showModal();
+                        this.closest('.custom-modal-overlay').remove();
+                    ">Oui, créer</button>
+                    <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Non</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+    } else {
+        // Afficher les événements
+        let message = 'Événements du ' + new Date(dateStr).toLocaleDateString('fr-FR') + ' :\n\n';
+        evts.forEach(evt => {
+            message += '• ' + evt.titre;
+            if (evt.heure) message += ' à ' + evt.heure;
+            message += evt.valide ? ' ✔️\n' : '\n';
+        });
+
+        window.showCustomModal('Événements', message);
+
+        // Proposer d'ajouter un autre événement avec modal personnalisé
+        setTimeout(() => {
+            const overlay = document.createElement('div');
+            overlay.className = 'custom-modal-overlay';
+            
+            overlay.innerHTML = `
+                <div class="custom-modal-box">
+                    <div class="custom-modal-title">Ajouter un événement ?</div>
+                    <div class="custom-modal-content">Voulez-vous ajouter un nouvel événement ce jour ?</div>
+                    <div class="flex gap-2">
+                        <button class="custom-modal-btn bg-green-600" onclick="
+                            document.getElementById('evt-date').value = '${dateStr}';
+                            window.showModal();
+                            this.closest('.custom-modal-overlay').remove();
+                        ">Oui</button>
+                        <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Non</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }, 300);
+    }
+};
+
+        window.changeMonth = (delta) => {
+            window.currentCalendarMonth += delta;
+            if (window.currentCalendarMonth > 11) {
+                window.currentCalendarMonth = 0;
+                window.currentCalendarYear++;
+            } else if (window.currentCalendarMonth < 0) {
+                window.currentCalendarMonth = 11;
+                window.currentCalendarYear--;
+            }
+            renderCalendarGrid();
+        };
+
+        function renderCalendarGrid() {
+            const monthTitle = document.getElementById('month-title');
+            const calendarGrid = document.getElementById('calendar-grid');
+            
+            if (!monthTitle || !calendarGrid) return;
+
+            const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            monthTitle.textContent = months[window.currentCalendarMonth] + ' ' + window.currentCalendarYear;
+
+            const firstDay = new Date(window.currentCalendarYear, window.currentCalendarMonth, 1);
+            const lastDay = new Date(window.currentCalendarYear, window.currentCalendarMonth + 1, 0);
+            const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const daysInMonth = lastDay.getDate();
+
+            let html = '';
+            
+            // En-têtes des jours
+            const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+            dayNames.forEach(day => {
+                html += '<div class="text-center text-xs font-semibold text-gray-600 py-2">' + day + '</div>';
+            });
+
+            // Jours vides avant le 1er du mois
+            for (let i = 0; i < startDay; i++) {
+                html += '<div class="aspect-square"></div>';
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Jours du mois
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDate = new Date(window.currentCalendarYear, window.currentCalendarMonth, day);
+				const dateStr = window.currentCalendarYear + '-' + 
+                String(window.currentCalendarMonth + 1).padStart(2, '0') + '-' + 
+                String(day).padStart(2, '0');
+                
+                // Vérifier s'il y a des événements ce jour
+                const evtsJour = state.data.evenements.filter(e => e.date === dateStr);
+                
+                const isToday = currentDate.getTime() === today.getTime();
+                const bgClass = isToday ? 'bg-blue-100 border-2 border-blue-500' : 'bg-gray-50 hover:bg-gray-100';
+                
+               const hasEvents = evtsJour.length > 0;
+                const eventClass = hasEvents ? 'bg-blue-200 border-2 border-blue-600 font-bold' : '';
+               html += '<div class="aspect-square ' + bgClass + ' ' + eventClass + ' rounded p-1 text-center relative cursor-pointer day-cell" data-date="' + dateStr + '">';
+                html += '<div class="text-sm ' + (hasEvents ? 'font-bold text-blue-800' : 'font-medium') + '">' + day + '</div>';
+                
+                if (evtsJour.length > 0) {
+                    html += '<div class="absolute bottom-1 left-0 right-0 flex justify-center gap-1">';
+                    evtsJour.slice(0, 3).forEach(evt => {
+                        const color = evt.valide ? 'bg-green-500' : 'bg-blue-500';
+                        html += '<div class="w-1.5 h-1.5 rounded-full ' + color + '"></div>';
+                    });
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            }
+
+            calendarGrid.innerHTML = html;
+            
+            // Attacher les événements après insertion du HTML
+document.querySelectorAll('.day-cell').forEach(cell => {
+    cell.addEventListener('click', () => {
+        window.handleDayClick(cell.getAttribute('data-date'));
+    });
+});
+        }
+		window.showHistoriqueLot = (lotId) => {
+    const lot = state.data.lots.find(l => l.id === lotId);
+    if (!lot) return;
+    
+    let message = 'Type: ' + lot.type + '\n';
+    message += 'Têtes: ' + lot.nombreTetes + '\n';
+    message += 'Lieu: ' + getNomBat(lot.lieuActuel) + '\n';
+    message += 'Créé le: ' + formatDate(lot.dateCreation) + '\n\n';
+    
+    // Historique des modifications
+    if (lot.historique && lot.historique.length > 0) {
+        message += '📝 HISTORIQUE DES MODIFICATIONS:\n';
+        lot.historique.slice().reverse().forEach(h => {
+            message += '  • ' + formatDate(h.date) + ' : ' + h.action + '\n';
+            if (h.action === 'Déplacement') {
+                message += '    De: ' + getNomBat(h.ancienLieu) + ' → ' + getNomBat(h.nouveauLieu) + '\n';
+            }
+            if (h.ancienTetes !== h.nouveauTetes) {
+                message += '    Têtes: ' + h.ancienTetes + ' → ' + h.nouveauTetes + '\n';
+            }
+        });
+        message += '\n';
+    }
+    
+    // Dernières rations
+    const rations = state.data.rations
+        .filter(r => r.lotId === lotId)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+    
+    if (rations.length > 0) {
+        message += '🍽️ DERNIÈRES RATIONS:\n';
+        rations.forEach(r => {
+            message += '  • ' + formatDate(r.date) + ' : ' + r.typeAliment + ' (' + r.quantiteTotale + ' kg)\n';
+        });
+        message += '\n';
+    }
+    
+    // Dernier fourrage
+    const fourrage = state.data.consoFourrage
+        .filter(c => c.lotId === lotId)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+    
+    if (fourrage.length > 0) {
+        message += '🌾 DERNIER FOURRAGE:\n';
+        fourrage.forEach(f => {
+            message += '  • ' + formatDate(f.date) + ' : ' + f.typeFourrage + ' (' + f.nombreBalles + ' balles)\n';
+        });
+    }
+    
+    window.showCustomModal(lot.nom, message);
+};
+		window.showEntreeSortie = (batId, type) => {
+            const bat = state.data.batiments.find(b => b.id === batId);
+            if (!bat) return;
+            
+            const unite = bat.type === 'Silos' ? 'kg' : 'balles';
+            const titre = type === 'entree' ? 'Entrée de stock' : 'Sortie de stock';
+            
+            const quantite = prompt(titre + ' - ' + bat.nom + '\n\nQuantité (' + unite + '):');
+            if (!quantite || isNaN(quantite) || parseFloat(quantite) <= 0) return;
+            
+            const mouvement = {
+                id: Date.now().toString(),
+                batimentId: batId,
+                quantite: parseFloat(quantite),
+                date: new Date().toISOString().split('T')[0],
+                type: type
+            };
+            
+            if (type === 'entree') {
+                state.data.entreesBat.push(mouvement);
+            } else {
+                state.data.sortiesBat.push(mouvement);
+            }
+            
+            saveData();
+            render();
+        };
+		
+		window.editLot = (lotId) => {
+            const lot = state.data.lots.find(l => l.id === lotId);
+            if (!lot) return;
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            
+            let batsOptions = '';
+            state.data.batiments.filter(b => b.type === 'Élevage').forEach(b => {
+                const selected = b.id === lot.lieuActuel ? 'selected' : '';
+                batsOptions += `<option value="${b.id}" ${selected}>${b.nom}</option>`;
+            });
+            
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-title">Modifier le lot - ${lot.nom}</div>
+                    <form id="form-edit-lot" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Nombre de têtes</label>
+                            <input type="number" id="edit-tetes" value="${lot.nombreTetes}" 
+                                   class="w-full px-3 py-2 border rounded-lg" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Lieu actuel</label>
+                            <select id="edit-lieu" class="w-full px-3 py-2 border rounded-lg" required>
+                                ${batsOptions}
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">
+                                Enregistrer
+                            </button>
+                            <button type="button" onclick="this.closest('.modal-overlay').remove()" 
+                                    class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            overlay.onclick = (e) => {
+                if (e.target === overlay) overlay.remove();
+            };
+            
+            document.body.appendChild(overlay);
+            
+            document.getElementById('form-edit-lot').onsubmit = (e) => {
+                e.preventDefault();
+                const ancienLieu = lot.lieuActuel;
+                const ancienTetes = lot.nombreTetes;
+                
+                lot.nombreTetes = parseInt(document.getElementById('edit-tetes').value);
+                lot.lieuActuel = document.getElementById('edit-lieu').value;
+                
+                // Enregistrer l'historique si changement
+                if (ancienLieu !== lot.lieuActuel || ancienTetes !== lot.nombreTetes) {
+                    if (!lot.historique) lot.historique = [];
+                    lot.historique.push({
+                        date: new Date().toISOString().split('T')[0],
+                        action: ancienLieu !== lot.lieuActuel ? 'Déplacement' : 'Modification têtes',
+                        ancienLieu: ancienLieu,
+                        nouveauLieu: lot.lieuActuel,
+                        ancienTetes: ancienTetes,
+                        nouveauTetes: lot.nombreTetes
+                    });
+                }
+                
+                saveData();
+                overlay.remove();
+                render();
+            };
+        };
+    
+loadData();
+render();
+</script>
+</html>

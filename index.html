@@ -2980,7 +2980,7 @@ document.querySelectorAll('.day-cell').forEach(cell => {
             delete lot.reproduction;
         }
         
-        // Ajouter les données agneaux
+// Ajouter les données agneaux
         const premierNe = document.getElementById('edit-premier-ne').value;
         const dernierNe = document.getElementById('edit-dernier-ne').value;
         
@@ -2991,14 +2991,14 @@ document.querySelectorAll('.day-cell').forEach(cell => {
             };
             
             // Recalculer les événements automatiques
-lot.evenementsAuto = calculerEvenementsAutomatiques(
-    lot, 
-    lot.reproduction && lot.reproduction.typeLutte || '', 
-    lot.reproduction && lot.reproduction.lutteDebut || '', 
-    lot.reproduction && lot.reproduction.lutteFin || '', 
-    premierNe, 
-    dernierNe
-);
+            lot.evenementsAuto = calculerEvenementsAutomatiques(
+                lot, 
+                lot.reproduction && lot.reproduction.typeLutte || '', 
+                lot.reproduction && lot.reproduction.lutteDebut || '', 
+                lot.reproduction && lot.reproduction.lutteFin || '', 
+                premierNe, 
+                dernierNe
+            );
         }
         
         // Enregistrer l'historique si changement
@@ -3011,7 +3011,7 @@ lot.evenementsAuto = calculerEvenementsAutomatiques(
                 nouveauLieu: lot.lieuActuel,
                 ancienTetes: ancienTetes,
                 nouveauTetes: lot.nombreTetes
-  });
+            });
         }
         
         saveData();
@@ -3036,6 +3036,8 @@ auth.onAuthStateChanged(async (user) => {
         showLoginScreen();
     }
 });
+
+} // Fermeture de attachEventListeners()
 
 // L'initialisation se fait via onAuthStateChanged
 </script>

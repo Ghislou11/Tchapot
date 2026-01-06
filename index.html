@@ -2023,10 +2023,7 @@ if (aliment3) {
             }
 
             const formFourrage = document.getElementById('form-fourrage');
-            if (formFourrage) {
-			const formFourrage = document.getElementById('form-fourrage');
 if (formFourrage) {
-    // AJOUTEZ ICI ⬇️⬇️⬇️
     const cfType = document.getElementById('cf-type');
     const cfBat = document.getElementById('cf-bat');
     
@@ -2045,23 +2042,21 @@ if (formFourrage) {
             }
         };
     }
-    // FIN DE L'AJOUT ⬆️⬆️⬆️
     
     formFourrage.onsubmit = (e) => {
-                formFourrage.onsubmit = (e) => {
-                    e.preventDefault();
-                    state.data.consoFourrage.push({
-                        id: Date.now().toString(),
-                        date: document.getElementById('cf-date').value,
-                        lotId: document.getElementById('cf-lot').value,
-                        batimentId: document.getElementById('cf-bat').value,
-                        typeFourrage: document.getElementById('cf-type').value,
-                        nombreBalles: document.getElementById('cf-nombre').value
-                    });
-                    saveData();
-                    render();
-                };
-            }
+        e.preventDefault();
+        state.data.consoFourrage.push({
+            id: Date.now().toString(),
+            date: document.getElementById('cf-date').value,
+            lotId: document.getElementById('cf-lot').value,
+            batimentId: document.getElementById('cf-bat').value,
+            typeFourrage: document.getElementById('cf-type').value,
+            nombreBalles: document.getElementById('cf-nombre').value
+        });
+        saveData();
+        render();
+    };
+}
 
             const formEvt = document.getElementById('form-evt');
             if (formEvt) {

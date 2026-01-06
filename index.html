@@ -7,6 +7,7 @@
 	
 	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 	
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -343,6 +344,75 @@ console.log('TEST DEBUG - Condition:', lot.type === 'Agneaux' && premierNe && de
             const annee = date.getFullYear();
             return jour + '/' + mois + '/' + annee;
         }
+
+// Écran de connexion
+function showLoginScreen() {
+    document.getElementById('app').innerHTML = `
+        <div class="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-green-700 mb-2">🐑 Tchapot de Ghislain</h1>
+                    <p class="text-gray-600">Connectez-vous pour accéder à votre élevage</p>
+                </div>
+                
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="login-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                               placeholder="votre@email.com">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+                        <input type="password" id="login-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                               placeholder="••••••••">
+                    </div>
+                    
+                    <div id="login-error" class="hidden text-red-600 text-sm bg-red-50 p-3 rounded-lg"></div>
+                    
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+                        Se connecter
+                    </button>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('login-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const errorDiv = document.getElementById('login-error');
+        
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            errorDiv.classList.add('hidden');
+        } catch (error) {
+            errorDiv.classList.remove('hidden');
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                errorDiv.textContent = '❌ Email ou mot de passe incorrect';
+            } else if (error.code === 'auth/invalid-email') {
+                errorDiv.textContent = '❌ Email invalide';
+            } else {
+                errorDiv.textContent = '❌ Erreur de connexion : ' + error.message;
+            }
+        }
+    };
+}
+
+// Vérifier l'état de connexion
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        currentUser = user;
+        await loadData();
+        render();
+    } else {
+        currentUser = null;
+        showLoginScreen();
+    }
+});
 
 		async function loadData() {
     try {
@@ -1009,11 +1079,11 @@ parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 roun
             
             parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
             parts.push('<select id="ration-mode1" class="w-full px-3 py-2 border rounded-lg">');
-            parts.push('<option value="partete">Poids par tête (kg)</option>');
-            parts.push('<option value="total">Poids total (kg)</option>');
+            parts.push('<option value="total" selected>Poids total (kg)</option>');
+parts.push('<option value="partete">Poids par tête (kg)</option>');
             parts.push('</select></div>');
             
-            parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-label1">Poids par tête (kg)</label>');
+            parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-label1">Poids total (kg)</label>');
             parts.push('<input type="number" step="0.001" id="ration-poids1" class="w-full px-3 py-2 border rounded-lg" required></div>');
             
             parts.push('<div id="ration-calc1" class="text-sm text-blue-600 font-medium hidden"></div>');
@@ -1043,11 +1113,11 @@ parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 roun
             
             parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
             parts.push('<select id="ration-mode2" class="w-full px-3 py-2 border rounded-lg">');
-            parts.push('<option value="partete">Poids par tête (kg)</option>');
-            parts.push('<option value="total">Poids total (kg)</option>');
+parts.push('<option value="total" selected>Poids total (kg)</option>');
+parts.push('<option value="partete">Poids par tête (kg)</option>');
             parts.push('</select></div>');
             
-            parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-label2">Poids par tête (kg)</label>');
+            parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-labe2">Poids total (kg)</label>');
             parts.push('<input type="number" step="0.001" id="ration-poids2" class="w-full px-3 py-2 border rounded-lg"></div>');
             
             parts.push('<div id="ration-calc2" class="text-sm text-blue-600 font-medium hidden"></div>');
@@ -1077,11 +1147,11 @@ parts.push('</select></div>');
 
 parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
 parts.push('<select id="ration-mode3" class="w-full px-3 py-2 border rounded-lg">');
+parts.push('<option value="total" selected>Poids total (kg)</option>');
 parts.push('<option value="partete">Poids par tête (kg)</option>');
-parts.push('<option value="total">Poids total (kg)</option>');
 parts.push('</select></div>');
 
-parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-label3">Poids par tête (kg)</label>');
+parts.push('<div><label class="block text-sm font-medium mb-1" id="ration-labe31">Poids total (kg)</label>');
 parts.push('<input type="number" step="0.001" id="ration-poids3" class="w-full px-3 py-2 border rounded-lg"></div>');
 
 parts.push('<div id="ration-calc3" class="text-sm text-blue-600 font-medium hidden"></div>');
@@ -1319,7 +1389,10 @@ parts.push('</div></div></div>');
 
             const parts = [];
             parts.push('<div class="bg-green-700 text-white p-4 shadow-lg">');
-            parts.push('<h1 class="text-xl font-bold">Tchapot de Ghislain</h1>');
+            parts.push('<div class="flex justify-between items-center">');
+parts.push('<h1 class="text-xl font-bold">Tchapot de Ghislain</h1>');
+parts.push('<button onclick="window.logout()" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Déconnexion</button>');
+parts.push('</div>');
             parts.push('</div>');
             parts.push('<div class="bg-gray-100 p-2 overflow-x-auto">');
             parts.push('<div class="flex gap-1">');
@@ -2831,7 +2904,13 @@ lot.evenementsAuto = calculerEvenementsAutomatiques(
         render();
     };
 };
+
+window.logout = async () => {
+    if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        await auth.signOut();
+    }
+};
     
-loadData().then(() => render());
+// L'initialisation se fait via onAuthStateChanged
 </script>
 </html>

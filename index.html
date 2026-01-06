@@ -385,6 +385,31 @@ function showLoginScreen() {
     };
 }
 
+window.ajouterLigneStock = (typeBatiment) => {
+    const container = document.getElementById('stocks-container');
+    if (!container) return;
+    
+    const unite = typeBatiment === 'Silos' ? 'kg' : 'balles';
+    const types = typeBatiment === 'Silos' ? TYPES_ALIMENT : TYPES_FOURRAGE;
+    
+    const lineId = 'stock-' + Date.now();
+    const line = document.createElement('div');
+    line.className = 'stock-line flex gap-2 mb-2';
+    line.id = lineId;
+    
+    let html = '<select class="stock-type flex-1 px-2 py-1 border rounded text-sm">';
+    html += '<option value="">Type...</option>';
+    types.forEach(t => {
+        html += '<option value="' + t + '">' + t + '</option>';
+    });
+    html += '</select>';
+    html += '<input type="number" step="0.001" placeholder="Quantité (' + unite + ')" class="stock-quantite w-32 px-2 py-1 border rounded text-sm">';
+    html += '<button type="button" onclick="document.getElementById(\'' + lineId + '\').remove()" class="text-red-600 font-bold text-lg px-2">×</button>';
+    
+    line.innerHTML = html;
+    container.appendChild(line);
+};
+
 function formatDate(dateStr) {
             if (!dateStr) return '';
             const date = new Date(dateStr);
@@ -442,44 +467,56 @@ async function saveData() {
             return lot ? lot.nom : 'N/A';
         }
 
-        function calculerStockBatiment(batId) {
-            const bat = state.data.batiments.find(b => b.id === batId);
-            if (!bat) return 0;
+        function calculerStockBatiment(batId, typeStock = null) {
+    const bat = state.data.batiments.find(b => b.id === batId);
+    if (!bat) return 0;
 
-            if (bat.type === 'Élevage') {
-                return state.data.lots
-                    .filter(l => l.lieuActuel === batId)
-                    .reduce((sum, l) => sum + parseFloat(l.nombreTetes || 0), 0);
-            }
+    if (bat.type === 'Élevage') {
+        return state.data.lots
+            .filter(l => l.lieuActuel === batId)
+            .reduce((sum, l) => sum + parseFloat(l.nombreTetes || 0), 0);
+    }
 
-            if (bat.type === 'Stockage fourrage') {
-                const entrees = state.data.entreesBat
-                    .filter(e => e.batimentId === batId)
-                    .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
-                const sorties = state.data.sortiesBat
-                    .filter(s => s.batimentId === batId)
-                    .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
-                const conso = state.data.consoFourrage
-                    .filter(c => c.batimentId === batId)
-                    .reduce((sum, c) => sum + parseFloat(c.nombreBalles || 0), 0);
-                return parseFloat(bat.stockInitial || 0) + entrees - sorties - conso;
-            }
+    // Si pas de stocks définis, retourner 0
+    if (!bat.stocks || bat.stocks.length === 0) return 0;
 
-            if (bat.type === 'Silos') {
-                const entrees = state.data.entreesBat
-                    .filter(e => e.batimentId === batId)
-                    .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
-                const sorties = state.data.sortiesBat
-                    .filter(s => s.batimentId === batId)
-                    .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
-                const rations = state.data.rations
-                    .filter(r => r.batimentId === batId)
-                    .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
-                return parseFloat(bat.stockInitial || 0) + entrees - sorties - rations;
-            }
+    // Si on demande un type spécifique
+    if (typeStock) {
+        const stockInitial = bat.stocks.find(s => s.type === typeStock)?.quantite || 0;
+        
+        if (bat.type === 'Stockage fourrage') {
+            const entrees = state.data.entreesBat
+                .filter(e => e.batimentId === batId && e.typeStock === typeStock)
+                .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
+            const sorties = state.data.sortiesBat
+                .filter(s => s.batimentId === batId && s.typeStock === typeStock)
+                .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
+            const conso = state.data.consoFourrage
+                .filter(c => c.batimentId === batId && c.typeFourrage === typeStock)
+                .reduce((sum, c) => sum + parseFloat(c.nombreBalles || 0), 0);
+            return parseFloat(stockInitial) + entrees - sorties - conso;
+        }
 
-            return 0;
-        }function renderTableauBord() {
+        if (bat.type === 'Silos') {
+            const entrees = state.data.entreesBat
+                .filter(e => e.batimentId === batId && e.typeStock === typeStock)
+                .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
+            const sorties = state.data.sortiesBat
+                .filter(s => s.batimentId === batId && s.typeStock === typeStock)
+                .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
+            const rations = state.data.rations
+                .filter(r => r.batimentId === batId && r.typeAliment === typeStock)
+                .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
+            return parseFloat(stockInitial) + entrees - sorties - rations;
+        }
+    }
+
+    // Si on ne demande pas de type spécifique, retourner le total
+    return bat.stocks.reduce((total, stock) => {
+        return total + calculerStockBatiment(batId, stock.type);
+    }, 0);
+}
+		function renderTableauBord() {
             const parts = [];
             parts.push('<div class="p-4"><h2 class="text-2xl font-bold mb-4">Tableau de Bord</h2>');
             
@@ -679,22 +716,30 @@ async function saveData() {
                 parts.push('<div class="space-y-3">');
                 
                 const silos = state.data.batiments.filter(b => b.type === 'Silos');
-                if (silos.length > 0) {
-                    silos.forEach(bat => {
-                        const stock = calculerStockBatiment(bat.id);
-                        parts.push('<div class="bg-white border border-blue-300 rounded-lg p-3">');
-                        parts.push('<div class="font-bold">' + bat.nom + '</div>');
-                        if (bat.typeAliment) {
-                            parts.push('<div class="text-xs text-gray-500">' + bat.typeAliment + '</div>');
-                        }
-                        parts.push('<div class="mt-2 flex justify-between">');
-                        parts.push('<span class="text-sm">Stock actuel:</span>');
-                        parts.push('<span class="font-bold">' + stock.toFixed(3) + ' kg</span>');
-                        parts.push('</div></div>');
-                    });
-                } else {
-                    parts.push('<p class="text-gray-500 text-sm">Aucun silo</p>');
-                }
+if (silos.length > 0) {
+    silos.forEach(bat => {
+        parts.push('<div class="bg-white border border-blue-300 rounded-lg p-3">');
+        parts.push('<div class="font-bold">' + bat.nom + '</div>');
+        
+        if (bat.stocks && bat.stocks.length > 0) {
+            bat.stocks.forEach(s => {
+                const stock = calculerStockBatiment(bat.id, s.type);
+                parts.push('<div class="mt-2 border-t pt-2">');
+                parts.push('<div class="text-xs text-gray-600 font-medium">' + s.type + '</div>');
+                parts.push('<div class="flex justify-between">');
+                parts.push('<span class="text-sm">Stock actuel:</span>');
+                parts.push('<span class="font-bold">' + stock.toFixed(3) + ' kg</span>');
+                parts.push('</div></div>');
+            });
+        } else {
+            parts.push('<div class="text-xs text-gray-500 mt-2">Aucun stock configuré</div>');
+        }
+        
+        parts.push('</div>');
+    });
+} else {
+    parts.push('<p class="text-gray-500 text-sm">Aucun silo</p>');
+}
                 parts.push('</div></div>');
                 
                 // Colonne Stockage fourrage
@@ -703,22 +748,30 @@ async function saveData() {
                 parts.push('<div class="space-y-3">');
                 
                 const stockages = state.data.batiments.filter(b => b.type === 'Stockage fourrage');
-                if (stockages.length > 0) {
-                    stockages.forEach(bat => {
-                        const stock = calculerStockBatiment(bat.id);
-                        parts.push('<div class="bg-white border border-green-300 rounded-lg p-3">');
-                        parts.push('<div class="font-bold">' + bat.nom + '</div>');
-                        if (bat.typeFourrage) {
-                            parts.push('<div class="text-xs text-gray-500">' + bat.typeFourrage + '</div>');
-                        }
-                        parts.push('<div class="mt-2 flex justify-between">');
-                        parts.push('<span class="text-sm">Stock actuel:</span>');
-                        parts.push('<span class="font-bold">' + stock.toFixed(0) + ' balles</span>');
-                        parts.push('</div></div>');
-                    });
-                } else {
-                    parts.push('<p class="text-gray-500 text-sm">Aucun stockage</p>');
-                }
+if (stockages.length > 0) {
+    stockages.forEach(bat => {
+        parts.push('<div class="bg-white border border-green-300 rounded-lg p-3">');
+        parts.push('<div class="font-bold">' + bat.nom + '</div>');
+        
+        if (bat.stocks && bat.stocks.length > 0) {
+            bat.stocks.forEach(s => {
+                const stock = calculerStockBatiment(bat.id, s.type);
+                parts.push('<div class="mt-2 border-t pt-2">');
+                parts.push('<div class="text-xs text-gray-600 font-medium">' + s.type + '</div>');
+                parts.push('<div class="flex justify-between">');
+                parts.push('<span class="text-sm">Stock actuel:</span>');
+                parts.push('<span class="font-bold">' + stock.toFixed(0) + ' balles</span>');
+                parts.push('</div></div>');
+            });
+        } else {
+            parts.push('<div class="text-xs text-gray-500 mt-2">Aucun stock configuré</div>');
+        }
+        
+        parts.push('</div>');
+    });
+} else {
+    parts.push('<p class="text-gray-500 text-sm">Aucun stockage</p>');
+}
                 parts.push('</div></div>');
                 
                 parts.push('</div>');
@@ -750,27 +803,30 @@ async function saveData() {
         parts.push('<div class="space-y-3 mb-4">');
         
         Object.keys(parTypeAliment).sort().forEach(type => {
-            // Calculer le stock restant pour cet aliment par silo
-            const silosAliment = state.data.batiments.filter(b => b.type === 'Silos' && b.typeAliment === type);
-            
-            parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
-            parts.push('<div class="font-bold text-blue-700">' + type + '</div>');
-            parts.push('<div class="text-sm mt-1">Consommé: <span class="font-semibold">' + parTypeAliment[type].toFixed(3) + ' kg</span></div>');
-            parts.push('<div class="text-xs text-gray-600">Moyenne/jour: <span class="font-semibold">' + (parTypeAliment[type] / joursEcoules).toFixed(3) + ' kg</span></div>');
-            
-            if (silosAliment.length > 0) {
-                parts.push('<div class="text-sm text-green-600 mt-2 font-medium">Stock restant:</div>');
-                silosAliment.forEach(silo => {
-                    const stock = calculerStockBatiment(silo.id);
-                    parts.push('<div class="text-xs text-gray-600 ml-2">• ' + silo.nom + ': <span class="font-semibold">' + stock.toFixed(3) + ' kg</span></div>');
-                });
-                const stockTotal = silosAliment.reduce((sum, silo) => sum + calculerStockBatiment(silo.id), 0);
-                parts.push('<div class="text-sm text-green-700 font-bold mt-1">Total: ' + stockTotal.toFixed(3) + ' kg</div>');
-            } else {
-                parts.push('<div class="text-sm text-gray-500">Pas de silo configuré</div>');
-            }
-            parts.push('</div>');
+    // Trouver tous les silos qui contiennent cet aliment
+    const silosAliment = state.data.batiments.filter(b => {
+        return b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === type);
+    });
+    
+    parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
+    parts.push('<div class="font-bold text-blue-700">' + type + '</div>');
+    parts.push('<div class="text-sm mt-1">Consommé: <span class="font-semibold">' + parTypeAliment[type].toFixed(3) + ' kg</span></div>');
+    parts.push('<div class="text-xs text-gray-600">Moyenne/jour: <span class="font-semibold">' + (parTypeAliment[type] / joursEcoules).toFixed(3) + ' kg</span></div>');
+    
+    if (silosAliment.length > 0) {
+        parts.push('<div class="text-sm text-green-600 mt-2 font-medium">Stock restant:</div>');
+        let stockTotal = 0;
+        silosAliment.forEach(silo => {
+            const stock = calculerStockBatiment(silo.id, type);
+            stockTotal += stock;
+            parts.push('<div class="text-xs text-gray-600 ml-2">• ' + silo.nom + ': <span class="font-semibold">' + stock.toFixed(3) + ' kg</span></div>');
         });
+        parts.push('<div class="text-sm text-green-700 font-bold mt-1">Total: ' + stockTotal.toFixed(3) + ' kg</div>');
+    } else {
+        parts.push('<div class="text-sm text-gray-500">Pas de silo configuré</div>');
+    }
+    parts.push('</div>');
+});
         
         parts.push('</div>');
         
@@ -803,27 +859,30 @@ async function saveData() {
         parts.push('<div class="space-y-3 mb-4">');
         
         Object.keys(parTypeFourrage).sort().forEach(type => {
-            // Calculer le stock restant pour ce fourrage par bâtiment
-            const stockagesFourrage = state.data.batiments.filter(b => b.type === 'Stockage fourrage' && b.typeFourrage === type);
-            
-            parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
-            parts.push('<div class="font-bold text-green-700">' + type + '</div>');
-            parts.push('<div class="text-sm mt-1">Consommé: <span class="font-semibold">' + parTypeFourrage[type].toFixed(1) + ' balles</span></div>');
-            parts.push('<div class="text-xs text-gray-600">Moyenne/jour: <span class="font-semibold">' + (parTypeFourrage[type] / joursEcoules).toFixed(1) + ' balles</span></div>');
-            
-            if (stockagesFourrage.length > 0) {
-                parts.push('<div class="text-sm text-blue-600 mt-2 font-medium">Stock restant:</div>');
-                stockagesFourrage.forEach(stockage => {
-                    const stock = calculerStockBatiment(stockage.id);
-                    parts.push('<div class="text-xs text-gray-600 ml-2">• ' + stockage.nom + ': <span class="font-semibold">' + stock.toFixed(0) + ' balles</span></div>');
-                });
-                const stockTotal = stockagesFourrage.reduce((sum, stockage) => sum + calculerStockBatiment(stockage.id), 0);
-                parts.push('<div class="text-sm text-blue-700 font-bold mt-1">Total: ' + stockTotal.toFixed(0) + ' balles</div>');
-            } else {
-                parts.push('<div class="text-sm text-gray-500">Pas de stockage configuré</div>');
-            }
-            parts.push('</div>');
+    // Trouver tous les stockages qui contiennent ce fourrage
+    const stockagesFourrage = state.data.batiments.filter(b => {
+        return b.type === 'Stockage fourrage' && b.stocks && b.stocks.some(s => s.type === type);
+    });
+    
+    parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
+    parts.push('<div class="font-bold text-green-700">' + type + '</div>');
+    parts.push('<div class="text-sm mt-1">Consommé: <span class="font-semibold">' + parTypeFourrage[type].toFixed(1) + ' balles</span></div>');
+    parts.push('<div class="text-xs text-gray-600">Moyenne/jour: <span class="font-semibold">' + (parTypeFourrage[type] / joursEcoules).toFixed(1) + ' balles</span></div>');
+    
+    if (stockagesFourrage.length > 0) {
+        parts.push('<div class="text-sm text-blue-600 mt-2 font-medium">Stock restant:</div>');
+        let stockTotal = 0;
+        stockagesFourrage.forEach(stockage => {
+            const stock = calculerStockBatiment(stockage.id, type);
+            stockTotal += stock;
+            parts.push('<div class="text-xs text-gray-600 ml-2">• ' + stockage.nom + ': <span class="font-semibold">' + stock.toFixed(0) + ' balles</span></div>');
         });
+        parts.push('<div class="text-sm text-blue-700 font-bold mt-1">Total: ' + stockTotal.toFixed(0) + ' balles</div>');
+    } else {
+        parts.push('<div class="text-sm text-gray-500">Pas de stockage configuré</div>');
+    }
+    parts.push('</div>');
+});
         
         parts.push('</div>');
         
@@ -885,22 +944,27 @@ async function saveData() {
             });
             
             batimentsTries.forEach(b => {
-                const stock = calculerStockBatiment(b.id);
-                const unite = b.type === 'Élevage' ? 'têtes' : b.type === 'Silos' ? 'kg' : 'balles';
-                parts.push('<tr>');
-                parts.push('<td class="px-3 py-2">');
-                parts.push('<div class="font-medium">' + b.nom + '</div>');
-                if (b.typeAliment) {
-                    parts.push('<div class="text-xs text-blue-600">' + b.typeAliment + '</div>');
-                }
-                if (b.typeFourrage) {
-                    parts.push('<div class="text-xs text-green-600">' + b.typeFourrage + '</div>');
-                }
-                parts.push('</td>');
-                parts.push('<td class="px-3 py-2">' + b.type + '</td>');
-                parts.push('<td class="px-3 py-2">' + (b.capacite || '-') + '</td>');
-                const decimales = b.type === 'Élevage' ? 0 : b.type === 'Silos' ? 3 : 0;
-                parts.push('<td class="px-3 py-2 font-bold">' + stock.toFixed(decimales) + ' ' + unite + '</td>');
+    const stock = calculerStockBatiment(b.id);
+    const unite = b.type === 'Élevage' ? 'têtes' : b.type === 'Silos' ? 'kg' : 'balles';
+    parts.push('<tr>');
+    parts.push('<td class="px-3 py-2">');
+    parts.push('<div class="font-medium">' + b.nom + '</div>');
+    
+    // Afficher tous les stocks
+    if (b.stocks && b.stocks.length > 0) {
+        b.stocks.forEach(s => {
+            const stockActuel = calculerStockBatiment(b.id, s.type);
+            const color = b.type === 'Silos' ? 'text-blue-600' : 'text-green-600';
+            const decimales = b.type === 'Silos' ? 3 : 0;
+            parts.push('<div class="text-xs ' + color + '">' + s.type + ' : ' + stockActuel.toFixed(decimales) + ' ' + unite + '</div>');
+        });
+    }
+    
+    parts.push('</td>');
+    parts.push('<td class="px-3 py-2">' + b.type + '</td>');
+    parts.push('<td class="px-3 py-2">' + (b.capacite || '-') + '</td>');
+    const decimales = b.type === 'Élevage' ? 0 : b.type === 'Silos' ? 3 : 0;
+    parts.push('<td class="px-3 py-2 font-bold">' + stock.toFixed(decimales) + ' ' + unite + '</td>');
                 parts.push('<td class="px-3 py-2 text-right">');
                 if (b.type !== 'Élevage') {
                     parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'entree\')" class="text-green-600 font-bold text-lg mr-2" title="Entrée">+</button>');
@@ -1038,12 +1102,9 @@ parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 roun
             parts.push('</select></div>');
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
-            parts.push('<select id="ration-bat" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            state.data.batiments.filter(b => b.type === 'Silos').forEach(b => {
-                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
-            });
-            parts.push('</select></div>');
+parts.push('<select id="ration-bat" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<option value="">Sélectionner...</option>');
+parts.push('</select></div>');
 
             // ALIMENT 1
             parts.push('<div class="bg-gray-50 p-3 rounded-lg">');
@@ -1082,14 +1143,11 @@ parts.push('<option value="partete">Poids par tête (kg)</option>');
             parts.push('</select></div>');
             
             parts.push('<div id="ration-fields2" class="hidden space-y-2">');
-            
-            parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
-            parts.push('<select id="ration-bat2" class="w-full px-3 py-2 border rounded-lg">');
-            parts.push('<option value="">Sélectionner...</option>');
-            state.data.batiments.filter(b => b.type === 'Silos').forEach(b => {
-                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
-            });
-            parts.push('</select></div>');
+
+parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
+parts.push('<select id="ration-bat2" class="w-full px-3 py-2 border rounded-lg">');
+parts.push('<option value="">Sélectionner...</option>');
+parts.push('</select></div>');
             
             parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
             parts.push('<select id="ration-mode2" class="w-full px-3 py-2 border rounded-lg">');
@@ -1120,9 +1178,6 @@ parts.push('<div id="ration-fields3" class="hidden space-y-2">');
 parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
 parts.push('<select id="ration-bat3" class="w-full px-3 py-2 border rounded-lg">');
 parts.push('<option value="">Sélectionner...</option>');
-state.data.batiments.filter(b => b.type === 'Silos').forEach(b => {
-    parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
-});
 parts.push('</select></div>');
 
 parts.push('<div><label class="block text-sm font-medium mb-1">Mode de saisie</label>');
@@ -1192,15 +1247,18 @@ parts.push('</div></div></div>');
             });
             parts.push('</select></div>');
 
-            parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (stockage)</label>');
-            parts.push('<select id="cf-bat" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            state.data.batiments.filter(b => b.type === 'Stockage fourrage').forEach(b => {
-                parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
-            });
-            parts.push('</select></div>');
-
             parts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
+parts.push('<select id="cf-type" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<option value="">Sélectionner...</option>');
+TYPES_FOURRAGE.forEach(f => {
+    parts.push('<option value="' + f + '">' + f + '</option>');
+});
+parts.push('</select></div>');
+
+parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (stockage)</label>');
+parts.push('<select id="cf-bat" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<option value="">Sélectionner...</option>');
+parts.push('</select></div>');
             parts.push('<select id="cf-type" class="w-full px-3 py-2 border rounded-lg" required>');
             parts.push('<option value="">Sélectionner...</option>');
             TYPES_FOURRAGE.forEach(f => {
@@ -1401,14 +1459,27 @@ parts.push('</div>');
                     e.preventDefault();
                     const type = document.getElementById('bat-type').value;
                     const newBat = {
-                        id: Date.now().toString(),
-                        nom: document.getElementById('bat-nom').value,
-                        type: type,
-                        capacite: document.getElementById('bat-capacite')?.value || null,
-                        stockInitial: type !== 'Élevage' ? (document.getElementById('bat-stock')?.value || 0) : 0,
-                        typeAliment: type === 'Silos' ? (document.getElementById('bat-aliment')?.value || null) : null,
-                        typeFourrage: type === 'Stockage fourrage' ? (document.getElementById('bat-fourrage')?.value || null) : null
-                    };
+    id: Date.now().toString(),
+    nom: document.getElementById('bat-nom').value,
+    type: type,
+    capacite: document.getElementById('bat-capacite')?.value || null,
+    stocks: [] // Nouveau : tableau de stocks multiples
+};
+
+// Ajouter les stocks initiaux si le bâtiment n'est pas d'élevage
+if (type !== 'Élevage') {
+    const stocksInputs = document.querySelectorAll('.stock-line');
+    stocksInputs.forEach(line => {
+        const typeInput = line.querySelector('.stock-type');
+        const quantiteInput = line.querySelector('.stock-quantite');
+        if (typeInput && quantiteInput && typeInput.value && quantiteInput.value) {
+            newBat.stocks.push({
+                type: typeInput.value,
+                quantite: parseFloat(quantiteInput.value)
+            });
+        }
+    });
+}
                     state.data.batiments.push(newBat);
                     saveData();
                     render();
@@ -1425,32 +1496,26 @@ parts.push('</div>');
                         }
 
                         const unite = type === 'Élevage' ? 'têtes' : type === 'Silos' ? 'kg' : 'balles';
-                        const fparts = [];
-                        fparts.push('<div><label class="block text-sm font-medium mb-1">Capacité (' + unite + ')</label>');
-                        fparts.push('<input type="number" step="0.1" id="bat-capacite" class="w-full px-3 py-2 border rounded-lg"></div>');
-                        
-                        if (type !== 'Élevage') {
-                            fparts.push('<div><label class="block text-sm font-medium mb-1">Stock initial (' + unite + ')</label>');
-                            fparts.push('<input type="number" step="0.1" id="bat-stock" class="w-full px-3 py-2 border rounded-lg"></div>');
-                        }
-                        
-                        if (type === 'Silos') {
-                            fparts.push('<div><label class="block text-sm font-medium mb-1">Type d\'aliment</label>');
-                            fparts.push('<select id="bat-aliment" class="w-full px-3 py-2 border rounded-lg">');
-                            fparts.push('<option value="">Sélectionner...</option>');
-                            TYPES_ALIMENT.forEach(a => fparts.push('<option value="' + a + '">' + a + '</option>'));
-                            fparts.push('</select></div>');
-                        }
-                        
-                        if (type === 'Stockage fourrage') {
-                            fparts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
-                            fparts.push('<select id="bat-fourrage" class="w-full px-3 py-2 border rounded-lg">');
-                            fparts.push('<option value="">Sélectionner...</option>');
-                            TYPES_FOURRAGE.forEach(f => fparts.push('<option value="' + f + '">' + f + '</option>'));
-                            fparts.push('</select></div>');
-                        }
-                        
-                        fieldsDiv.innerHTML = fparts.join('');
+const fparts = [];
+fparts.push('<div><label class="block text-sm font-medium mb-1">Capacité (' + unite + ')</label>');
+fparts.push('<input type="number" step="0.1" id="bat-capacite" class="w-full px-3 py-2 border rounded-lg"></div>');
+
+if (type !== 'Élevage') {
+    fparts.push('<div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 mt-3">');
+    fparts.push('<div class="flex justify-between items-center mb-2">');
+    fparts.push('<label class="text-sm font-semibold">Stocks initiaux</label>');
+    fparts.push('<button type="button" onclick="window.ajouterLigneStock(\'' + type + '\')" class="bg-green-600 text-white px-3 py-1 rounded text-sm">+ Ajouter</button>');
+    fparts.push('</div>');
+    fparts.push('<div id="stocks-container"></div>');
+    fparts.push('</div>');
+}
+
+fieldsDiv.innerHTML = fparts.join('');
+
+// Ajouter automatiquement une première ligne
+if (type !== 'Élevage') {
+    setTimeout(() => window.ajouterLigneStock(type), 50);
+}
                     };
                 }
             }
@@ -1642,6 +1707,24 @@ if (formLot) {
                 const rationPoids2 = document.getElementById('ration-poids2');
                 const rationLabel2 = document.getElementById('ration-label2');
                 const rationCalc2 = document.getElementById('ration-calc2');
+				const rationAliment1 = document.getElementById('ration-aliment1');
+const rationBat = document.getElementById('ration-bat');
+
+// Filtrer les silos selon l'aliment choisi
+if (rationAliment1 && rationBat) {
+    rationAliment1.onchange = () => {
+        const aliment = rationAliment1.value;
+        rationBat.innerHTML = '<option value="">Sélectionner...</option>';
+        
+        if (aliment) {
+            state.data.batiments
+                .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === aliment))
+                .forEach(b => {
+                    rationBat.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                });
+        }
+    };
+}
 				
 				const rationAliment3 = document.getElementById('ration-aliment3');
 const rationFields3 = document.getElementById('ration-fields3');
@@ -1698,23 +1781,39 @@ const rationCalc3 = document.getElementById('ration-calc3');
     };
 }
 
-                // Afficher/masquer aliment 2
-                if (rationAliment2) {
-                    rationAliment2.onchange = () => {
-                        if (rationAliment2.value) {
-                            rationFields2.classList.remove('hidden');
-                        } else {
-                            rationFields2.classList.add('hidden');
-                        }
-                        updateTotaux();
-                    };
-                }
+                // Afficher/masquer aliment 2 et filtrer les silos
+const rationBat2 = document.getElementById('ration-bat2');
+if (rationAliment2 && rationBat2) {
+    rationAliment2.onchange = () => {
+        if (rationAliment2.value) {
+            rationFields2.classList.remove('hidden');
+            // Filtrer les silos pour l'aliment 2
+            rationBat2.innerHTML = '<option value="">Sélectionner...</option>';
+            state.data.batiments
+                .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === rationAliment2.value))
+                .forEach(b => {
+                    rationBat2.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                });
+        } else {
+            rationFields2.classList.add('hidden');
+        }
+        updateTotaux();
+    };
+}
 				
-				// Afficher/masquer aliment 3
-if (rationAliment3) {
+				// Afficher/masquer aliment 3 et filtrer les silos
+const rationBat3 = document.getElementById('ration-bat3');
+if (rationAliment3 && rationBat3) {
     rationAliment3.onchange = () => {
         if (rationAliment3.value) {
             rationFields3.classList.remove('hidden');
+            // Filtrer les silos pour l'aliment 3
+            rationBat3.innerHTML = '<option value="">Sélectionner...</option>';
+            state.data.batiments
+                .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === rationAliment3.value))
+                .forEach(b => {
+                    rationBat3.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                });
         } else {
             rationFields3.classList.add('hidden');
         }
@@ -1925,6 +2024,30 @@ if (aliment3) {
 
             const formFourrage = document.getElementById('form-fourrage');
             if (formFourrage) {
+			const formFourrage = document.getElementById('form-fourrage');
+if (formFourrage) {
+    // AJOUTEZ ICI ⬇️⬇️⬇️
+    const cfType = document.getElementById('cf-type');
+    const cfBat = document.getElementById('cf-bat');
+    
+    // Filtrer les stockages selon le type de fourrage choisi
+    if (cfType && cfBat) {
+        cfType.onchange = () => {
+            const typeFourrage = cfType.value;
+            cfBat.innerHTML = '<option value="">Sélectionner...</option>';
+            
+            if (typeFourrage) {
+                state.data.batiments
+                    .filter(b => b.type === 'Stockage fourrage' && b.stocks && b.stocks.some(s => s.type === typeFourrage))
+                    .forEach(b => {
+                        cfBat.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                    });
+            }
+        };
+    }
+    // FIN DE L'AJOUT ⬆️⬆️⬆️
+    
+    formFourrage.onsubmit = (e) => {
                 formFourrage.onsubmit = (e) => {
                     e.preventDefault();
                     state.data.consoFourrage.push({
@@ -2620,14 +2743,34 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
     
+    // Créer les options de type
+    let optionsType = '<option value="">Sélectionner...</option>';
+    if (bat.stocks && bat.stocks.length > 0) {
+        bat.stocks.forEach(s => {
+            optionsType += '<option value="' + s.type + '">' + s.type + '</option>';
+        });
+    }
+    
     overlay.innerHTML = `
         <div class="custom-modal-box">
             <div class="custom-modal-title">${titre}</div>
-            <div class="custom-modal-content">Bâtiment : ${bat.nom}\n\nQuantité (${unite}) :</div>
-            <input type="number" step="0.001" id="quantite-input" class="w-full px-3 py-2 border rounded-lg mb-4" placeholder="Entrez la quantité" autofocus>
+            <div class="custom-modal-content">Bâtiment : ${bat.nom}</div>
+            <div class="mb-3">
+                <label class="block text-sm font-medium mb-1">Type</label>
+                <select id="type-stock-input" class="w-full px-3 py-2 border rounded-lg">${optionsType}</select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Quantité (${unite})</label>
+                <input type="number" step="0.001" id="quantite-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Entrez la quantité">
+            </div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-${color}-600" onclick="
+                    const typeStock = document.getElementById('type-stock-input').value;
                     const quantite = document.getElementById('quantite-input').value;
+                    if (!typeStock) {
+                        alert('Veuillez sélectionner un type');
+                        return;
+                    }
                     if (!quantite || isNaN(quantite) || parseFloat(quantite) <= 0) {
                         alert('Veuillez entrer une quantité valide');
                         return;
@@ -2635,6 +2778,7 @@ document.querySelectorAll('.day-cell').forEach(cell => {
                     const mouvement = {
                         id: Date.now().toString(),
                         batimentId: '${batId}',
+                        typeStock: typeStock,
                         quantite: parseFloat(quantite),
                         date: new Date().toISOString().split('T')[0],
                         type: '${type}'
@@ -2655,17 +2799,8 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     
     document.body.appendChild(overlay);
     
-    // Focus sur l'input et validation avec Entrée
     setTimeout(() => {
-        const input = document.getElementById('quantite-input');
-        if (input) {
-            input.focus();
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    document.querySelector('.custom-modal-btn.bg-' + color + '-600').click();
-                }
-            });
-        }
+        document.getElementById('type-stock-input')?.focus();
     }, 100);
 };
 		

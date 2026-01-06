@@ -119,23 +119,27 @@
     <div id="app"></div>
 	<script>
 	
-	const firebaseConfig = {
-        apiKey: "AIzaSyBkbF5yO293N2ovfjw1NzlN8N28qqaUI3E",
-        authDomain: "tchapot-de-ghislain.firebaseapp.com",
-        projectId: "tchapot-de-ghislain",
-        storageBucket: "tchapot-de-ghislain.firebasestorage.app",
-        messagingSenderId: "317977253522",
-        appId: "1:317977253522:web:bec4af0edec1949174384b"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+	<script>
 	
-        const TYPES_BATIMENT = ['Élevage', 'Stockage fourrage', 'Silos'];
-        const TYPES_ANIMAUX = ['Brebis', 'Agnelle', 'Béliers', 'Agneaux', 'Vache', 'Génisse', 'Broutard', 'Poulet'];
-        const TYPES_FOURRAGE = ['Ray-grass trèfles', 'Enrubannage', 'Dactyle', 'Luzerne', 'Foin de prairie', 'Perfo 100', 'Perfo 300', 'Paille'];
-        const TYPES_ALIMENT = ['Rumifirst', 'Blé tendre', 'Minéraux classique', 'Minéraux flushing', 'Ovirecord', 'Démarrage', 'Croissance', 'Croissance NRJ', 'Finition', 'Finition NRJ', 'Retrait'];
-		const PERIODES_GESTATION = {
+const firebaseConfig = {
+    apiKey: "AIzaSyBkbF5yO293N2ovfjw1NzlN8N28qqaUI3E",
+    authDomain: "tchapot-de-ghislain.firebaseapp.com",
+    projectId: "tchapot-de-ghislain",
+    storageBucket: "tchapot-de-ghislain.firebasestorage.app",
+    messagingSenderId: "317977253522",
+    appId: "1:317977253522:web:bec4af0edec1949174384b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+let currentUser = null;
+
+const TYPES_BATIMENT = ['Élevage', 'Stockage fourrage', 'Silos'];
+const TYPES_ANIMAUX = ['Brebis', 'Agnelle', 'Béliers', 'Agneaux', 'Vache', 'Génisse', 'Broutard', 'Poulet'];
+const TYPES_FOURRAGE = ['Ray-grass trèfles', 'Enrubannage', 'Dactyle', 'Luzerne', 'Foin de prairie', 'Perfo 100', 'Perfo 300', 'Paille'];
+const TYPES_ALIMENT = ['Rumifirst', 'Minéraux classique', 'Minéraux flushing', 'Ovirecord', 'Démarrage', 'Croissance', 'Croissance NRJ', 'Finition', 'Finition NRJ', 'Retrait'];
+const PERIODES_GESTATION = {
     'Brebis': { duree: 145, delta: 5, hasEcho: true, hasFlushing: true },
     'Agnelle': { duree: 145, delta: 5, hasEcho: true, hasFlushing: true },
     'Vache': { duree: 274, delta: 5, hasEcho: false, hasFlushing: true },
@@ -336,14 +340,19 @@ console.log('TEST DEBUG - Condition:', lot.type === 'Agneaux' && premierNe && de
     return evenements;
 }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            const jour = String(date.getDate()).padStart(2, '0');
-            const mois = String(date.getMonth() + 1).padStart(2, '0');
-            const annee = date.getFullYear();
-            return jour + '/' + mois + '/' + annee;
-        }
+let state = {
+    activeTab: 'tableau-bord',
+    activeSubTab: 'rdv-pattounes',
+    data: {
+        batiments: [],
+        lots: [],
+        rations: [],
+        consoFourrage: [],
+        entreesBat: [],
+        sortiesBat: [],
+        evenements: []
+    }
+};
 
 // Écran de connexion
 function showLoginScreen() {
@@ -395,6 +404,8 @@ function showLoginScreen() {
                 errorDiv.textContent = '❌ Email ou mot de passe incorrect';
             } else if (error.code === 'auth/invalid-email') {
                 errorDiv.textContent = '❌ Email invalide';
+            } else if (error.code === 'auth/invalid-credential') {
+                errorDiv.textContent = '❌ Email ou mot de passe incorrect';
             } else {
                 errorDiv.textContent = '❌ Erreur de connexion : ' + error.message;
             }
@@ -402,18 +413,15 @@ function showLoginScreen() {
     };
 }
 
-// Vérifier l'état de connexion
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        currentUser = user;
-        await loadData();
-        render();
-    } else {
-        currentUser = null;
-        showLoginScreen();
-    }
-});
-
+function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const jour = String(date.getDate()).padStart(2, '0');
+            const mois = String(date.getMonth() + 1).padStart(2, '0');
+            const annee = date.getFullYear();
+            return jour + '/' + mois + '/' + annee;
+        }
+		
 		async function loadData() {
     try {
         const doc = await db.collection('tchapot').doc('data').get();
@@ -2910,6 +2918,17 @@ window.logout = async () => {
         await auth.signOut();
     }
 };
+
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        currentUser = user;
+        await loadData();
+        render();
+    } else {
+        currentUser = null;
+        showLoginScreen();
+    }
+})
     
 // L'initialisation se fait via onAuthStateChanged
 </script>

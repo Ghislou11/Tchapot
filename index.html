@@ -1765,7 +1765,7 @@ if (formRation) {
     document.getElementById('ration-aliment1').value = ration1.typeAliment;
     remplirSelectSilo('ration-bat', ration1.typeAliment, ration1.batimentId);
     document.getElementById('ration-mode1').value = 'total';
-    rationLabel1.textContent = 'Poids total (kg)';
+    document.getElementById('ration-label1').textContent = 'Poids total (kg)';
     document.getElementById('ration-poids1').value = ration1.quantiteTotale;
 
     // Aliment 2 si existe
@@ -1775,7 +1775,7 @@ if (formRation) {
         rationFields2.classList.remove('hidden');
         remplirSelectSilo('ration-bat2', ration2.typeAliment, ration2.batimentId);
         document.getElementById('ration-mode2').value = 'total';
-        rationLabel2.textContent = 'Poids total (kg)';
+        document.getElementById('ration-label2').textContent = 'Poids total (kg)';
         document.getElementById('ration-poids2').value = ration2.quantiteTotale;
     }
 
@@ -1786,7 +1786,7 @@ if (formRation) {
         rationFields3.classList.remove('hidden');
         remplirSelectSilo('ration-bat3', ration3.typeAliment, ration3.batimentId);
         document.getElementById('ration-mode3').value = 'total';
-        rationLabel3.textContent = 'Poids total (kg)';
+        document.getElementById('ration-label3').textContent = 'Poids total (kg)';
         document.getElementById('ration-poids3').value = ration3.quantiteTotale;
     }
 

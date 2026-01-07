@@ -1775,15 +1775,18 @@ if (formRation) {
     }
 
     // Aliment 3 si existe
-    if (rationsVeille.length > 2) {
-        const ration3 = rationsVeille[2];
-        document.getElementById('ration-aliment3').value = ration3.typeAliment;
-        rationFields3.classList.remove('hidden');
-        remplirSelectSilo('ration-bat3', ration3.typeAliment, ration3.batimentId);
-        document.getElementById('ration-mode3').value = 'total';
-        document.getElementById('ration-label3').textContent = 'Poids total (kg)';
-        document.getElementById('ration-poids3').value = ration3.quantiteTotale;
-    }
+if (rationsVeille.length > 2) {
+    const ration3 = rationsVeille[2];
+    document.getElementById('ration-aliment3').value = ration3.typeAliment;
+    rationFields3.classList.remove('hidden');
+    remplirSelectSilo('ration-bat3', ration3.typeAliment, ration3.batimentId);
+    const mode3 = document.getElementById('ration-mode3');
+    const label3 = document.getElementById('ration-label3');
+    const poids3Input = document.getElementById('ration-poids3');
+    if (mode3) mode3.value = 'total';
+    if (label3) label3.textContent = 'Poids total (kg)';
+    if (poids3Input) poids3Input.value = ration3.quantiteTotale;
+}
 
     updateTotaux();
 }

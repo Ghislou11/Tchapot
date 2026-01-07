@@ -1259,12 +1259,7 @@ parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (stocka
 parts.push('<select id="cf-bat" class="w-full px-3 py-2 border rounded-lg" required>');
 parts.push('<option value="">Sélectionner...</option>');
 parts.push('</select></div>');
-            parts.push('<select id="cf-type" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            TYPES_FOURRAGE.forEach(f => {
-                parts.push('<option value="' + f + '">' + f + '</option>');
-            });
-            parts.push('</select></div>');
+
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de balles</label>');
             parts.push('<input type="number" step="0.1" id="cf-nombre" class="w-full px-3 py-2 border rounded-lg" required></div>');

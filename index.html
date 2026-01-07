@@ -1760,32 +1760,38 @@ if (formRation) {
                 .sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
             if (rationsVeille.length > 0) {
-                // Aliment 1
-                const ration1 = rationsVeille[0];
-                document.getElementById('ration-aliment1').value = ration1.typeAliment;
-                remplirSelectSilo('ration-bat', ration1.typeAliment, ration1.batimentId);
-                document.getElementById('ration-poids1').value = ration1.poidsParTete;
+    // Aliment 1
+    const ration1 = rationsVeille[0];
+    document.getElementById('ration-aliment1').value = ration1.typeAliment;
+    remplirSelectSilo('ration-bat', ration1.typeAliment, ration1.batimentId);
+    document.getElementById('ration-mode1').value = 'total';
+    rationLabel1.textContent = 'Poids total (kg)';
+    document.getElementById('ration-poids1').value = ration1.quantiteTotale;
 
-                // Aliment 2 si existe
-                if (rationsVeille.length > 1) {
-                    const ration2 = rationsVeille[1];
-                    document.getElementById('ration-aliment2').value = ration2.typeAliment;
-                    rationFields2.classList.remove('hidden');
-                    remplirSelectSilo('ration-bat2', ration2.typeAliment, ration2.batimentId);
-                    document.getElementById('ration-poids2').value = ration2.poidsParTete;
-                }
+    // Aliment 2 si existe
+    if (rationsVeille.length > 1) {
+        const ration2 = rationsVeille[1];
+        document.getElementById('ration-aliment2').value = ration2.typeAliment;
+        rationFields2.classList.remove('hidden');
+        remplirSelectSilo('ration-bat2', ration2.typeAliment, ration2.batimentId);
+        document.getElementById('ration-mode2').value = 'total';
+        rationLabel2.textContent = 'Poids total (kg)';
+        document.getElementById('ration-poids2').value = ration2.quantiteTotale;
+    }
 
-                // Aliment 3 si existe
-                if (rationsVeille.length > 2) {
-                    const ration3 = rationsVeille[2];
-                    document.getElementById('ration-aliment3').value = ration3.typeAliment;
-                    rationFields3.classList.remove('hidden');
-                    remplirSelectSilo('ration-bat3', ration3.typeAliment, ration3.batimentId);
-                    document.getElementById('ration-poids3').value = ration3.poidsParTete;
-                }
+    // Aliment 3 si existe
+    if (rationsVeille.length > 2) {
+        const ration3 = rationsVeille[2];
+        document.getElementById('ration-aliment3').value = ration3.typeAliment;
+        rationFields3.classList.remove('hidden');
+        remplirSelectSilo('ration-bat3', ration3.typeAliment, ration3.batimentId);
+        document.getElementById('ration-mode3').value = 'total';
+        rationLabel3.textContent = 'Poids total (kg)';
+        document.getElementById('ration-poids3').value = ration3.quantiteTotale;
+    }
 
-                updateTotaux();
-            }
+    updateTotaux();
+}
         };
     }
 

@@ -1694,171 +1694,167 @@ if (formLot) {
 }
 			
 			const formRation = document.getElementById('form-ration');
-            if (formRation) {
-                const rationLot = document.getElementById('ration-lot');
-                const rationMode1 = document.getElementById('ration-mode1');
-                const rationPoids1 = document.getElementById('ration-poids1');
-                const rationLabel1 = document.getElementById('ration-label1');
-                const rationCalc1 = document.getElementById('ration-calc1');
-                
-                const rationAliment2 = document.getElementById('ration-aliment2');
-                const rationFields2 = document.getElementById('ration-fields2');
-                const rationMode2 = document.getElementById('ration-mode2');
-                const rationPoids2 = document.getElementById('ration-poids2');
-                const rationLabel2 = document.getElementById('ration-label2');
-                const rationCalc2 = document.getElementById('ration-calc2');
-				const rationAliment1 = document.getElementById('ration-aliment1');
-const rationBat = document.getElementById('ration-bat');
-
-// Filtrer les silos selon l'aliment choisi
-if (rationAliment1 && rationBat) {
-    rationAliment1.onchange = () => {
-        const aliment = rationAliment1.value;
-        rationBat.innerHTML = '<option value="">Sélectionner...</option>';
+if (formRation) {
+    const rationLot = document.getElementById('ration-lot');
+    const rationMode1 = document.getElementById('ration-mode1');
+    const rationPoids1 = document.getElementById('ration-poids1');
+    const rationLabel1 = document.getElementById('ration-label1');
+    const rationCalc1 = document.getElementById('ration-calc1');
+    
+    const rationAliment2 = document.getElementById('ration-aliment2');
+    const rationFields2 = document.getElementById('ration-fields2');
+    const rationMode2 = document.getElementById('ration-mode2');
+    const rationPoids2 = document.getElementById('ration-poids2');
+    const rationLabel2 = document.getElementById('ration-label2');
+    const rationCalc2 = document.getElementById('ration-calc2');
+    
+    // Fonction pour remplir le select des silos selon l'aliment
+    const remplirSelectSilo = (selectId, aliment, batimentIdASelectionner) => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Sélectionner...</option>';
         
         if (aliment) {
             state.data.batiments
                 .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === aliment))
                 .forEach(b => {
-                    rationBat.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                    const selected = batimentIdASelectionner === b.id ? 'selected' : '';
+                    select.innerHTML += '<option value="' + b.id + '" ' + selected + '>' + b.nom + '</option>';
                 });
         }
     };
-}
-				
-				const rationAliment3 = document.getElementById('ration-aliment3');
-const rationFields3 = document.getElementById('ration-fields3');
-const rationMode3 = document.getElementById('ration-mode3');
-const rationPoids3 = document.getElementById('ration-poids3');
-const rationLabel3 = document.getElementById('ration-label3');
-const rationCalc3 = document.getElementById('ration-calc3');
-                
-                const rationTotal = document.getElementById('ration-total');
-                const rationTotalVal = document.getElementById('ration-total-val');
-
-                // Préremplir avec ration de la veille
-                if (rationLot) {
-    rationLot.onchange = () => {
-        const lotId = rationLot.value;
-        if (!lotId) return;
-
-        const dateStr = document.getElementById('ration-date').value;
-        const dateSelectionnee = new Date(dateStr);
-        dateSelectionnee.setDate(dateSelectionnee.getDate() - 1);
-        const dateVeille = dateSelectionnee.toISOString().split('T')[0];
-
-        const rationsVeille = state.data.rations
-            .filter(r => r.lotId === lotId && r.date === dateVeille)
-            .sort((a, b) => parseInt(a.id) - parseInt(b.id)); // ← CHANGÉ : tri croissant au lieu de décroissant
-
-        if (rationsVeille.length > 0) {
-    // Aliment 1
-    const ration1 = rationsVeille[0];
-    document.getElementById('ration-bat').value = ration1.batimentId;
-    document.getElementById('ration-aliment1').value = ration1.typeAliment;
-    document.getElementById('ration-poids1').value = ration1.poidsParTete;
-
-    // Aliment 2 si existe
-    if (rationsVeille.length > 1) {
-        const ration2 = rationsVeille[1];
-        document.getElementById('ration-aliment2').value = ration2.typeAliment;
-        rationFields2.classList.remove('hidden');
-        document.getElementById('ration-bat2').value = ration2.batimentId;
-        document.getElementById('ration-poids2').value = ration2.poidsParTete;
+    
+    const rationAliment3 = document.getElementById('ration-aliment3');
+    const rationFields3 = document.getElementById('ration-fields3');
+    const rationMode3 = document.getElementById('ration-mode3');
+    const rationPoids3 = document.getElementById('ration-poids3');
+    const rationLabel3 = document.getElementById('ration-label3');
+    const rationCalc3 = document.getElementById('ration-calc3');
+    
+    const rationTotal = document.getElementById('ration-total');
+    const rationTotalVal = document.getElementById('ration-total-val');
+    
+    // Filtrer les silos selon l'aliment 1 choisi
+    const rationAliment1 = document.getElementById('ration-aliment1');
+    const rationBat = document.getElementById('ration-bat');
+    if (rationAliment1 && rationBat) {
+        rationAliment1.onchange = () => {
+            remplirSelectSilo('ration-bat', rationAliment1.value, null);
+        };
     }
 
-    // Aliment 3 si existe
-    if (rationsVeille.length > 2) {
-        const ration3 = rationsVeille[2];
-        document.getElementById('ration-aliment3').value = ration3.typeAliment;
-        rationFields3.classList.remove('hidden');
-        document.getElementById('ration-bat3').value = ration3.batimentId;
-        document.getElementById('ration-poids3').value = ration3.poidsParTete;
+    // Préremplir avec ration de la veille
+    if (rationLot) {
+        rationLot.onchange = () => {
+            const lotId = rationLot.value;
+            if (!lotId) return;
+
+            const dateStr = document.getElementById('ration-date').value;
+            const dateSelectionnee = new Date(dateStr);
+            dateSelectionnee.setDate(dateSelectionnee.getDate() - 1);
+            const dateVeille = dateSelectionnee.toISOString().split('T')[0];
+
+            const rationsVeille = state.data.rations
+                .filter(r => r.lotId === lotId && r.date === dateVeille)
+                .sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+            if (rationsVeille.length > 0) {
+                // Aliment 1
+                const ration1 = rationsVeille[0];
+                document.getElementById('ration-aliment1').value = ration1.typeAliment;
+                remplirSelectSilo('ration-bat', ration1.typeAliment, ration1.batimentId);
+                document.getElementById('ration-poids1').value = ration1.poidsParTete;
+
+                // Aliment 2 si existe
+                if (rationsVeille.length > 1) {
+                    const ration2 = rationsVeille[1];
+                    document.getElementById('ration-aliment2').value = ration2.typeAliment;
+                    rationFields2.classList.remove('hidden');
+                    remplirSelectSilo('ration-bat2', ration2.typeAliment, ration2.batimentId);
+                    document.getElementById('ration-poids2').value = ration2.poidsParTete;
+                }
+
+                // Aliment 3 si existe
+                if (rationsVeille.length > 2) {
+                    const ration3 = rationsVeille[2];
+                    document.getElementById('ration-aliment3').value = ration3.typeAliment;
+                    rationFields3.classList.remove('hidden');
+                    remplirSelectSilo('ration-bat3', ration3.typeAliment, ration3.batimentId);
+                    document.getElementById('ration-poids3').value = ration3.poidsParTete;
+                }
+
+                updateTotaux();
+            }
+        };
     }
 
-    updateTotaux();
-}
-    };
-}
+    // Afficher/masquer aliment 2 et filtrer les silos
+    const rationBat2 = document.getElementById('ration-bat2');
+    if (rationAliment2 && rationBat2) {
+        rationAliment2.onchange = () => {
+            if (rationAliment2.value) {
+                rationFields2.classList.remove('hidden');
+                remplirSelectSilo('ration-bat2', rationAliment2.value, null);
+            } else {
+                rationFields2.classList.add('hidden');
+            }
+            updateTotaux();
+        };
+    }
+    
+    // Afficher/masquer aliment 3 et filtrer les silos
+    const rationBat3 = document.getElementById('ration-bat3');
+    if (rationAliment3 && rationBat3) {
+        rationAliment3.onchange = () => {
+            if (rationAliment3.value) {
+                rationFields3.classList.remove('hidden');
+                remplirSelectSilo('ration-bat3', rationAliment3.value, null);
+            } else {
+                rationFields3.classList.add('hidden');
+            }
+            updateTotaux();
+        };
+    }
 
-                // Afficher/masquer aliment 2 et filtrer les silos
-const rationBat2 = document.getElementById('ration-bat2');
-if (rationAliment2 && rationBat2) {
-    rationAliment2.onchange = () => {
-        if (rationAliment2.value) {
-            rationFields2.classList.remove('hidden');
-            // Filtrer les silos pour l'aliment 2
-            rationBat2.innerHTML = '<option value="">Sélectionner...</option>';
-            state.data.batiments
-                .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === rationAliment2.value))
-                .forEach(b => {
-                    rationBat2.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
-                });
-        } else {
-            rationFields2.classList.add('hidden');
-        }
-        updateTotaux();
-    };
-}
-				
-				// Afficher/masquer aliment 3 et filtrer les silos
-const rationBat3 = document.getElementById('ration-bat3');
-if (rationAliment3 && rationBat3) {
-    rationAliment3.onchange = () => {
-        if (rationAliment3.value) {
-            rationFields3.classList.remove('hidden');
-            // Filtrer les silos pour l'aliment 3
-            rationBat3.innerHTML = '<option value="">Sélectionner...</option>';
-            state.data.batiments
-                .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === rationAliment3.value))
-                .forEach(b => {
-                    rationBat3.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
-                });
-        } else {
-            rationFields3.classList.add('hidden');
-        }
-        updateTotaux();
-    };
-}
+    // Changer label selon mode aliment 1
+    if (rationMode1) {
+        rationMode1.onchange = () => {
+            if (rationMode1.value === 'partete') {
+                rationLabel1.textContent = 'Poids par tête (kg)';
+            } else {
+                rationLabel1.textContent = 'Poids total (kg)';
+            }
+            rationPoids1.value = '';
+            updateTotaux();
+        };
+    }
 
-                // Changer label selon mode aliment 1
-                if (rationMode1) {
-                    rationMode1.onchange = () => {
-                        if (rationMode1.value === 'partete') {
-                            rationLabel1.textContent = 'Poids par tête (kg)';
-                        } else {
-                            rationLabel1.textContent = 'Poids total (kg)';
-                        }
-                        rationPoids1.value = '';
-                        updateTotaux();
-                    };
-                }
+    // Changer label selon mode aliment 2
+    if (rationMode2) {
+        rationMode2.onchange = () => {
+            if (rationMode2.value === 'partete') {
+                rationLabel2.textContent = 'Poids par tête (kg)';
+            } else {
+                rationLabel2.textContent = 'Poids total (kg)';
+            }
+            rationPoids2.value = '';
+            updateTotaux();
+        };
+    }
 
-                // Changer label selon mode aliment 2
-                if (rationMode2) {
-                    rationMode2.onchange = () => {
-                        if (rationMode2.value === 'partete') {
-                            rationLabel2.textContent = 'Poids par tête (kg)';
-                        } else {
-                            rationLabel2.textContent = 'Poids total (kg)';
-                        }
-                        rationPoids2.value = '';
-                        updateTotaux();
-                    };
-                }
-
-				// Changer label selon mode aliment 3
-if (rationMode3) {
-    rationMode3.onchange = () => {
-        if (rationMode3.value === 'partete') {
-            rationLabel3.textContent = 'Poids par tête (kg)';
-        } else {
-            rationLabel3.textContent = 'Poids total (kg)';
-        }
-        rationPoids3.value = '';
-        updateTotaux();
-    };
-}
+    // Changer label selon mode aliment 3
+    if (rationMode3) {
+        rationMode3.onchange = () => {
+            if (rationMode3.value === 'partete') {
+                rationLabel3.textContent = 'Poids par tête (kg)';
+            } else {
+                rationLabel3.textContent = 'Poids total (kg)';
+            }
+            rationPoids3.value = '';
+            updateTotaux();
+        };
+    }
 
                 const updateTotaux = () => {
                     if (!rationLot || !rationLot.value) {

@@ -339,6 +339,7 @@ if (typeLutte === 'IA') {
                 });
             }
         }
+        }
     }
     
     // === ÉVÉNEMENTS AGNEAUX ===
@@ -629,11 +630,15 @@ async function saveData() {
             const joursRestants = Math.ceil((evtDate - today) / (1000 * 60 * 60 * 24));
             if (joursRestants >= 0 && joursRestants <= 30 && !evt.dateFin) {
                 let emoji = '📅';
-                if (evt.type === 'poseEponge') emoji = '🧽';
-                else if (evt.type === 'retraitEponge') emoji = '🧽❌';
-                else if (evt.type === 'ouvertureAliments') emoji = '🌰';
-                else if (evt.type === 'stopLait') emoji = '🍼❌';
-                else if (evt.type === 'sevrage') emoji = '✂️';
+                let emoji = '📅';
+if (evt.type === 'poseEponge') emoji = '🧽';
+else if (evt.type === 'retraitEponge') emoji = '🧽❌';
+else if (evt.type === 'poseSpiraleVache') emoji = '📍';
+else if (evt.type === 'piqurePGF') emoji = '💉';
+else if (evt.type === 'retraitSpiraleVache') emoji = '📍❌';
+else if (evt.type === 'ouvertureAliments') emoji = '🍽️';
+else if (evt.type === 'stopLait') emoji = '⛔🍼';
+else if (evt.type === 'sevrage') emoji = '🍼❌';
                 else if (evt.type === 'echoRdv') emoji = '📷✓';
                 else if (evt.type === 'peseeRdv') emoji = '⚖️✓';
                 
@@ -2578,6 +2583,12 @@ state.data.lots.forEach(lot => {
                 } else if (evt.type === 'retraitEponge') {
                     hasRetraitEponge = true;
                     reproLots.push({ lot: lot.nom, type: 'retraitEponge' });
+				} else if (evt.type === 'poseSpiraleVache') {
+    reproLots.push({ lot: lot.nom, type: 'poseSpiraleVache' });
+} else if (evt.type === 'piqurePGF') {
+    reproLots.push({ lot: lot.nom, type: 'piqurePGF' });
+} else if (evt.type === 'retraitSpiraleVache') {
+    reproLots.push({ lot: lot.nom, type: 'retraitSpiraleVache' });	
                 } else if (evt.type === 'ouvertureAliments') {
                     hasOuvertureAliments = true;
                     reproLots.push({ lot: lot.nom, type: 'ouvertureAliments' });
@@ -2680,19 +2691,22 @@ if (evtsJour.length > 0 || reproLots.length > 0) {
         if (!lotsParNom[r.lot]) lotsParNom[r.lot] = [];
         
         // Ajouter l'emoji selon le type
-        if (r.type === 'misebas') lotsParNom[r.lot].push('🐑');
-        else if (r.type === 'echo') lotsParNom[r.lot].push('📷');
-        else if (r.type === 'echoRdv') lotsParNom[r.lot].push('📷✓');
-        else if (r.type === 'flushing') lotsParNom[r.lot].push('🌾');
-        else if (r.type === 'lutte') lotsParNom[r.lot].push('💕');
-        else if (r.type === 'poseEponge') lotsParNom[r.lot].push('🧽');
-        else if (r.type === 'retraitEponge') lotsParNom[r.lot].push('🧽❌');
-        else if (r.type === 'lutteRetour') lotsParNom[r.lot].push('🔄');
-        else if (r.type === 'ouvertureAliments') lotsParNom[r.lot].push('🌰');
-        else if (r.type === 'stopLait') lotsParNom[r.lot].push('🍼❌');
-        else if (r.type === 'sevrage') lotsParNom[r.lot].push('✂️');
-        else if (r.type === 'pesee') lotsParNom[r.lot].push('⚖️');
-        else if (r.type === 'peseeRdv') lotsParNom[r.lot].push('⚖️✓');
+if (r.type === 'misebas') lotsParNom[r.lot].push('🐣');
+else if (r.type === 'echo') lotsParNom[r.lot].push('📷');
+else if (r.type === 'echoRdv') lotsParNom[r.lot].push('📷✓');
+else if (r.type === 'flushing') lotsParNom[r.lot].push('🌾');
+else if (r.type === 'lutte') lotsParNom[r.lot].push('💕');
+else if (r.type === 'poseEponge') lotsParNom[r.lot].push('🧽');
+else if (r.type === 'retraitEponge') lotsParNom[r.lot].push('🧽❌');
+else if (r.type === 'poseSpiraleVache') lotsParNom[r.lot].push('📍');
+else if (r.type === 'piqurePGF') lotsParNom[r.lot].push('💉');
+else if (r.type === 'retraitSpiraleVache') lotsParNom[r.lot].push('📍❌');
+else if (r.type === 'lutteRetour') lotsParNom[r.lot].push('🔄');
+else if (r.type === 'ouvertureAliments') lotsParNom[r.lot].push('🍽️');
+else if (r.type === 'stopLait') lotsParNom[r.lot].push('⛔🍼');
+else if (r.type === 'sevrage') lotsParNom[r.lot].push('🍼❌');
+else if (r.type === 'pesee') lotsParNom[r.lot].push('⚖️');
+else if (r.type === 'peseeRdv') lotsParNom[r.lot].push('⚖️✓');
     });
     
     // Afficher une ligne par lot

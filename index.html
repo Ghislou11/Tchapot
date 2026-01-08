@@ -630,7 +630,7 @@ async function saveData() {
             const joursRestants = Math.ceil((evtDate - today) / (1000 * 60 * 60 * 24));
             if (joursRestants >= 0 && joursRestants <= 30 && !evt.dateFin) {
                 let emoji = '📅';
-                let emoji = '📅';
+                emoji = '📅';
 if (evt.type === 'poseEponge') emoji = '🧽';
 else if (evt.type === 'retraitEponge') emoji = '🧽❌';
 else if (evt.type === 'poseSpiraleVache') emoji = '📍';

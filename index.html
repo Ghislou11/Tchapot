@@ -140,8 +140,8 @@ const TYPES_ALIMENT = ['Rumifirst', 'Blé tendre', 'Minéraux classique', 'Miné
 const PERIODES_GESTATION = {
     'Brebis': { duree: 145, delta: 5, hasEcho: true, hasFlushing: true },
     'Agnelle': { duree: 145, delta: 5, hasEcho: true, hasFlushing: true },
-    'Vache': { duree: 274, delta: 5, hasEcho: false, hasFlushing: true },
-    'Génisse': { duree: 274, delta: 5, hasEcho: false, hasFlushing: true }
+    'Vache': { duree: 285, delta: 5, hasEcho: false, hasFlushing: true },
+    'Génisse': { duree: 285, delta: 5, hasEcho: false, hasFlushing: true }
 };
 
 const PERIODE_ECHO = { debut: 45, fin: 60 };
@@ -157,10 +157,16 @@ const EVENEMENTS_AGNEAUX = {
 
 // Événements IA
 const EVENEMENTS_IA = {
+    // Brebis/agnelles
     poseEponge: -16,       // avant IA
     retraitEponge: -2,     // avant IA
     retoursDebut: 11,      // après IA
-    retoursFin: 32         // après IA
+    retoursFin: 32,        // après IA
+    // Vaches/génisses
+    flushingDebutVache: -45,    // -45j avant IA
+    poseSpiraleVache: -9,       // -9j avant IA
+    piqurePGF: -3,              // -3j avant IA
+    retraitSpiraleVache: -2     // -2j avant IA
 };
 
 // Emojis pour le calendrier
@@ -209,37 +215,64 @@ if (config && typeLutte && lutteDebut) {
         });
         
         // Événements spécifiques IA
-        if (typeLutte === 'IA') {
-            // Pose éponge (-16j)
-            const poseEponge = new Date(dateDebut);
-            poseEponge.setDate(poseEponge.getDate() + EVENEMENTS_IA.poseEponge);
-            evenements.push({
-                type: 'poseEponge',
-                date: poseEponge.toISOString().split('T')[0],
-                titre: 'Pose éponge ' + lot.nom
-            });
+if (typeLutte === 'IA') {
+    if (lot.type === 'Vache' || lot.type === 'Génisse') {
+        // Cycle vaches/génisses
+        const poseSpiraleVache = new Date(dateDebut);
+        poseSpiraleVache.setDate(poseSpiraleVache.getDate() + EVENEMENTS_IA.poseSpiraleVache);
+        evenements.push({
+            type: 'poseSpiraleVache',
+            date: poseSpiraleVache.toISOString().split('T')[0],
+            titre: 'Pose spirale ' + lot.nom
+        });
+        
+        const piqurePGF = new Date(dateDebut);
+        piqurePGF.setDate(piqurePGF.getDate() + EVENEMENTS_IA.piqurePGF);
+        evenements.push({
+            type: 'piqurePGF',
+            date: piqurePGF.toISOString().split('T')[0],
+            titre: 'Piqûre PGF ' + lot.nom
+        });
+        
+        const retraitSpiraleVache = new Date(dateDebut);
+        retraitSpiraleVache.setDate(retraitSpiraleVache.getDate() + EVENEMENTS_IA.retraitSpiraleVache);
+        evenements.push({
+            type: 'retraitSpiraleVache',
+            date: retraitSpiraleVache.toISOString().split('T')[0],
+            titre: 'Retrait spirale ' + lot.nom
+        });
+    } else {
+        // Cycle brebis/agnelles
+        const poseEponge = new Date(dateDebut);
+        poseEponge.setDate(poseEponge.getDate() + EVENEMENTS_IA.poseEponge);
+        evenements.push({
+            type: 'poseEponge',
+            date: poseEponge.toISOString().split('T')[0],
+            titre: 'Pose éponge ' + lot.nom
+        });
+        
+        const retraitEponge = new Date(dateDebut);
+        retraitEponge.setDate(retraitEponge.getDate() + EVENEMENTS_IA.retraitEponge);
+        evenements.push({
+            type: 'retraitEponge',
+            date: retraitEponge.toISOString().split('T')[0],
+            titre: 'Retrait éponge ' + lot.nom
+        });
+    }
             
-            // Retrait éponge (-2j)
-            const retraitEponge = new Date(dateDebut);
-            retraitEponge.setDate(retraitEponge.getDate() + EVENEMENTS_IA.retraitEponge);
-            evenements.push({
-                type: 'retraitEponge',
-                date: retraitEponge.toISOString().split('T')[0],
-                titre: 'Retrait éponge ' + lot.nom
-            });
-            
-            // Lutte des retours (11-32j)
-            const retoursDebut = new Date(dateDebut);
-            retoursDebut.setDate(retoursDebut.getDate() + EVENEMENTS_IA.retoursDebut);
-            const retoursFin = new Date(dateDebut);
-            retoursFin.setDate(retoursFin.getDate() + EVENEMENTS_IA.retoursFin);
-            evenements.push({
-                type: 'lutteRetourStart',  // ← CHANGÉ
-                date: retoursDebut.toISOString().split('T')[0],  // ← CHANGÉ
-                dateFin: retoursFin.toISOString().split('T')[0],  // ← CHANGÉ
-                titre: 'Lutte retours ' + lot.nom
-            });
-        }
+            // Lutte des retours (SEULEMENT pour brebis/agnelles)
+    if (lot.type === 'Brebis' || lot.type === 'Agnelle') {
+        const retoursDebut = new Date(dateDebut);
+        retoursDebut.setDate(retoursDebut.getDate() + EVENEMENTS_IA.retoursDebut);
+        const retoursFin = new Date(dateDebut);
+        retoursFin.setDate(retoursFin.getDate() + EVENEMENTS_IA.retoursFin);
+        evenements.push({
+            type: 'lutteRetourStart',
+            date: retoursDebut.toISOString().split('T')[0],
+            dateFin: retoursFin.toISOString().split('T')[0],
+            titre: 'Lutte retours ' + lot.nom
+        });
+    }
         
         // Mise bas
         const mbDebut = new Date(dateDebut);
@@ -267,18 +300,47 @@ if (config && typeLutte && lutteDebut) {
             });
         }
         
-        // Flushing (4 mois après fin lutte jusqu'à début mise bas)
+        // Flushing
         if (config.hasFlushing) {
-            const flushingDebut = new Date(dateFin);
-            flushingDebut.setDate(flushingDebut.getDate() + 120);
-            evenements.push({
-                type: 'flushing',
-                date: flushingDebut.toISOString().split('T')[0],  // ← CHANGÉ
-                dateFin: mbDebut.toISOString().split('T')[0],  // ← CHANGÉ
-                titre: 'Flushing ' + lot.nom
-            });
+            if (lot.type === 'Vache' || lot.type === 'Génisse') {
+                // Vaches/génisses : 45j avant l'IA jusqu'à l'IA
+                const flushingDebut = new Date(dateDebut);
+                flushingDebut.setDate(flushingDebut.getDate() - 45);
+                
+                evenements.push({
+                    type: 'flushing',
+                    date: flushingDebut.toISOString().split('T')[0],
+                    dateFin: dateDebut.toISOString().split('T')[0],
+                    titre: 'Flushing ' + lot.nom
+                });
+            } else {
+                // Brebis/agnelles : 2 périodes de 15j
+                
+                // 1ère période : 15j avant la lutte
+                const flushing1Debut = new Date(dateDebut);
+                flushing1Debut.setDate(flushing1Debut.getDate() - 15);
+                
+                evenements.push({
+                    type: 'flushing',
+                    date: flushing1Debut.toISOString().split('T')[0],
+                    dateFin: dateDebut.toISOString().split('T')[0],
+                    titre: 'Flushing pré-lutte ' + lot.nom
+                });
+                
+                // 2ème période : 15j avant la mise bas
+                const flushing2Debut = new Date(mbDebut);
+                flushing2Debut.setDate(flushing2Debut.getDate() - 15);
+                
+                evenements.push({
+                    type: 'flushing',
+                    date: flushing2Debut.toISOString().split('T')[0],
+                    dateFin: mbDebut.toISOString().split('T')[0],
+                    titre: 'Flushing pré-mise bas ' + lot.nom
+                });
+            }
         }
-    }
+    
+    // === ÉVÉNEMENTS AGNEAUX ===
     
     // === ÉVÉNEMENTS AGNEAUX ===
 	console.log('TEST DEBUG - lot.type:', lot.type);
@@ -2833,8 +2895,16 @@ document.querySelectorAll('.day-cell').forEach(cell => {
                 </div>
                 
                 <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3">
-                    <h4 class="font-semibold mb-2 text-green-800">Mise à la lutte (optionnel)</h4>
-                    <div class="grid grid-cols-2 gap-2">
+    <h4 class="font-semibold mb-2 text-green-800">Mise à la lutte (optionnel)</h4>
+    <div class="mb-2">
+        <label class="block text-xs font-medium mb-1">Type de lutte</label>
+        <select id="edit-type-lutte" class="w-full px-2 py-1 border rounded text-sm">
+            <option value="">Aucune</option>
+            <option value="LN" ${lot.reproduction?.typeLutte === 'LN' ? 'selected' : ''}>Lutte Naturelle (LN)</option>
+            <option value="IA" ${lot.reproduction?.typeLutte === 'IA' ? 'selected' : ''}>Insémination Artificielle (IA)</option>
+        </select>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-medium mb-1">Début</label>
                             <input type="date" id="edit-lutte-debut" value="${lutteDebut}" 
@@ -2942,10 +3012,11 @@ document.querySelectorAll('.day-cell').forEach(cell => {
         lot.lieuActuel = document.getElementById('edit-lieu').value;
         
         // Mise à jour des données de reproduction
-        const nouveauLutteDebut = document.getElementById('edit-lutte-debut').value;
-        const nouveauLutteFin = document.getElementById('edit-lutte-fin').value;
-        
-        if (nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATION[lot.type]) {
+const nouveauTypeLutte = document.getElementById('edit-type-lutte').value;
+const nouveauLutteDebut = document.getElementById('edit-lutte-debut').value;
+const nouveauLutteFin = document.getElementById('edit-lutte-fin').value;
+
+if (nouveauTypeLutte && nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATION[lot.type]) {
             const config = PERIODES_GESTATION[lot.type];
             const dateDebut = new Date(nouveauLutteDebut);
             const dateFin = new Date(nouveauLutteFin);
@@ -2963,6 +3034,7 @@ document.querySelectorAll('.day-cell').forEach(cell => {
             echoFin.setDate(echoFin.getDate() + PERIODE_ECHO.fin);
             
             lot.reproduction = {
+				typeLutte: nouveauTypeLutte,
                 lutteDebut: nouveauLutteDebut,
                 lutteFin: nouveauLutteFin,
                 miseBasDebut: mbDebut.toISOString().split('T')[0],
@@ -2973,6 +3045,7 @@ document.querySelectorAll('.day-cell').forEach(cell => {
         } else {
             // Supprimer les données de reproduction si champs vides
             delete lot.reproduction;
+			delete lot.evenementsAuto;
         }
         
 // Ajouter les données agneaux

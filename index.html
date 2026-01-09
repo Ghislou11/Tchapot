@@ -2676,8 +2676,8 @@ state.data.lots.forEach(lot => {
         borderClass = 'border-l-4 border-purple-500';
     }
     
-    html += '<div class="aspect-square ' + bgClass + ' ' + borderClass + ' rounded p-2 text-center relative cursor-pointer day-cell ' + (isToday ? 'ring-2 ring-blue-500' : '') + '" data-date="' + dateStr + '">';
-html += '<div class="text-base font-bold ' + textClass + '">' + day + '</div>';
+    html += '<div class="min-h-32 ' + bgClass + ' ' + borderClass + ' rounded p-3 text-center relative cursor-pointer day-cell ' + (isToday ? 'ring-2 ring-blue-500' : '') + '" data-date="' + dateStr + '">';
+	html += '<div class="text-lg font-bold ' + textClass + ' mb-2">' + day + '</div>';
     
     // Icônes en bas de la case - ORGANISÉ PAR LOT
 if (evtsJour.length > 0 || reproLots.length > 0) {

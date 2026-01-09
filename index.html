@@ -1367,12 +1367,12 @@ parts.push('</div></div></div>');
             parts.push('<h2 class="text-2xl font-bold mb-4">Calendrier</h2>');
             parts.push('<button onclick="window.showModal()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold mb-4">+ Ajouter un événement</button>');
             
-            // Conteneur principal avec 2 colonnes
-            parts.push('<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">');
-            
-            // COLONNE DROITE - Calendrier mensuel
-			parts.push('<div class="bg-white border-2 rounded-lg p-6">');
-            parts.push('<h3 class="text-lg font-bold mb-3">Événements à venir</h3>');
+            // Conteneur principal avec 2 colonnes (1/4 et 3/4)
+parts.push('<div class="grid grid-cols-1 lg:grid-cols-4 gap-4">');
+
+// COLONNE GAUCHE - Événements (1/4)
+parts.push('<div class="lg:col-span-1 bg-white border-2 rounded-lg p-4">');
+parts.push('<h3 class="text-lg font-bold mb-3">Événements à venir</h3>');
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1432,8 +1432,8 @@ parts.push('</div></div></div>');
 
             parts.push('</div>');
             
-            // COLONNE DROITE - Calendrier mensuel
-            parts.push('<div class="bg-white border-2 rounded-lg p-4">');
+            // COLONNE DROITE - Calendrier mensuel (3/4)
+			parts.push('<div class="lg:col-span-3 bg-white border-2 rounded-lg p-6">');
             parts.push('<div class="flex justify-between items-center mb-4">');
             parts.push('<button onclick="window.changeMonth(-1)" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">◀</button>');
             parts.push('<h3 class="text-lg font-bold" id="month-title"></h3>');

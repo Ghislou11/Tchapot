@@ -1275,7 +1275,17 @@ parts.push('</div></div></div>');
             parts.push('<th class="px-2 py-2 text-right">Act.</th>');
             parts.push('</tr></thead><tbody class="divide-y">');
 
-            state.data.rations.slice().reverse().slice(0, 20).forEach(r => {
+            state.data.rations
+    .slice()
+    .sort((a, b) => {
+        // Trier par date décroissante
+        const dateCompare = new Date(b.date) - new Date(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        // Si même date, trier par nom de lot
+        return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
+    })
+    .slice(0, 20)
+    .forEach(r => {
                 parts.push('<tr>');
                 parts.push('<td class="px-2 py-2">' + formatDate(r.date) + '</td>');
                 parts.push('<td class="px-2 py-2">' + getNomLot(r.lotId) + '</td>');
@@ -1342,7 +1352,17 @@ parts.push('</div></div></div>');
             parts.push('<th class="px-2 py-2 text-right">Act.</th>');
             parts.push('</tr></thead><tbody class="divide-y">');
 
-            state.data.consoFourrage.slice().reverse().slice(0, 20).forEach(c => {
+            state.data.consoFourrage
+    .slice()
+    .sort((a, b) => {
+        // Trier par date décroissante
+        const dateCompare = new Date(b.date) - new Date(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        // Si même date, trier par nom de lot
+        return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
+    })
+    .slice(0, 20)
+    .forEach(c => {
                 parts.push('<tr>');
                 parts.push('<td class="px-2 py-2">' + formatDate(c.date) + '</td>');
                 parts.push('<td class="px-2 py-2">' + getNomLot(c.lotId) + '</td>');

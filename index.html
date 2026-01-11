@@ -738,23 +738,27 @@ async function saveData() {
             if (joursRestants >= 0 && joursRestants <= 30 && !evt.dateFin) {
                 let emoji = '📅';
                 emoji = '📅';
-if (evt.type === 'poseEponge') emoji = '🧽';
-else if (evt.type === 'retraitEponge') emoji = '🧽❌';
-else if (evt.type === 'poseSpiraleVache') emoji = '📍';
-else if (evt.type === 'piqurePGF') emoji = '💉';
-else if (evt.type === 'retraitSpiraleVache') emoji = '📍❌';
-else if (evt.type === 'ouvertureAliments') emoji = '🍽️';
-else if (evt.type === 'stopLait') emoji = '⛔🍼';
-else if (evt.type === 'sevrage') emoji = '🍼❌';
+				if (evt.type === 'poseEponge') emoji = '🧽';
+				else if (evt.type === 'retraitEponge') emoji = '🧽❌';
+				else if (evt.type === 'poseSpiraleVache') emoji = '📍';
+				else if (evt.type === 'piqurePGF') emoji = '💉';
+				else if (evt.type === 'retraitSpiraleVache') emoji = '📍❌';
+				else if (evt.type === 'ouvertureAliments') emoji = '🍽️';
+				else if (evt.type === 'stopLait') emoji = '⛔🍼';
+				else if (evt.type === 'sevrage') emoji = '🍼❌';
                 else if (evt.type === 'echoRdv') emoji = '📷✓';
                 else if (evt.type === 'peseeRdv') emoji = '⚖️✓';
-else if (r.type === 'commandeGaz') lotsParNom[r.lot].push('⛽');
-else if (r.type === 'commandeAliment') lotsParNom[r.lot].push('🌽');
-else if (r.type === 'vaccin1') lotsParNom[r.lot].push('💉');
-else if (r.type === 'vaccin2') lotsParNom[r.lot].push('💉');
-else if (r.type === 'peseePoulet1') lotsParNom[r.lot].push('⚖️');
-else if (r.type === 'peseePoulet2') lotsParNom[r.lot].push('⚖️');
-else if (r.type === 'peseePoulet3') lotsParNom[r.lot].push('⚖️');
+				else if (r.type === 'commandeGaz') lotsParNom[r.lot].push('⛽');
+				else if (r.type === 'commandeAliment') lotsParNom[r.lot].push('🌽');
+				else if (r.type === 'vaccin1') lotsParNom[r.lot].push('💉');
+				else if (r.type === 'vaccin2') lotsParNom[r.lot].push('💉');
+				else if (r.type === 'peseePoulet1') lotsParNom[r.lot].push('⚖️');
+				else if (r.type === 'peseePoulet2') lotsParNom[r.lot].push('⚖️');
+				else if (r.type === 'peseePoulet3') lotsParNom[r.lot].push('⚖️');
+				else if (r.type === 'gallifen') lotsParNom[r.lot].push('💊');
+				else if (r.type === 'biamintic') lotsParNom[r.lot].push('💉');
+				else if (r.type === 'biaminticRdv') lotsParNom[r.lot].push('💉✔');
+				else if (r.type === 'gallifenRdv') lotsParNom[r.lot].push('💊✔');
                 
                 evtsProches.push({
                     titre: evt.titre.replace(lot.nom, '').trim(),

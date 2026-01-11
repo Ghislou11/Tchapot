@@ -794,6 +794,12 @@ async function saveData() {
                     } else if (evt.type === 'lutteRetourStart') {
                         emoji = '🔄';
                         titre = 'Lutte retours';
+					} else if (evt.type === 'biaminticStart') {
+						emoji = '💉';
+						titre = 'Période Biamintic';
+					} else if (evt.type === 'gallifenStart') {
+						emoji = '💊';
+						titre = 'Période Gallifen';
                     }
                     
                     if (titre) {
@@ -1736,37 +1742,33 @@ if (formLot) {
     const lutteFin = document.getElementById('lot-lutte-fin');
     const previsionsDiv = document.getElementById('lot-previsions');
     
-    // Gestion affichage section selon type animal
-    if (lotType) {
-        lotType.addEventListener('change', () => {
-    const type = lotType.value;
-    const lutteSection = document.querySelector('.bg-green-50.border-2.border-green-200');
-    const pouletsSection = document.getElementById('lot-poulets-section');
-
-	// Afficher section agneaux si type = Agneaux
-	if (type === 'Agneaux' && agneauxSection) {
-		agneauxSection.classList.remove('hidden');
-	} else if (agneauxSection) {
-		agneauxSection.classList.add('hidden');
-	}
-
-	// Afficher section poulets si type = Poulet
-	if (type === 'Poulet' && pouletsSection) {
-		pouletsSection.classList.remove('hidden');
-	} else if (pouletsSection) {
-		pouletsSection.classList.add('hidden');
-	}
-    
-    // Masquer la section lutte pour Agneaux et Béliers
-    if (lutteSection) {
-        if (type === 'Agneaux' || type === 'Broutard' || type === 'Poulet' || type === 'Béliers') {
-            lutteSection.classList.add('hidden');
-        } else {
-            lutteSection.classList.remove('hidden');
+   // Gestion affichage section selon type animal
+if (lotType) {
+    lotType.addEventListener('change', () => {
+        const type = lotType.value;
+        const lutteSection = document.querySelector('.bg-green-50.border-2.border-green-200');
+        const pouletsSection = document.getElementById('lot-poulets-section');
+        const agneauxSection = document.getElementById('lot-agneaux-section');
+        
+        // Masquer TOUTES les sections par défaut
+        if (agneauxSection) agneauxSection.classList.add('hidden');
+        if (pouletsSection) pouletsSection.classList.add('hidden');
+        if (lutteSection) lutteSection.classList.add('hidden');
+        
+        // Afficher uniquement les sections pertinentes selon le type
+        if (type === 'Agneaux') {
+            // Agneaux : suivi agneaux UNIQUEMENT
+            if (agneauxSection) agneauxSection.classList.remove('hidden');
+        } else if (type === 'Poulet') {
+            // Poulets : suivi poulets UNIQUEMENT
+            if (pouletsSection) pouletsSection.classList.remove('hidden');
+        } else if (type === 'Brebis' || type === 'Agnelle' || type === 'Vache' || type === 'Génisse') {
+            // Animaux reproducteurs : section lutte UNIQUEMENT
+            if (lutteSection) lutteSection.classList.remove('hidden');
         }
-    }
-});
-    }
+        // Pour Béliers et Broutard : rien à afficher (pas de suivi spécifique)
+    });
+}
     
     // Gestion type de lutte
     if (typeLutteSelect) {

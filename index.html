@@ -155,6 +155,21 @@ const EVENEMENTS_AGNEAUX = {
     peseeIdeal: 45         // après premier né
 };
 
+// Événements poulets (jours après entrée du lot)
+const EVENEMENTS_POULETS = {
+    commandeGaz: -7,
+    commandeAliment: -7,
+    vaccin1: 20,
+    vaccin2: 26,
+    pesee1: 28,
+    biaminticDebut: 42,
+    biaminticFin: 49,
+    pesee2: 56,
+    gallifenDebut: 63,
+    gallifenFin: 70,
+    pesee3: 84
+};
+
 // Événements IA
 const EVENEMENTS_IA = {
     // Brebis/agnelles
@@ -342,6 +357,98 @@ if (typeLutte === 'IA') {
         }
     }
     
+	// === ÉVÉNEMENTS POULETS ===
+    if (lot.type === 'Poulet' && lot.poulets && lot.poulets.dateEntree) {
+        const dateEntree = new Date(lot.poulets.dateEntree);
+        
+        // Commande gaz (J-7)
+        const commandeGaz = new Date(dateEntree);
+        commandeGaz.setDate(commandeGaz.getDate() + EVENEMENTS_POULETS.commandeGaz);
+        evenements.push({
+            type: 'commandeGaz',
+            date: commandeGaz.toISOString().split('T')[0],
+            titre: 'Commander gaz ' + lot.nom
+        });
+        
+        // Commande aliment (J-7)
+        const commandeAliment = new Date(dateEntree);
+        commandeAliment.setDate(commandeAliment.getDate() + EVENEMENTS_POULETS.commandeAliment);
+        evenements.push({
+            type: 'commandeAliment',
+            date: commandeAliment.toISOString().split('T')[0],
+            titre: 'Commander aliment ' + lot.nom
+        });
+        
+        // Vaccin 1 (J20)
+        const vaccin1 = new Date(dateEntree);
+        vaccin1.setDate(vaccin1.getDate() + EVENEMENTS_POULETS.vaccin1);
+        evenements.push({
+            type: 'vaccin1',
+            date: vaccin1.toISOString().split('T')[0],
+            titre: 'Vaccin 1 ' + lot.nom
+        });
+        
+        // Vaccin 2 (J26)
+        const vaccin2 = new Date(dateEntree);
+        vaccin2.setDate(vaccin2.getDate() + EVENEMENTS_POULETS.vaccin2);
+        evenements.push({
+            type: 'vaccin2',
+            date: vaccin2.toISOString().split('T')[0],
+            titre: 'Vaccin 2 ' + lot.nom
+        });
+        
+        // Pesée 1 (J28)
+        const pesee1 = new Date(dateEntree);
+        pesee1.setDate(pesee1.getDate() + EVENEMENTS_POULETS.pesee1);
+        evenements.push({
+            type: 'peseePoulet1',
+            date: pesee1.toISOString().split('T')[0],
+            titre: 'Pesée 1 ' + lot.nom
+        });
+        
+        // Biamintic (J42 à J49) - période
+        const biaminticDebut = new Date(dateEntree);
+        biaminticDebut.setDate(biaminticDebut.getDate() + EVENEMENTS_POULETS.biaminticDebut);
+        const biaminticFin = new Date(dateEntree);
+        biaminticFin.setDate(biaminticFin.getDate() + EVENEMENTS_POULETS.biaminticFin);
+        evenements.push({
+            type: 'biaminticStart',
+            date: biaminticDebut.toISOString().split('T')[0],
+            dateFin: biaminticFin.toISOString().split('T')[0],
+            titre: 'Période Biamintic ' + lot.nom
+        });
+        
+        // Pesée 2 (J56)
+        const pesee2 = new Date(dateEntree);
+        pesee2.setDate(pesee2.getDate() + EVENEMENTS_POULETS.pesee2);
+        evenements.push({
+            type: 'peseePoulet2',
+            date: pesee2.toISOString().split('T')[0],
+            titre: 'Pesée 2 ' + lot.nom
+        });
+        
+        // Gallifen (J63 à J70) - période
+        const gallifenDebut = new Date(dateEntree);
+        gallifenDebut.setDate(gallifenDebut.getDate() + EVENEMENTS_POULETS.gallifenDebut);
+        const gallifenFin = new Date(dateEntree);
+        gallifenFin.setDate(gallifenFin.getDate() + EVENEMENTS_POULETS.gallifenFin);
+        evenements.push({
+            type: 'gallifenStart',
+            date: gallifenDebut.toISOString().split('T')[0],
+            dateFin: gallifenFin.toISOString().split('T')[0],
+            titre: 'Période Gallifen ' + lot.nom
+        });
+        
+        // Pesée 3 (J84)
+        const pesee3 = new Date(dateEntree);
+        pesee3.setDate(pesee3.getDate() + EVENEMENTS_POULETS.pesee3);
+        evenements.push({
+            type: 'peseePoulet3',
+            date: pesee3.toISOString().split('T')[0],
+            titre: 'Pesée 3 ' + lot.nom
+        });
+    }
+	
     // === ÉVÉNEMENTS AGNEAUX ===
 	console.log('TEST DEBUG - lot.type:', lot.type);
 console.log('TEST DEBUG - premierNe:', premierNe);
@@ -641,6 +748,13 @@ else if (evt.type === 'stopLait') emoji = '⛔🍼';
 else if (evt.type === 'sevrage') emoji = '🍼❌';
                 else if (evt.type === 'echoRdv') emoji = '📷✓';
                 else if (evt.type === 'peseeRdv') emoji = '⚖️✓';
+else if (r.type === 'commandeGaz') lotsParNom[r.lot].push('⛽');
+else if (r.type === 'commandeAliment') lotsParNom[r.lot].push('🌽');
+else if (r.type === 'vaccin1') lotsParNom[r.lot].push('💉');
+else if (r.type === 'vaccin2') lotsParNom[r.lot].push('💉');
+else if (r.type === 'peseePoulet1') lotsParNom[r.lot].push('⚖️');
+else if (r.type === 'peseePoulet2') lotsParNom[r.lot].push('⚖️');
+else if (r.type === 'peseePoulet3') lotsParNom[r.lot].push('⚖️');
                 
                 evtsProches.push({
                     titre: evt.titre.replace(lot.nom, '').trim(),
@@ -1073,6 +1187,12 @@ if (stockages.length > 0) {
 			parts.push('<div><label class="block text-xs font-medium mb-1">Date dernier né</label>');
 			parts.push('<input type="date" id="lot-dernier-ne" class="w-full px-2 py-1 border rounded text-sm"></div>');
 			parts.push('</div></div>');
+			
+			parts.push('<div id="lot-poulets-section" class="hidden bg-orange-50 border-2 border-orange-200 rounded-lg p-3">');
+			parts.push('<h4 class="font-semibold mb-2 text-orange-800">Suivi poulets</h4>');
+			parts.push('<div><label class="block text-xs font-medium mb-1">Date d\'entrée du lot (J0)</label>');
+			parts.push('<input type="date" id="lot-date-entree-poulet" class="w-full px-2 py-1 border rounded text-sm"></div>');
+			parts.push('</div>');
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de têtes</label>');
             parts.push('<input type="number" id="lot-tetes" class="w-full px-3 py-2 border rounded-lg" required></div>');
@@ -1619,13 +1739,21 @@ if (formLot) {
         lotType.addEventListener('change', () => {
     const type = lotType.value;
     const lutteSection = document.querySelector('.bg-green-50.border-2.border-green-200');
-    
-    // Afficher section agneaux si type = Agneaux
-    if (type === 'Agneaux' && agneauxSection) {
-        agneauxSection.classList.remove('hidden');
-    } else if (agneauxSection) {
-        agneauxSection.classList.add('hidden');
-    }
+    const pouletsSection = document.getElementById('lot-poulets-section');
+
+	// Afficher section agneaux si type = Agneaux
+	if (type === 'Agneaux' && agneauxSection) {
+		agneauxSection.classList.remove('hidden');
+	} else if (agneauxSection) {
+		agneauxSection.classList.add('hidden');
+	}
+
+	// Afficher section poulets si type = Poulet
+	if (type === 'Poulet' && pouletsSection) {
+		pouletsSection.classList.remove('hidden');
+	} else if (pouletsSection) {
+		pouletsSection.classList.add('hidden');
+	}
     
     // Masquer la section lutte pour Agneaux et Béliers
     if (lutteSection) {
@@ -1760,6 +1888,14 @@ if (formLot) {
         newLot.agneaux = {
             premierNe: premierNe,
             dernierNe: dernierNe
+        };
+    }
+    
+    // Ajouter les données poulets
+    const dateEntreePoulet = document.getElementById('lot-date-entree-poulet')?.value || '';
+    if (type === 'Poulet' && dateEntreePoulet) {
+        newLot.poulets = {
+            dateEntree: dateEntreePoulet
         };
     }
     
@@ -2440,6 +2576,25 @@ window.handleDayClick = (dateStr) => {
                         debut: evt.date,
                         fin: evt.dateFin
                     });
+				} else if (evt.type === 'biaminticStart') {
+    periodesActives.push({
+        lot: lot,
+        lotNom: lot.nom,
+        type: 'biamintic',
+        typeLabel: 'Biamintic',
+        debut: evt.date,
+        fin: evt.dateFin
+    });
+} else if (evt.type === 'gallifenStart') {
+    periodesActives.push({
+        lot: lot,
+        lotNom: lot.nom,
+        type: 'gallifen',
+        typeLabel: 'Gallifen',
+        debut: evt.date,
+        fin: evt.dateFin
+    });
+}
                 }
             }
         });
@@ -2492,11 +2647,13 @@ window.prendreRdv = (lotId, typeRdv, dateRdv) => {
     if (!lot || !lot.evenementsAuto) return;
     
     // Trouver l'événement de période correspondant
-    const indexPeriode = lot.evenementsAuto.findIndex(evt => {
-        if (typeRdv === 'echo' && evt.type === 'echoStart') return true;
-        if (typeRdv === 'pesee' && evt.type === 'peseeStart') return true;
-        return false;
-    });
+const indexPeriode = lot.evenementsAuto.findIndex(evt => {
+    if (typeRdv === 'echo' && evt.type === 'echoStart') return true;
+    if (typeRdv === 'pesee' && evt.type === 'peseeStart') return true;
+    if (typeRdv === 'biamintic' && evt.type === 'biaminticStart') return true;
+    if (typeRdv === 'gallifen' && evt.type === 'gallifenStart') return true;
+    return false;
+});
     
     if (indexPeriode === -1) return;
     
@@ -2504,8 +2661,20 @@ window.prendreRdv = (lotId, typeRdv, dateRdv) => {
     lot.evenementsAuto.splice(indexPeriode, 1);
     
     // Ajouter le RDV ponctuel
-    const typeRdvFinal = typeRdv === 'echo' ? 'echoRdv' : 'peseeRdv';
-    const titreRdv = typeRdv === 'echo' ? 'RDV Échographie ' : 'RDV Pesée ';
+let typeRdvFinal, titreRdv;
+if (typeRdv === 'echo') {
+    typeRdvFinal = 'echoRdv';
+    titreRdv = 'RDV Échographie ';
+} else if (typeRdv === 'pesee') {
+    typeRdvFinal = 'peseeRdv';
+    titreRdv = 'RDV Pesée ';
+} else if (typeRdv === 'biamintic') {
+    typeRdvFinal = 'biaminticRdv';
+    titreRdv = 'RDV Biamintic ';
+} else if (typeRdv === 'gallifen') {
+    typeRdvFinal = 'gallifenRdv';
+    titreRdv = 'RDV Gallifen ';
+}
     
     lot.evenementsAuto.push({
         type: typeRdvFinal,
@@ -2622,9 +2791,27 @@ state.data.lots.forEach(lot => {
                     hasEchoRdv = true;
                     reproLots.push({ lot: lot.nom, type: 'echoRdv' });
                 } else if (evt.type === 'peseeRdv') {
-                    hasPeseeRdv = true;
-                    reproLots.push({ lot: lot.nom, type: 'peseeRdv' });
-                }
+    hasPeseeRdv = true;
+    reproLots.push({ lot: lot.nom, type: 'peseeRdv' });
+} else if (evt.type === 'commandeGaz') {
+    reproLots.push({ lot: lot.nom, type: 'commandeGaz' });
+} else if (evt.type === 'commandeAliment') {
+    reproLots.push({ lot: lot.nom, type: 'commandeAliment' });
+} else if (evt.type === 'vaccin1') {
+    reproLots.push({ lot: lot.nom, type: 'vaccin1' });
+} else if (evt.type === 'vaccin2') {
+    reproLots.push({ lot: lot.nom, type: 'vaccin2' });
+} else if (evt.type === 'peseePoulet1') {
+    reproLots.push({ lot: lot.nom, type: 'peseePoulet1' });
+} else if (evt.type === 'peseePoulet2') {
+    reproLots.push({ lot: lot.nom, type: 'peseePoulet2' });
+} else if (evt.type === 'peseePoulet3') {
+    reproLots.push({ lot: lot.nom, type: 'peseePoulet3' });
+} else if (evt.type === 'biaminticRdv') {
+    reproLots.push({ lot: lot.nom, type: 'biaminticRdv' });
+} else if (evt.type === 'gallifenRdv') {
+    reproLots.push({ lot: lot.nom, type: 'gallifenRdv' });
+}
             }
             
             // Vérifier si on est dans une période
@@ -2660,8 +2847,19 @@ state.data.lots.forEach(lot => {
                         if (!hasRdvPesee) {
                             hasPesee = true;
                             reproLots.push({ lot: lot.nom, type: 'pesee' });
-                        }
-                    }
+                        } else if (evt.type === 'biaminticStart') {
+    // Ne pas afficher si RDV existe
+    const hasRdvBiamintic = lot.evenementsAuto.some(e => e.type === 'biaminticRdv');
+    if (!hasRdvBiamintic) {
+        reproLots.push({ lot: lot.nom, type: 'biamintic' });
+    }
+} else if (evt.type === 'gallifenStart') {
+    // Ne pas afficher si RDV existe
+    const hasRdvGallifen = lot.evenementsAuto.some(e => e.type === 'gallifenRdv');
+    if (!hasRdvGallifen) {
+        reproLots.push({ lot: lot.nom, type: 'gallifen' });
+    }
+}
                 }
             }
         });
@@ -2727,6 +2925,13 @@ else if (r.type === 'stopLait') lotsParNom[r.lot].push('⛔🍼');
 else if (r.type === 'sevrage') lotsParNom[r.lot].push('🍼❌');
 else if (r.type === 'pesee') lotsParNom[r.lot].push('⚖️');
 else if (r.type === 'peseeRdv') lotsParNom[r.lot].push('⚖️✓');
+else if (r.type === 'commandeGaz') lotsParNom[r.lot].push('⛽');
+else if (r.type === 'commandeAliment') lotsParNom[r.lot].push('🌽');
+else if (r.type === 'vaccin1') lotsParNom[r.lot].push('💉');
+else if (r.type === 'vaccin2') lotsParNom[r.lot].push('💉');
+else if (r.type === 'peseePoulet1') lotsParNom[r.lot].push('⚖️');
+else if (r.type === 'peseePoulet2') lotsParNom[r.lot].push('⚖️');
+else if (r.type === 'peseePoulet3') lotsParNom[r.lot].push('⚖️');
     });
     
     // Afficher une ligne par lot

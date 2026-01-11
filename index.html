@@ -748,17 +748,15 @@ async function saveData() {
 				else if (evt.type === 'sevrage') emoji = '🍼❌';
                 else if (evt.type === 'echoRdv') emoji = '📷✓';
                 else if (evt.type === 'peseeRdv') emoji = '⚖️✓';
-				else if (r.type === 'commandeGaz') lotsParNom[r.lot].push('⛽');
-				else if (r.type === 'commandeAliment') lotsParNom[r.lot].push('🌽');
-				else if (r.type === 'vaccin1') lotsParNom[r.lot].push('💉');
-				else if (r.type === 'vaccin2') lotsParNom[r.lot].push('💉');
-				else if (r.type === 'peseePoulet1') lotsParNom[r.lot].push('⚖️');
-				else if (r.type === 'peseePoulet2') lotsParNom[r.lot].push('⚖️');
-				else if (r.type === 'peseePoulet3') lotsParNom[r.lot].push('⚖️');
-				else if (r.type === 'gallifen') lotsParNom[r.lot].push('💊');
-				else if (r.type === 'biamintic') lotsParNom[r.lot].push('💉');
-				else if (r.type === 'biaminticRdv') lotsParNom[r.lot].push('💉✔');
-				else if (r.type === 'gallifenRdv') lotsParNom[r.lot].push('💊✔');
+				else if (evt.type === 'commandeGaz') emoji = '⛽';
+				else if (evt.type === 'commandeAliment') emoji = '🌽';
+				else if (evt.type === 'vaccin1') emoji = '💉';
+				else if (evt.type === 'vaccin2') emoji = '💉';
+				else if (evt.type === 'peseePoulet1') emoji = '⚖️';
+				else if (evt.type === 'peseePoulet2') emoji = '⚖️';
+				else if (evt.type === 'peseePoulet3') emoji = '⚖️';
+				else if (evt.type === 'biaminticRdv') emoji = '💉✔';
+				else if (evt.type === 'gallifenRdv') emoji = '💊✔';
                 
                 evtsProches.push({
                     titre: evt.titre.replace(lot.nom, '').trim(),

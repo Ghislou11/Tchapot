@@ -2822,43 +2822,26 @@ state.data.lots.forEach(lot => {
                 
                 if (currentDate >= evtDebut && currentDate <= evtFin) {
                     if (evt.type === 'echoStart') {
-                        // Ne pas afficher si RDV écho existe pour ce lot
-                        const hasRdv = lot.evenementsAuto.some(e => e.type === 'echoRdv');
-                        if (!hasRdv) {
-                            hasEcho = true;
-                            reproLots.push({ lot: lot.nom, type: 'echo' });
-                        }
-                    } else if (evt.type === 'birthStart') {
-                        hasMiseBas = true;
-                        reproLots.push({ lot: lot.nom, type: 'misebas' });
-                    } else if (evt.type === 'flushing') {
-                        hasFlushing = true;
-                        reproLots.push({ lot: lot.nom, type: 'flushing' });
-                    } else if (evt.type === 'lutteStart') {
-                        hasLutte = true;
-                        reproLots.push({ lot: lot.nom, type: 'lutte' });
-                    } else if (evt.type === 'lutteRetourStart') {
-                        hasLutteRetour = true;
-                        reproLots.push({ lot: lot.nom, type: 'lutteRetour' });
-                    } else if (evt.type === 'peseeStart') {
+                        } else if (evt.type === 'peseeStart') {
                         // Ne pas afficher si RDV pesée existe pour ce lot
                         const hasRdvPesee = lot.evenementsAuto.some(e => e.type === 'peseeRdv');
                         if (!hasRdvPesee) {
                             hasPesee = true;
                             reproLots.push({ lot: lot.nom, type: 'pesee' });
-                        } else if (evt.type === 'biaminticStart') {
-    // Ne pas afficher si RDV existe
-    const hasRdvBiamintic = lot.evenementsAuto.some(e => e.type === 'biaminticRdv');
-    if (!hasRdvBiamintic) {
-        reproLots.push({ lot: lot.nom, type: 'biamintic' });
-    }
-} else if (evt.type === 'gallifenStart') {
-    // Ne pas afficher si RDV existe
-    const hasRdvGallifen = lot.evenementsAuto.some(e => e.type === 'gallifenRdv');
-    if (!hasRdvGallifen) {
-        reproLots.push({ lot: lot.nom, type: 'gallifen' });
-    }
-}
+                        }
+                    } else if (evt.type === 'biaminticStart') {
+                        // Ne pas afficher si RDV existe
+                        const hasRdvBiamintic = lot.evenementsAuto.some(e => e.type === 'biaminticRdv');
+                        if (!hasRdvBiamintic) {
+                            reproLots.push({ lot: lot.nom, type: 'biamintic' });
+                        }
+                    } else if (evt.type === 'gallifenStart') {
+                        // Ne pas afficher si RDV existe
+                        const hasRdvGallifen = lot.evenementsAuto.some(e => e.type === 'gallifenRdv');
+                        if (!hasRdvGallifen) {
+                            reproLots.push({ lot: lot.nom, type: 'gallifen' });
+                        }
+                    }
                 }
             }
         });

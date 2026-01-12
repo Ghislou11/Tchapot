@@ -2825,15 +2825,21 @@ state.data.lots.forEach(lot => {
                 evtFin.setHours(0, 0, 0, 0);
                 
                 if (currentDate >= evtDebut && currentDate <= evtFin) {
-                    if (evt.type === 'echoStart') {
-                        } else if (evt.type === 'peseeStart') {
-                        // Ne pas afficher si RDV pesée existe pour ce lot
-                        const hasRdvPesee = lot.evenementsAuto.some(e => e.type === 'peseeRdv');
-                        if (!hasRdvPesee) {
-                            hasPesee = true;
-                            reproLots.push({ lot: lot.nom, type: 'pesee' });
-                        }
-                    } else if (evt.type === 'biaminticStart') {
+    if (evt.type === 'echoStart') {
+        // Ne pas afficher si RDV écho existe pour ce lot
+        const hasRdvEcho = lot.evenementsAuto.some(e => e.type === 'echoRdv');
+        if (!hasRdvEcho) {
+            hasEcho = true;
+            reproLots.push({ lot: lot.nom, type: 'echo' });
+        }
+    } else if (evt.type === 'peseeStart') {
+        // Ne pas afficher si RDV pesée existe pour ce lot
+        const hasRdvPesee = lot.evenementsAuto.some(e => e.type === 'peseeRdv');
+        if (!hasRdvPesee) {
+            hasPesee = true;
+            reproLots.push({ lot: lot.nom, type: 'pesee' });
+        }
+    } else if (evt.type === 'biaminticStart') {
                         // Ne pas afficher si RDV existe
                         const hasRdvBiamintic = lot.evenementsAuto.some(e => e.type === 'biaminticRdv');
                         if (!hasRdvBiamintic) {

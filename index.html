@@ -2810,58 +2810,46 @@ window.showCustomModal = (title, content) => {
         }
 		
 window.handleDayClick = (dateStr) => {
-    const evts = state.data.evenements.filter(e => {
+    const clickDate = dateStr.split('T')[0];
+    
+    // === 1. RÉCUPÉRER LES ÉVÉNEMENTS MANUELS DU JOUR ===
+    const evtsManuels = state.data.evenements.filter(e => {
         const evtDate = new Date(e.date).toISOString().split('T')[0];
-        const clickDate = dateStr.split('T')[0];
         return evtDate === clickDate;
     });
     
-    if (evts.length === 0) {
-        // Proposer de créer un événement avec modal personnalisé
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-modal-overlay';
-        
-        overlay.innerHTML = `
-            <div class="custom-modal-box">
-                <div class="custom-modal-title">Aucun événement</div>
-                <div class="custom-modal-content">Aucun événement ce jour.\n\nVoulez-vous créer un événement pour le ${new Date(dateStr).toLocaleDateString('fr-FR')} ?</div>
-                <div class="flex gap-2">
-                    <button class="custom-modal-btn bg-green-600" onclick="
-                        document.getElementById('evt-date').value = '${dateStr}';
-                        window.showModal();
-                        this.closest('.custom-modal-overlay').remove();
-                    ">Oui, créer</button>
-                    <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Non</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(overlay);
-    } else {
-    // Afficher les événements + périodes reproduction
-    let message = 'Événements du ' + new Date(dateStr).toLocaleDateString('fr-FR') + ' :\n\n';
-    
-    // Événements classiques
-    if (evts.length > 0) {
-        evts.forEach(evt => {
-            message += '• ' + evt.titre;
-            if (evt.heure) message += ' à ' + evt.heure;
-            message += evt.valide ? ' ✔️\n' : '\n';
-        });
-        message += '\n';
-    }
-    
-    // Vérifier les périodes d'échographie et pesée
+    // === 2. RÉCUPÉRER LES ÉVÉNEMENTS AUTOMATIQUES DU JOUR ===
     const currentDate = new Date(dateStr);
     currentDate.setHours(0, 0, 0, 0);
-
-    const periodesActives = []; // {lot, type, debut, fin}
-
+    
+    const evtsAutomatiques = [];
+    
     state.data.lots.forEach(lot => {
         if (!lot.evenementsAuto) return;
         
         lot.evenementsAuto.forEach(evt => {
-            if (!evt.dateFin) return; // Seulement les périodes
+            const evtDate = new Date(evt.date);
+            evtDate.setHours(0, 0, 0, 0);
+            
+            // Événement ponctuel ce jour
+            if (evtDate.getTime() === currentDate.getTime() && !evt.dateFin) {
+                evtsAutomatiques.push({
+                    lot: lot,
+                    evt: evt,
+                    type: 'ponctuel'
+                });
+            }
+        });
+    });
+    
+    // === 3. VÉRIFIER LES PÉRIODES EN COURS ===
+    const periodesEnCours = [];
+    
+    state.data.lots.forEach(lot => {
+        if (!lot.evenementsAuto) return;
+        
+        lot.evenementsAuto.forEach(evt => {
+            if (!evt.dateFin) return;
             
             const evtDebut = new Date(evt.date);
             const evtFin = new Date(evt.dateFin);
@@ -2870,54 +2858,118 @@ window.handleDayClick = (dateStr) => {
             
             // Vérifier si on est dans la période
             if (currentDate >= evtDebut && currentDate <= evtFin) {
-                if (evt.type === 'echoStart') {
-                    periodesActives.push({
+                // Uniquement les périodes avec prise de RDV possible
+                if (['echoStart', 'peseeStart', 'biaminticStart', 'gallifenStart'].includes(evt.type)) {
+                    periodesEnCours.push({
                         lot: lot,
-                        lotNom: lot.nom,
-                        type: 'echo',
-                        typeLabel: 'Échographie',
-                        debut: evt.date,
-                        fin: evt.dateFin
+                        evt: evt,
+                        type: evt.type
                     });
-                } else if (evt.type === 'peseeStart') {
-                    periodesActives.push({
-                        lot: lot,
-                        lotNom: lot.nom,
-                        type: 'pesee',
-                        typeLabel: 'Pesée',
-                        debut: evt.date,
-                        fin: evt.dateFin
-                    });
-				} else if (evt.type === 'biaminticStart') {
-    periodesActives.push({
-        lot: lot,
-        lotNom: lot.nom,
-        type: 'biamintic',
-        typeLabel: 'Biamintic',
-        debut: evt.date,
-        fin: evt.dateFin
-    });
-} else if (evt.type === 'gallifenStart') {
-    periodesActives.push({
-        lot: lot,
-        lotNom: lot.nom,
-        type: 'gallifen',
-        typeLabel: 'Gallifen',
-        debut: evt.date,
-        fin: evt.dateFin
-    });
-}
+                }
             }
         });
     });
     
-    if (periodesActives.length > 0) {
-        message += '📅 PÉRIODES EN COURS :\n';
-        periodesActives.forEach(p => {
-            message += '  • ' + p.lotNom + ' : ' + p.typeLabel + '\n';
-            message += '    Du ' + formatDate(p.debut) + ' au ' + formatDate(p.fin) + '\n';
-        });
+    // === 4. CONSTRUIRE LE MESSAGE ===
+    let message = '';
+    const hasEvents = evtsManuels.length > 0 || evtsAutomatiques.length > 0;
+    
+    if (!hasEvents && periodesEnCours.length === 0) {
+        // CAS 1 : Aucun événement
+        message = 'Aucun événement ce jour.\n\n';
+    } else {
+        message = 'Événements du ' + new Date(dateStr).toLocaleDateString('fr-FR') + ' :\n\n';
+        
+        // Événements manuels
+        if (evtsManuels.length > 0) {
+            message += '📋 ÉVÉNEMENTS MANUELS :\n';
+            evtsManuels.forEach(evt => {
+                message += '  • ' + evt.titre;
+                if (evt.lotNom) message += ' (' + evt.lotNom + ')';
+                if (evt.heure) message += ' à ' + evt.heure;
+                message += evt.valide ? ' ✅\n' : '\n';
+                if (evt.description) message += '    ' + evt.description + '\n';
+            });
+            message += '\n';
+        }
+        
+        // Événements automatiques
+        if (evtsAutomatiques.length > 0) {
+            message += '🤖 ÉVÉNEMENTS AUTOMATIQUES :\n';
+            evtsAutomatiques.forEach(ea => {
+                message += '  • ' + ea.evt.titre + '\n';
+            });
+            message += '\n';
+        }
+        
+        // Périodes en cours
+        if (periodesEnCours.length > 0) {
+            message += '📅 PÉRIODES EN COURS :\n';
+            periodesEnCours.forEach(p => {
+                let typeLabel = '';
+                if (p.type === 'echoStart') typeLabel = 'Échographie';
+                else if (p.type === 'peseeStart') typeLabel = 'Pesée';
+                else if (p.type === 'biaminticStart') typeLabel = 'Biamintic';
+                else if (p.type === 'gallifenStart') typeLabel = 'Gallifen';
+                
+                message += '  • ' + p.lot.nom + ' : ' + typeLabel + '\n';
+                message += '    Du ' + formatDate(p.evt.date) + ' au ' + formatDate(p.evt.dateFin) + '\n';
+            });
+        }
     }
+    
+    // === 5. AFFICHER LE MODAL PRINCIPAL ===
+    window.showCustomModal('Événements', message);
+    
+    // === 6. AFFICHER LES BOUTONS D'ACTION ===
+    setTimeout(() => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        
+        let buttonsHtml = '';
+        
+        // Bouton "Prendre RDV" si période en cours
+        if (periodesEnCours.length > 0) {
+            periodesEnCours.forEach(p => {
+                let typeLabel = '';
+                let typeRdv = '';
+                if (p.type === 'echoStart') {
+                    typeLabel = 'Échographie';
+                    typeRdv = 'echo';
+                } else if (p.type === 'peseeStart') {
+                    typeLabel = 'Pesée';
+                    typeRdv = 'pesee';
+                } else if (p.type === 'biaminticStart') {
+                    typeLabel = 'Biamintic';
+                    typeRdv = 'biamintic';
+                } else if (p.type === 'gallifenStart') {
+                    typeLabel = 'Gallifen';
+                    typeRdv = 'gallifen';
+                }
+                
+                buttonsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + typeRdv + '\', \'' + clickDate + '\'); this.closest(\'.custom-modal-overlay\').remove();">';
+                buttonsHtml += '📅 RDV ' + typeLabel + ' - ' + p.lot.nom;
+                buttonsHtml += '</button>';
+            });
+        }
+        
+        // Bouton "Créer un événement"
+        buttonsHtml += '<button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + clickDate + '\'; window.showModal(); this.closest(\'.custom-modal-overlay\').remove();">';
+        buttonsHtml += '➕ Créer un événement';
+        buttonsHtml += '</button>';
+        
+        // Bouton "Annuler"
+        buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="this.closest(\'.custom-modal-overlay\').remove()">Fermer</button>';
+        
+        overlay.innerHTML = '<div class="custom-modal-box">' +
+            '<div class="custom-modal-title">Actions</div>' +
+            '<div class="custom-modal-content">Que voulez-vous faire ?</div>' +
+            buttonsHtml +
+            '</div>';
+        
+        document.body.appendChild(overlay);
+    }, 300);
+};
 
     window.showCustomModal('Événements', message);
 

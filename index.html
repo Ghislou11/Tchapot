@@ -1571,7 +1571,7 @@ state.data.lots.forEach(lot => {
             });
         }
         
-        // Périodes en cours ou à venir
+        // Périodes : afficher uniquement début et fin (pas écho, pesée, biamintic, gallifen)
         if (evt.dateFin) {
             const evtDebut = new Date(evt.date);
             const evtFin = new Date(evt.dateFin);
@@ -1579,30 +1579,63 @@ state.data.lots.forEach(lot => {
             evtFin.setHours(0, 0, 0, 0);
             
             const joursAvantDebut = Math.ceil((evtDebut - today) / (1000 * 60 * 60 * 24));
+            const joursAvantFin = Math.ceil((evtFin - today) / (1000 * 60 * 60 * 24));
             
-            // Afficher si période en cours ou début dans moins de 30 jours
-            if (joursAvantDebut <= 30) {
-                let titreAffiche = evt.titre;
-                if (today >= evtDebut && today <= evtFin) {
-                    titreAffiche = evt.titre + ' (EN COURS)';
+            // Types de périodes à afficher (exclure écho, pesée, biamintic, gallifen)
+            const periodesAffichees = ['birthStart', 'flushing', 'lutteStart', 'lutteRetourStart'];
+            
+            if (periodesAffichees.includes(evt.type)) {
+                // Ajouter l'événement de DÉBUT si dans les 60 prochains jours
+                if (joursAvantDebut >= 0 && joursAvantDebut <= 60) {
+                    let titreDebut = evt.titre.replace(lot.nom, '').trim();
+                    if (evt.type === 'birthStart') titreDebut = 'Début mise bas';
+                    else if (evt.type === 'flushing') titreDebut = 'Début flushing';
+                    else if (evt.type === 'lutteStart') titreDebut = 'Début lutte';
+                    else if (evt.type === 'lutteRetourStart') titreDebut = 'Début lutte retours';
+                    
+                    tousEvtsAvenir.push({
+                        date: evt.date,
+                        titre: titreDebut + ' - ' + lot.nom,
+                        categorie: 'Élevage',
+                        heure: '',
+                        description: 'Période du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
+                        id: lot.id + '-' + evt.type + '-debut-' + evt.date,
+                        valide: false,
+                        type: 'automatique-debut',
+                        lotNom: lot.nom,
+                        lotId: lot.id,
+                        evtType: evt.type,
+                        evtData: evt
+                    });
                 }
                 
-                tousEvtsAvenir.push({
-                    date: evt.date,
-                    dateFin: evt.dateFin,
-                    titre: titreAffiche,
-                    categorie: 'Élevage',
-                    heure: '',
-                    description: 'Du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
-                    id: lot.id + '-' + evt.type + '-' + evt.date,
-                    valide: false,
-                    type: 'automatique-periode',
-                    lotNom: lot.nom,
-                    lotId: lot.id,
-                    evtType: evt.type,
-                    evtData: evt
-                });
+                // Ajouter l'événement de FIN si dans les 60 prochains jours
+                if (joursAvantFin >= 0 && joursAvantFin <= 60) {
+                    let titreFin = evt.titre.replace(lot.nom, '').trim();
+                    if (evt.type === 'birthStart') titreFin = 'Fin mise bas';
+                    else if (evt.type === 'flushing') titreFin = 'Fin flushing';
+                    else if (evt.type === 'lutteStart') titreFin = 'Fin lutte';
+                    else if (evt.type === 'lutteRetourStart') titreFin = 'Fin lutte retours';
+                    
+                    tousEvtsAvenir.push({
+                        date: evt.dateFin,
+                        titre: titreFin + ' - ' + lot.nom,
+                        categorie: 'Élevage',
+                        heure: '',
+                        description: 'Période du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
+                        id: lot.id + '-' + evt.type + '-fin-' + evt.dateFin,
+                        valide: false,
+                        type: 'automatique-fin',
+                        lotNom: lot.nom,
+                        lotId: lot.id,
+                        evtType: evt.type,
+                        evtData: evt
+                    });
+                }
             }
+            
+            // Pour les RDV pris (echoRdv, peseeRdv, etc.) : les afficher comme événements ponctuels
+            // Ils n'ont normalement pas de dateFin, mais au cas où...
         }
     });
 });

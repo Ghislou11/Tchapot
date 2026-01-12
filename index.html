@@ -1524,59 +1524,140 @@ parts.push('<h3 class="text-lg font-bold mb-3">Événements à venir</h3>');
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const evtsAvenir = state.data.evenements
-                .filter(e => new Date(e.date) >= today && !e.valide)
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
-            
-            if (evtsAvenir.length > 0) {
-                evtsAvenir.forEach(evt => {
-                    const date = new Date(evt.date);
-                    const isPast = date < new Date();
-                    const borderColor = evt.valide ? 'border-green-500' : isPast ? 'border-gray-400' : 'border-blue-500';
-                    const bgColor = evt.valide ? 'bg-green-50' : isPast ? 'bg-gray-50' : 'bg-white';
-                    
-                    parts.push('<div class="border-l-4 ' + borderColor + ' ' + bgColor + ' p-3 mb-2">');
-                    parts.push('<div class="flex justify-between">');
-                    parts.push('<div class="flex-1">');
-                    parts.push('<div class="font-bold">' + evt.titre + '</div>');
-                    parts.push('<div class="text-sm text-gray-600">' + date.toLocaleDateString('fr-FR') + (evt.heure ? ' • ' + evt.heure : '') + '</div>');
-                    parts.push('<div class="text-xs text-gray-500">' + evt.categorie + '</div>');
-                    if (evt.description) parts.push('<div class="text-sm mt-1">' + evt.description + '</div>');
-                    parts.push('</div>');
-                    parts.push('<div class="flex gap-2">');
-                    parts.push('<button onclick="window.validerEvt(\'' + evt.id + '\')" class="text-green-600 text-xl" title="Valider">✓</button>');
-                    parts.push('<button onclick="window.deleteEvt(\'' + evt.id + '\')" class="text-red-600 text-xl">×</button>');
-                    parts.push('</div></div></div>');
-                });
-            } else {
-                parts.push('<p class="text-gray-500">Aucun événement à venir</p>');
-            }
+            // Récupérer TOUS les événements (manuels + automatiques)
+const tousEvtsAvenir = [];
 
-            // Historique des événements validés
-            parts.push('<h3 class="text-lg font-bold mb-3 mt-6">Événements validés</h3>');
-            const evtsValides = state.data.evenements
-                .filter(e => e.valide)
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 10);
+// 1. Ajouter les événements manuels
+state.data.evenements
+    .filter(e => new Date(e.date) >= today && !e.valide)
+    .forEach(e => {
+        tousEvtsAvenir.push({
+            date: e.date,
+            titre: e.titre,
+            categorie: e.categorie,
+            heure: e.heure,
+            description: e.description,
+            id: e.id,
+            valide: e.valide,
+            type: 'manuel',
+            lotNom: e.lotNom || null
+        });
+    });
+
+// 2. Ajouter les événements automatiques de tous les lots
+state.data.lots.forEach(lot => {
+    if (!lot.evenementsAuto) return;
+    
+    lot.evenementsAuto.forEach(evt => {
+        const evtDate = new Date(evt.date);
+        evtDate.setHours(0, 0, 0, 0);
+        
+        // Événements ponctuels à venir (dans les 60 prochains jours)
+        const joursRestants = Math.ceil((evtDate - today) / (1000 * 60 * 60 * 24));
+        if (joursRestants >= 0 && joursRestants <= 60 && !evt.dateFin) {
+            tousEvtsAvenir.push({
+                date: evt.date,
+                titre: evt.titre,
+                categorie: 'Élevage',
+                heure: '',
+                description: '',
+                id: lot.id + '-' + evt.type + '-' + evt.date,
+                valide: false,
+                type: 'automatique',
+                lotNom: lot.nom,
+                lotId: lot.id,
+                evtType: evt.type,
+                evtData: evt
+            });
+        }
+        
+        // Périodes en cours ou à venir
+        if (evt.dateFin) {
+            const evtDebut = new Date(evt.date);
+            const evtFin = new Date(evt.dateFin);
+            evtDebut.setHours(0, 0, 0, 0);
+            evtFin.setHours(0, 0, 0, 0);
             
-            if (evtsValides.length > 0) {
-                evtsValides.forEach(evt => {
-                    const date = new Date(evt.date);
-                    parts.push('<div class="border-l-4 border-green-500 bg-green-50 p-3 mb-2">');
-                    parts.push('<div class="flex justify-between">');
-                    parts.push('<div class="flex-1">');
-                    parts.push('<div class="font-bold">' + evt.titre + '</div>');
-                    parts.push('<div class="text-sm text-gray-600">' + date.toLocaleDateString('fr-FR') + (evt.heure ? ' • ' + evt.heure : '') + '</div>');
-                    parts.push('<div class="text-xs text-gray-500">' + evt.categorie + '</div>');
-                    parts.push('</div>');
-                    parts.push('<div class="flex gap-2">');
-                    parts.push('<button onclick="window.invaliderEvt(\'' + evt.id + '\')" class="text-orange-600 text-xl" title="Annuler">↶</button>');
-                    parts.push('<button onclick="window.deleteEvt(\'' + evt.id + '\')" class="text-red-600 text-xl">×</button>');
-                    parts.push('</div></div></div>');
+            const joursAvantDebut = Math.ceil((evtDebut - today) / (1000 * 60 * 60 * 24));
+            
+            // Afficher si période en cours ou début dans moins de 30 jours
+            if (joursAvantDebut <= 30) {
+                let titreAffiche = evt.titre;
+                if (today >= evtDebut && today <= evtFin) {
+                    titreAffiche = evt.titre + ' (EN COURS)';
+                }
+                
+                tousEvtsAvenir.push({
+                    date: evt.date,
+                    dateFin: evt.dateFin,
+                    titre: titreAffiche,
+                    categorie: 'Élevage',
+                    heure: '',
+                    description: 'Du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
+                    id: lot.id + '-' + evt.type + '-' + evt.date,
+                    valide: false,
+                    type: 'automatique-periode',
+                    lotNom: lot.nom,
+                    lotId: lot.id,
+                    evtType: evt.type,
+                    evtData: evt
                 });
-            } else {
-                parts.push('<p class="text-gray-500">Aucun événement validé</p>');
             }
+        }
+    });
+});
+
+// Trier par date
+tousEvtsAvenir.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+if (tousEvtsAvenir.length > 0) {
+    tousEvtsAvenir.forEach(evt => {
+        const date = new Date(evt.date);
+        const isPast = date < new Date();
+        const borderColor = evt.valide ? 'border-green-500' : isPast ? 'border-gray-400' : 'border-blue-500';
+        const bgColor = evt.valide ? 'bg-green-50' : isPast ? 'bg-gray-50' : 'bg-white';
+        
+        parts.push('<div class="border-l-4 ' + borderColor + ' ' + bgColor + ' p-3 mb-2 rounded">');
+        parts.push('<div class="flex justify-between">');
+        parts.push('<div class="flex-1">');
+        
+        parts.push('<div class="font-bold">' + evt.titre + '</div>');
+        
+        // Afficher le nom du lot si présent
+        if (evt.lotNom) {
+            parts.push('<div class="text-xs text-purple-700 font-semibold">📍 ' + evt.lotNom + '</div>');
+        }
+        
+        parts.push('<div class="text-sm text-gray-600">' + date.toLocaleDateString('fr-FR') + (evt.heure ? ' • ' + evt.heure : '') + '</div>');
+        parts.push('<div class="text-xs text-gray-500">' + evt.categorie + '</div>');
+        if (evt.description) parts.push('<div class="text-sm mt-1">' + evt.description + '</div>');
+        parts.push('</div>');
+        
+        // Boutons d'action
+        parts.push('<div class="flex gap-2">');
+        
+        // Bouton modifier
+        if (evt.type === 'manuel') {
+            parts.push('<button onclick="window.editEvt(\'' + evt.id + '\')" class="text-blue-600 text-xl" title="Modifier">✎</button>');
+        } else {
+            // Pour événements auto : modifier dans le lot
+            parts.push('<button onclick="window.editEvtAuto(\'' + evt.lotId + '\', \'' + evt.evtType + '\', \'' + evt.date + '\')" class="text-blue-600 text-xl" title="Modifier">✎</button>');
+        }
+        
+        parts.push('<button onclick="window.validerEvt(\'' + evt.id + '\', ' + (evt.type !== 'manuel' ? '\'' + evt.lotId + '\', \'' + evt.evtType + '\'' : 'null, null') + ')" class="text-green-600 text-xl" title="Valider">✓</button>');
+        
+        // Bouton supprimer
+        if (evt.type === 'manuel') {
+            parts.push('<button onclick="window.deleteEvt(\'' + evt.id + '\')" class="text-red-600 text-xl">×</button>');
+        } else {
+            parts.push('<button onclick="window.deleteEvtAuto(\'' + evt.lotId + '\', \'' + evt.evtType + '\', \'' + evt.date + '\')" class="text-red-600 text-xl">×</button>');
+        }
+        
+        parts.push('</div></div></div>');
+    });
+} else {
+    parts.push('<p class="text-gray-500">Aucun événement à venir</p>');
+}
 
             parts.push('</div>');
             
@@ -2447,14 +2528,104 @@ if (formFourrage) {
     document.body.appendChild(overlay);
 };
 
-        window.validerEvt = (id) => {
-            const evt = state.data.evenements.find(e => e.id === id);
-            if (evt) {
-                evt.valide = true;
-                saveData();
-                render();
-            }
-        };
+// Modifier un événement automatique
+window.editEvtAuto = (lotId, evtType, dateEvt) => {
+    const lot = state.data.lots.find(l => l.id === lotId);
+    if (!lot || !lot.evenementsAuto) return;
+    
+    const evt = lot.evenementsAuto.find(e => e.type === evtType && e.date === dateEvt);
+    if (!evt) return;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title">Modifier l'événement</div>
+            <div class="custom-modal-content">
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Titre</label>
+                    <input type="text" id="edit-evt-titre" value="${evt.titre}" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Date</label>
+                    <input type="date" id="edit-evt-date" value="${evt.date}" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                ${evt.dateFin ? `
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Date de fin</label>
+                    <input type="date" id="edit-evt-datefin" value="${evt.dateFin}" class="w-full px-3 py-2 border rounded-lg">
+                </div>` : ''}
+            </div>
+            <div class="flex gap-2">
+                <button class="custom-modal-btn bg-green-600" onclick="
+                    const newTitre = document.getElementById('edit-evt-titre').value;
+                    const newDate = document.getElementById('edit-evt-date').value;
+                    const evt = state.data.lots.find(l => l.id === '${lotId}').evenementsAuto.find(e => e.type === '${evtType}' && e.date === '${dateEvt}');
+                    evt.titre = newTitre;
+                    evt.date = newDate;
+                    ${evt.dateFin ? `evt.dateFin = document.getElementById('edit-evt-datefin').value;` : ''}
+                    saveData();
+                    this.closest('.custom-modal-overlay').remove();
+                    render();
+                ">Enregistrer</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+// Supprimer un événement automatique
+window.deleteEvtAuto = (lotId, evtType, dateEvt) => {
+    const lot = state.data.lots.find(l => l.id === lotId);
+    if (!lot || !lot.evenementsAuto) return;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title">Supprimer l'événement</div>
+            <div class="custom-modal-content">Voulez-vous vraiment supprimer cet événement automatique ?\n\nCette action est irréversible.</div>
+            <div class="flex gap-2">
+                <button class="custom-modal-btn bg-red-600" onclick="
+                    const lot = state.data.lots.find(l => l.id === '${lotId}');
+                    lot.evenementsAuto = lot.evenementsAuto.filter(e => !(e.type === '${evtType}' && e.date === '${dateEvt}'));
+                    saveData();
+                    this.closest('.custom-modal-overlay').remove();
+                    render();
+                ">Oui, supprimer</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+// Modifier la fonction validerEvt existante
+window.validerEvt = (id, lotId, evtType) => {
+    // Si c'est un événement manuel
+    if (!lotId) {
+        const evt = state.data.evenements.find(e => e.id === id);
+        if (evt) {
+            evt.valide = true;
+            saveData();
+            render();
+        }
+        return;
+    }
+    
+    // Si c'est un événement automatique, le supprimer (considéré comme fait)
+    const lot = state.data.lots.find(l => l.id === lotId);
+    if (lot && lot.evenementsAuto) {
+        lot.evenementsAuto = lot.evenementsAuto.filter(e => e.type !== evtType || e.date !== id.split('-')[2]);
+        saveData();
+        render();
+    }
+};
 
         window.invaliderEvt = (id) => {
             const evt = state.data.evenements.find(e => e.id === id);

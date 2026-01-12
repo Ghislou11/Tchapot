@@ -2971,39 +2971,6 @@ window.handleDayClick = (dateStr) => {
     }, 300);
 };
 
-    window.showCustomModal('Événements', message);
-
-    // Proposer de prendre RDV pour les périodes
-    if (periodesActives.length > 0) {
-        setTimeout(() => {
-            const overlay = document.createElement('div');
-            overlay.className = 'custom-modal-overlay';
-            
-            let optionsHtml = '';
-            periodesActives.forEach((p, index) => {
-                optionsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + p.type + '\', \'' + dateStr + '\'); this.closest(\'.custom-modal-overlay\').remove();">';
-                optionsHtml += 'RDV ' + p.typeLabel + ' - ' + p.lotNom;
-                optionsHtml += '</button>';
-            });
-            
-            overlay.innerHTML = '<div class="custom-modal-box"><div class="custom-modal-title">Prendre un rendez-vous ?</div><div class="custom-modal-content">Voulez-vous fixer un rendez-vous le ' + new Date(dateStr).toLocaleDateString('fr-FR') + ' ?</div>' + optionsHtml + '<button class="custom-modal-btn bg-gray-400" onclick="this.closest(\'.custom-modal-overlay\').remove()">Non, annuler</button></div>';
-            
-            document.body.appendChild(overlay);
-        }, 300);
-    } else if (evts.length > 0) {
-
-        // Proposer d'ajouter un autre événement avec modal personnalisé
-        setTimeout(() => {
-            const overlay = document.createElement('div');
-            overlay.className = 'custom-modal-overlay';
-            
-            overlay.innerHTML = '<div class="custom-modal-box"><div class="custom-modal-title">Ajouter un événement ?</div><div class="custom-modal-content">Voulez-vous ajouter un nouvel événement ce jour ?</div><div class="flex gap-2"><button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + dateStr + '\'; window.showModal(); this.closest(\'.custom-modal-overlay\').remove();">Oui</button><button class="custom-modal-btn bg-gray-400" onclick="this.closest(\'.custom-modal-overlay\').remove()">Non</button></div></div>';
-            
-            document.body.appendChild(overlay);
-        }, 300);
-    }
-};
-
 window.prendreRdv = (lotId, typeRdv, dateRdv) => {
     const lot = state.data.lots.find(l => l.id === lotId);
     if (!lot || !lot.evenementsAuto) return;

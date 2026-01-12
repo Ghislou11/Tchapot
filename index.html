@@ -1572,71 +1572,99 @@ state.data.lots.forEach(lot => {
         }
         
         // Périodes : afficher uniquement début et fin (pas écho, pesée, biamintic, gallifen)
-        if (evt.dateFin) {
-            const evtDebut = new Date(evt.date);
-            const evtFin = new Date(evt.dateFin);
-            evtDebut.setHours(0, 0, 0, 0);
-            evtFin.setHours(0, 0, 0, 0);
-            
-            const joursAvantDebut = Math.ceil((evtDebut - today) / (1000 * 60 * 60 * 24));
-            const joursAvantFin = Math.ceil((evtFin - today) / (1000 * 60 * 60 * 24));
-            
-            // Types de périodes à afficher (exclure écho, pesée, biamintic, gallifen)
-            const periodesAffichees = ['birthStart', 'flushing', 'lutteStart', 'lutteRetourStart'];
-            
-            if (periodesAffichees.includes(evt.type)) {
-                // Ajouter l'événement de DÉBUT si dans les 60 prochains jours
-                if (joursAvantDebut >= 0 && joursAvantDebut <= 60) {
-                    let titreDebut = evt.titre.replace(lot.nom, '').trim();
-                    if (evt.type === 'birthStart') titreDebut = 'Début mise bas';
-                    else if (evt.type === 'flushing') titreDebut = 'Début flushing';
-                    else if (evt.type === 'lutteStart') titreDebut = 'Début lutte';
-                    else if (evt.type === 'lutteRetourStart') titreDebut = 'Début lutte retours';
-                    
-                    tousEvtsAvenir.push({
-                        date: evt.date,
-                        titre: titreDebut + ' - ' + lot.nom,
-                        categorie: 'Élevage',
-                        heure: '',
-                        description: 'Période du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
-                        id: lot.id + '-' + evt.type + '-debut-' + evt.date,
-                        valide: false,
-                        type: 'automatique-debut',
-                        lotNom: lot.nom,
-                        lotId: lot.id,
-                        evtType: evt.type,
-                        evtData: evt
-                    });
-                }
+if (evt.dateFin) {
+    const evtDebut = new Date(evt.date);
+    const evtFin = new Date(evt.dateFin);
+    evtDebut.setHours(0, 0, 0, 0);
+    evtFin.setHours(0, 0, 0, 0);
+    
+    const joursAvantDebut = Math.ceil((evtDebut - today) / (1000 * 60 * 60 * 24));
+    const joursAvantFin = Math.ceil((evtFin - today) / (1000 * 60 * 60 * 24));
+    
+    // Types de périodes à afficher (exclure écho, pesée, biamintic, gallifen)
+    const periodesAffichees = ['birthStart', 'flushing', 'lutteStart', 'lutteRetourStart'];
+    
+    if (periodesAffichees.includes(evt.type)) {
+        // Vérifier si début = fin (cas IA)
+        const memeJour = evt.date === evt.dateFin;
+        
+        if (memeJour) {
+            // Si même jour : afficher UN SEUL événement
+            if (joursAvantDebut >= 0 && joursAvantDebut <= 60) {
+                let titre = evt.titre.replace(lot.nom, '').trim();
+                if (evt.type === 'birthStart') titre = 'Mise bas';
+                else if (evt.type === 'flushing') titre = 'Flushing';
+                else if (evt.type === 'lutteStart') titre = 'Lutte (IA)';
+                else if (evt.type === 'lutteRetourStart') titre = 'Lutte retours';
                 
-                // Ajouter l'événement de FIN si dans les 60 prochains jours
-                if (joursAvantFin >= 0 && joursAvantFin <= 60) {
-                    let titreFin = evt.titre.replace(lot.nom, '').trim();
-                    if (evt.type === 'birthStart') titreFin = 'Fin mise bas';
-                    else if (evt.type === 'flushing') titreFin = 'Fin flushing';
-                    else if (evt.type === 'lutteStart') titreFin = 'Fin lutte';
-                    else if (evt.type === 'lutteRetourStart') titreFin = 'Fin lutte retours';
-                    
-                    tousEvtsAvenir.push({
-                        date: evt.dateFin,
-                        titre: titreFin + ' - ' + lot.nom,
-                        categorie: 'Élevage',
-                        heure: '',
-                        description: 'Période du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
-                        id: lot.id + '-' + evt.type + '-fin-' + evt.dateFin,
-                        valide: false,
-                        type: 'automatique-fin',
-                        lotNom: lot.nom,
-                        lotId: lot.id,
-                        evtType: evt.type,
-                        evtData: evt
-                    });
-                }
+                tousEvtsAvenir.push({
+                    date: evt.date,
+                    titre: titre + ' - ' + lot.nom,
+                    categorie: 'Élevage',
+                    heure: '',
+                    description: 'Le ' + formatDate(evt.date),
+                    id: lot.id + '-' + evt.type + '-unique-' + evt.date,
+                    valide: false,
+                    type: 'automatique',
+                    lotNom: lot.nom,
+                    lotId: lot.id,
+                    evtType: evt.type,
+                    evtData: evt
+                });
+            }
+        } else {
+            // Si jours différents : afficher DÉBUT et FIN
+            
+            // Ajouter l'événement de DÉBUT si dans les 60 prochains jours
+            if (joursAvantDebut >= 0 && joursAvantDebut <= 60) {
+                let titreDebut = evt.titre.replace(lot.nom, '').trim();
+                if (evt.type === 'birthStart') titreDebut = 'Début mise bas';
+                else if (evt.type === 'flushing') titreDebut = 'Début flushing';
+                else if (evt.type === 'lutteStart') titreDebut = 'Début lutte';
+                else if (evt.type === 'lutteRetourStart') titreDebut = 'Début lutte retours';
+                
+                tousEvtsAvenir.push({
+                    date: evt.date,
+                    titre: titreDebut + ' - ' + lot.nom,
+                    categorie: 'Élevage',
+                    heure: '',
+                    description: 'Période du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
+                    id: lot.id + '-' + evt.type + '-debut-' + evt.date,
+                    valide: false,
+                    type: 'automatique-debut',
+                    lotNom: lot.nom,
+                    lotId: lot.id,
+                    evtType: evt.type,
+                    evtData: evt
+                });
             }
             
-            // Pour les RDV pris (echoRdv, peseeRdv, etc.) : les afficher comme événements ponctuels
-            // Ils n'ont normalement pas de dateFin, mais au cas où...
+            // Ajouter l'événement de FIN si dans les 60 prochains jours
+            if (joursAvantFin >= 0 && joursAvantFin <= 60) {
+                let titreFin = evt.titre.replace(lot.nom, '').trim();
+                if (evt.type === 'birthStart') titreFin = 'Fin mise bas';
+                else if (evt.type === 'flushing') titreFin = 'Fin flushing';
+                else if (evt.type === 'lutteStart') titreFin = 'Fin lutte';
+                else if (evt.type === 'lutteRetourStart') titreFin = 'Fin lutte retours';
+                
+                tousEvtsAvenir.push({
+                    date: evt.dateFin,
+                    titre: titreFin + ' - ' + lot.nom,
+                    categorie: 'Élevage',
+                    heure: '',
+                    description: 'Période du ' + formatDate(evt.date) + ' au ' + formatDate(evt.dateFin),
+                    id: lot.id + '-' + evt.type + '-fin-' + evt.dateFin,
+                    valide: false,
+                    type: 'automatique-fin',
+                    lotNom: lot.nom,
+                    lotId: lot.id,
+                    evtType: evt.type,
+                    evtData: evt
+                });
+            }
         }
+    }
+}
     });
 });
 
@@ -1711,17 +1739,19 @@ if (tousEvtsAvenir.length > 0) {
             parts.push('</div>'); // Fin du grid 2 colonnes
 
             // Modal
-            parts.push('<div id="modal-evt" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">');
-            parts.push('<div class="bg-white rounded-lg p-6 max-w-md w-full max-h-screen overflow-y-auto">');
-            parts.push('<h3 class="text-xl font-bold mb-4">Nouvel événement</h3>');
-            parts.push('<form id="form-evt" class="space-y-3">');
-            parts.push('<div><label class="block text-sm font-medium mb-1">Catégorie</label>');
-            parts.push('<select id="evt-cat" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            parts.push('<option value="Stockage">Stockage</option>');
-            parts.push('<option value="Élevage">Élevage</option>');
-            parts.push('<option value="Autre">Autre</option>');
-            parts.push('</select></div>');
+parts.push('<div id="modal-evt" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">');
+parts.push('<div class="bg-white rounded-lg p-6 max-w-md w-full max-h-screen overflow-y-auto">');
+parts.push('<h3 class="text-xl font-bold mb-4">Nouvel événement</h3>');
+parts.push('<form id="form-evt" class="space-y-3">');
+
+// NOUVEAU : Choix du lot ou "Autre"
+parts.push('<div><label class="block text-sm font-medium mb-1">Associer à un lot (optionnel)</label>');
+parts.push('<select id="evt-lot" class="w-full px-3 py-2 border rounded-lg">');
+parts.push('<option value="">Autre (événement général)</option>');
+state.data.lots.forEach(lot => {
+    parts.push('<option value="' + lot.id + '">' + lot.nom + ' (' + lot.type + ')</option>');
+});
+parts.push('</select></div>');
             parts.push('<div><label class="block text-sm font-medium mb-1">Titre</label>');
             parts.push('<input type="text" id="evt-titre" class="w-full px-3 py-2 border rounded-lg" required></div>');
             parts.push('<div><label class="block text-sm font-medium mb-1">Date</label>');
@@ -2399,22 +2429,29 @@ if (formFourrage) {
 }
 
             const formEvt = document.getElementById('form-evt');
-            if (formEvt) {
-                formEvt.onsubmit = (e) => {
-                    e.preventDefault();
-                    state.data.evenements.push({
-                        id: Date.now().toString(),
-                        categorie: document.getElementById('evt-cat').value,
-                        titre: document.getElementById('evt-titre').value,
-                        date: document.getElementById('evt-date').value,
-                        heure: document.getElementById('evt-heure').value || '',
-                        description: document.getElementById('evt-desc').value || '',
-                        valide: false
-                    });
-                    saveData();
-                    window.hideModal();
-                    render();
-                };
+if (formEvt) {
+    formEvt.onsubmit = (e) => {
+        e.preventDefault();
+        
+        const lotId = document.getElementById('evt-lot').value;
+        const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
+        
+        state.data.evenements.push({
+            id: Date.now().toString(),
+            lotId: lotId || null,  // NOUVEAU : ID du lot ou null
+            lotNom: lot ? lot.nom : null,  // NOUVEAU : Nom du lot pour affichage
+            categorie: lot ? 'Élevage' : 'Autre',  // Catégorie automatique selon le lot
+            titre: document.getElementById('evt-titre').value,
+            date: document.getElementById('evt-date').value,
+            heure: document.getElementById('evt-heure').value || '',
+            description: document.getElementById('evt-desc').value || '',
+            valide: false
+        });
+        saveData();
+        window.hideModal();
+        render();
+    };
+}
             } // Rendu du calendrier si on est sur l'onglet calendrier
             if (state.activeTab === 'calendrier') {
                 renderCalendarGrid();
@@ -2553,6 +2590,73 @@ if (formFourrage) {
                     this.closest('.custom-modal-overlay').remove();
                     render();
                 ">Oui, supprimer</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+window.editEvt = (id) => {
+    const evt = state.data.evenements.find(e => e.id === id);
+    if (!evt) return;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    // Options pour les lots
+    let lotsOptions = '<option value="">Autre (événement général)</option>';
+    state.data.lots.forEach(lot => {
+        const selected = evt.lotId === lot.id ? 'selected' : '';
+        lotsOptions += '<option value="' + lot.id + '" ' + selected + '>' + lot.nom + ' (' + lot.type + ')</option>';
+    });
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title">Modifier l'événement</div>
+            <div class="custom-modal-content">
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Associer à un lot</label>
+                    <select id="edit-evt-lot" class="w-full px-3 py-2 border rounded-lg">
+                        ${lotsOptions}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Titre</label>
+                    <input type="text" id="edit-evt-titre" value="${evt.titre}" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Date</label>
+                    <input type="date" id="edit-evt-date" value="${evt.date}" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Heure (optionnel)</label>
+                    <input type="time" id="edit-evt-heure" value="${evt.heure || ''}" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium mb-1">Description</label>
+                    <textarea id="edit-evt-desc" class="w-full px-3 py-2 border rounded-lg" rows="3">${evt.description || ''}</textarea>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="custom-modal-btn bg-green-600" onclick="
+                    const lotId = document.getElementById('edit-evt-lot').value;
+                    const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
+                    
+                    const evt = state.data.evenements.find(e => e.id === '${id}');
+                    evt.lotId = lotId || null;
+                    evt.lotNom = lot ? lot.nom : null;
+                    evt.categorie = lot ? 'Élevage' : 'Autre';
+                    evt.titre = document.getElementById('edit-evt-titre').value;
+                    evt.date = document.getElementById('edit-evt-date').value;
+                    evt.heure = document.getElementById('edit-evt-heure').value;
+                    evt.description = document.getElementById('edit-evt-desc').value;
+                    
+                    saveData();
+                    this.closest('.custom-modal-overlay').remove();
+                    render();
+                ">Enregistrer</button>
                 <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
             </div>
         </div>

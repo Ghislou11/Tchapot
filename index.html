@@ -214,90 +214,91 @@ const EMOJIS = {
 		function calculerEvenementsAutomatiques(lot, typeLutte, lutteDebut, lutteFin, premierNe, dernierNe) {
     const evenements = [];
     
-const config = PERIODES_GESTATION[lot.type];
+    const config = PERIODES_GESTATION[lot.type];
 
-// === ÉVÉNEMENTS DE REPRODUCTION ===
-if (config && typeLutte && lutteDebut) {
+    // === ÉVÉNEMENTS DE REPRODUCTION ===
+    if (config && typeLutte && lutteDebut) {
         const dateDebut = new Date(lutteDebut);
         const dateFin = typeLutte === 'IA' ? new Date(lutteDebut) : new Date(lutteFin);
         
         // Période de lutte
         evenements.push({
-            type: 'lutteStart',  // ← CHANGÉ
-            date: lutteDebut,    // ← CHANGÉ
-            dateFin: typeLutte === 'IA' ? lutteDebut : lutteFin,  // ← CHANGÉ
+            type: 'lutteStart',
+            date: lutteDebut,
+            dateFin: typeLutte === 'IA' ? lutteDebut : lutteFin,
             titre: 'Lutte ' + lot.nom
         });
         
         // Événements spécifiques IA
-if (typeLutte === 'IA') {
-    if (lot.type === 'Vache' || lot.type === 'Génisse') {
-        // Cycle vaches/génisses
-        const poseSpiraleVache = new Date(dateDebut);
-        poseSpiraleVache.setDate(poseSpiraleVache.getDate() + EVENEMENTS_IA.poseSpiraleVache);
-        evenements.push({
-            type: 'poseSpiraleVache',
-            date: poseSpiraleVache.toISOString().split('T')[0],
-            titre: 'Pose spirale ' + lot.nom
-        });
-        
-        const piqurePGF = new Date(dateDebut);
-        piqurePGF.setDate(piqurePGF.getDate() + EVENEMENTS_IA.piqurePGF);
-        evenements.push({
-            type: 'piqurePGF',
-            date: piqurePGF.toISOString().split('T')[0],
-            titre: 'Piqûre PGF ' + lot.nom
-        });
-        
-        const retraitSpiraleVache = new Date(dateDebut);
-        retraitSpiraleVache.setDate(retraitSpiraleVache.getDate() + EVENEMENTS_IA.retraitSpiraleVache);
-        evenements.push({
-            type: 'retraitSpiraleVache',
-            date: retraitSpiraleVache.toISOString().split('T')[0],
-            titre: 'Retrait spirale ' + lot.nom
-        });
-    } else {
-        // Cycle brebis/agnelles
-        const poseEponge = new Date(dateDebut);
-        poseEponge.setDate(poseEponge.getDate() + EVENEMENTS_IA.poseEponge);
-        evenements.push({
-            type: 'poseEponge',
-            date: poseEponge.toISOString().split('T')[0],
-            titre: 'Pose éponge ' + lot.nom
-        });
-        
-        const retraitEponge = new Date(dateDebut);
-        retraitEponge.setDate(retraitEponge.getDate() + EVENEMENTS_IA.retraitEponge);
-        evenements.push({
-            type: 'retraitEponge',
-            date: retraitEponge.toISOString().split('T')[0],
-            titre: 'Retrait éponge ' + lot.nom
-        });
-    }
+        if (typeLutte === 'IA') {
+            if (lot.type === 'Vache' || lot.type === 'Génisse') {
+                // Cycle vaches/génisses
+                const poseSpiraleVache = new Date(dateDebut);
+                poseSpiraleVache.setDate(poseSpiraleVache.getDate() + EVENEMENTS_IA.poseSpiraleVache);
+                evenements.push({
+                    type: 'poseSpiraleVache',
+                    date: poseSpiraleVache.toISOString().split('T')[0],
+                    titre: 'Pose spirale ' + lot.nom
+                });
+                
+                const piqurePGF = new Date(dateDebut);
+                piqurePGF.setDate(piqurePGF.getDate() + EVENEMENTS_IA.piqurePGF);
+                evenements.push({
+                    type: 'piqurePGF',
+                    date: piqurePGF.toISOString().split('T')[0],
+                    titre: 'Piqûre PGF ' + lot.nom
+                });
+                
+                const retraitSpiraleVache = new Date(dateDebut);
+                retraitSpiraleVache.setDate(retraitSpiraleVache.getDate() + EVENEMENTS_IA.retraitSpiraleVache);
+                evenements.push({
+                    type: 'retraitSpiraleVache',
+                    date: retraitSpiraleVache.toISOString().split('T')[0],
+                    titre: 'Retrait spirale ' + lot.nom
+                });
+            } else {
+                // Cycle brebis/agnelles
+                const poseEponge = new Date(dateDebut);
+                poseEponge.setDate(poseEponge.getDate() + EVENEMENTS_IA.poseEponge);
+                evenements.push({
+                    type: 'poseEponge',
+                    date: poseEponge.toISOString().split('T')[0],
+                    titre: 'Pose éponge ' + lot.nom
+                });
+                
+                const retraitEponge = new Date(dateDebut);
+                retraitEponge.setDate(retraitEponge.getDate() + EVENEMENTS_IA.retraitEponge);
+                evenements.push({
+                    type: 'retraitEponge',
+                    date: retraitEponge.toISOString().split('T')[0],
+                    titre: 'Retrait éponge ' + lot.nom
+                });
+            }
             
             // Lutte des retours (SEULEMENT pour brebis/agnelles)
-    if (lot.type === 'Brebis' || lot.type === 'Agnelle') {
-        const retoursDebut = new Date(dateDebut);
-        retoursDebut.setDate(retoursDebut.getDate() + EVENEMENTS_IA.retoursDebut);
-        const retoursFin = new Date(dateDebut);
-        retoursFin.setDate(retoursFin.getDate() + EVENEMENTS_IA.retoursFin);
-        evenements.push({
-            type: 'lutteRetourStart',
-            date: retoursDebut.toISOString().split('T')[0],
-            dateFin: retoursFin.toISOString().split('T')[0],
-            titre: 'Lutte retours ' + lot.nom
-        });
-    }
+            if (lot.type === 'Brebis' || lot.type === 'Agnelle') {
+                const retoursDebut = new Date(dateDebut);
+                retoursDebut.setDate(retoursDebut.getDate() + EVENEMENTS_IA.retoursDebut);
+                const retoursFin = new Date(dateDebut);
+                retoursFin.setDate(retoursFin.getDate() + EVENEMENTS_IA.retoursFin);
+                evenements.push({
+                    type: 'lutteRetourStart',
+                    date: retoursDebut.toISOString().split('T')[0],
+                    dateFin: retoursFin.toISOString().split('T')[0],
+                    titre: 'Lutte retours ' + lot.nom
+                });
+            }
+        }
         
-        // Mise bas
+        // === MISE BAS (POUR TOUS LES TYPES DE LUTTE) ===
         const mbDebut = new Date(dateDebut);
         mbDebut.setDate(mbDebut.getDate() + config.duree - config.delta);
         const mbFin = new Date(dateFin);
         mbFin.setDate(mbFin.getDate() + config.duree + config.delta);
         evenements.push({
-            type: 'birthStart',  // ← CHANGÉ
-            date: mbDebut.toISOString().split('T')[0],  // ← CHANGÉ
-            dateFin: mbFin.toISOString().split('T')[0],  // ← CHANGÉ
+            type: 'birthStart',
+            date: mbDebut.toISOString().split('T')[0],
+            dateFin: mbFin.toISOString().split('T')[0],
             titre: 'Mise bas ' + lot.nom
         });
         
@@ -308,9 +309,9 @@ if (typeLutte === 'IA') {
             const echoFin = new Date(dateFin);
             echoFin.setDate(echoFin.getDate() + PERIODE_ECHO.fin);
             evenements.push({
-                type: 'echoStart',  // ← CHANGÉ
-                date: echoDebut.toISOString().split('T')[0],  // ← CHANGÉ
-                dateFin: echoFin.toISOString().split('T')[0],  // ← CHANGÉ
+                type: 'echoStart',
+                date: echoDebut.toISOString().split('T')[0],
+                dateFin: echoFin.toISOString().split('T')[0],
                 titre: 'Échographie ' + lot.nom
             });
         }
@@ -354,10 +355,9 @@ if (typeLutte === 'IA') {
                 });
             }
         }
-        }
     }
     
-	// === ÉVÉNEMENTS POULETS ===
+    // === ÉVÉNEMENTS POULETS ===
     if (lot.type === 'Poulet' && lot.poulets && lot.poulets.dateEntree) {
         const dateEntree = new Date(lot.poulets.dateEntree);
         
@@ -448,13 +448,8 @@ if (typeLutte === 'IA') {
             titre: 'Pesée 3 ' + lot.nom
         });
     }
-	
+    
     // === ÉVÉNEMENTS AGNEAUX ===
-	console.log('TEST DEBUG - lot.type:', lot.type);
-console.log('TEST DEBUG - premierNe:', premierNe);
-console.log('TEST DEBUG - dernierNe:', dernierNe);
-console.log('TEST DEBUG - Condition:', lot.type === 'Agneaux' && premierNe && dernierNe);
-
     if (lot.type === 'Agneaux' && premierNe && dernierNe) {
         const datePremier = new Date(premierNe);
         const dateDernier = new Date(dernierNe);
@@ -463,7 +458,7 @@ console.log('TEST DEBUG - Condition:', lot.type === 'Agneaux' && premierNe && de
         const ouvertureAliment = new Date(datePremier);
         ouvertureAliment.setDate(ouvertureAliment.getDate() + EVENEMENTS_AGNEAUX.ouvertureAliment);
         evenements.push({
-            type: 'ouvertureAliments',  // ← CHANGÉ (avec 's')
+            type: 'ouvertureAliments',
             date: ouvertureAliment.toISOString().split('T')[0],
             titre: 'Ouverture aliment ' + lot.nom
         });
@@ -497,9 +492,9 @@ console.log('TEST DEBUG - Condition:', lot.type === 'Agneaux' && premierNe && de
         peseeFin.setDate(peseeFin.getDate() + 7);
         
         evenements.push({
-            type: 'peseeStart',  // ← CHANGÉ
-            date: peseeStart.toISOString().split('T')[0],  // ← CHANGÉ
-            dateFin: peseeFin.toISOString().split('T')[0],  // ← CHANGÉ
+            type: 'peseeStart',
+            date: peseeStart.toISOString().split('T')[0],
+            dateFin: peseeFin.toISOString().split('T')[0],
             titre: 'Pesée ' + lot.nom
         });
     }

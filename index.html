@@ -1250,14 +1250,16 @@ parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 roun
             parts.push('<th class="px-3 py-2 text-right font-semibold">Actions</th>');
             parts.push('</tr></thead><tbody class="divide-y">');
 
-            // Trier les lots par bâtiment
-            const lotsTries = [...state.data.lots].sort((a, b) => {
-                const nomBatA = getNomBat(a.lieuActuel);
-                const nomBatB = getNomBat(b.lieuActuel);
-                return nomBatA.localeCompare(nomBatB);
-            });
-            
-            lotsTries.forEach(l => {
+            // Trier les lots ACTIFS par bâtiment (exclure les archivés)
+const lotsTries = [...state.data.lots]
+    .filter(l => !l.archive)  // NOUVEAU : Ne montrer que les lots actifs
+    .sort((a, b) => {
+        const nomBatA = getNomBat(a.lieuActuel);
+        const nomBatB = getNomBat(b.lieuActuel);
+        return nomBatA.localeCompare(nomBatB);
+    });
+
+lotsTries.forEach(l => {
                 parts.push('<tr>');
                 parts.push('<td class="px-3 py-2">' + l.nom + '</td>');
                 parts.push('<td class="px-3 py-2">' + l.type + '</td>');
@@ -1288,11 +1290,11 @@ parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 roun
             parts.push('<input type="date" id="ration-date" value="' + today + '" class="w-full px-3 py-2 border rounded-lg" required></div>');
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Lot d\'animaux</label>');
-            parts.push('<select id="ration-lot" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            state.data.lots.forEach(l => {
-                parts.push('<option value="' + l.id + '" data-tetes="' + l.nombreTetes + '">' + l.nom + ' (' + l.nombreTetes + ' têtes)</option>');
-            });
+parts.push('<select id="ration-lot" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<option value="">Sélectionner...</option>');
+state.data.lots.filter(l => !l.archive).forEach(l => {  // NOUVEAU : Filtrer les archivés
+    parts.push('<option value="' + l.id + '" data-tetes="' + l.nombreTetes + '">' + l.nom + ' (' + l.nombreTetes + ' têtes)</option>');
+});
             parts.push('</select></div>');
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (silo)</label>');
@@ -1445,10 +1447,10 @@ parts.push('</div></div></div>');
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Lot d\'animaux</label>');
             parts.push('<select id="cf-lot" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            state.data.lots.forEach(l => {
-                parts.push('<option value="' + l.id + '">' + l.nom + '</option>');
-            });
+			parts.push('<option value="">Sélectionner...</option>');
+			state.data.lots.filter(l => !l.archive).forEach(l => {  // NOUVEAU : Filtrer les archivés
+			parts.push('<option value="' + l.id + '">' + l.nom + '</option>');
+			});
             parts.push('</select></div>');
 
             parts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
@@ -1748,7 +1750,7 @@ parts.push('<form id="form-evt" class="space-y-3">');
 parts.push('<div><label class="block text-sm font-medium mb-1">Associer à un lot (optionnel)</label>');
 parts.push('<select id="evt-lot" class="w-full px-3 py-2 border rounded-lg">');
 parts.push('<option value="">Autre (événement général)</option>');
-state.data.lots.forEach(lot => {
+state.data.lots.filter(l => !l.archive).forEach(lot => {  // NOUVEAU : Filtrer les archivés
     parts.push('<option value="' + lot.id + '">' + lot.nom + ' (' + lot.type + ')</option>');
 });
 parts.push('</select></div>');
@@ -2503,15 +2505,19 @@ if (formEvt) {
     
     overlay.innerHTML = `
         <div class="custom-modal-box">
-            <div class="custom-modal-title">Supprimer le lot</div>
-            <div class="custom-modal-content">Voulez-vous vraiment supprimer "${lot.nom}" ?\n\nCette action est irréversible.</div>
+            <div class="custom-modal-title">Archiver le lot</div>
+            <div class="custom-modal-content">Voulez-vous archiver "${lot.nom}" ?\n\nLe lot ne sera plus actif mais son historique (rations, fourrage, événements) sera conservé pour les statistiques.</div>
             <div class="flex gap-2">
-                <button class="custom-modal-btn bg-red-600" onclick="
-                    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
+                <button class="custom-modal-btn bg-orange-600" onclick="
+                    const lot = state.data.lots.find(l => l.id === '${id}');
+                    lot.archive = true;
+                    lot.dateArchivage = new Date().toISOString().split('T')[0];
+                    lot.lieuActuel = null;
+                    lot.nombreTetes = 0;
                     saveData();
                     this.closest('.custom-modal-overlay').remove();
                     render();
-                ">Oui, supprimer</button>
+                ">Oui, archiver</button>
                 <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
             </div>
         </div>
@@ -2607,10 +2613,10 @@ window.editEvt = (id) => {
     
     // Options pour les lots
     let lotsOptions = '<option value="">Autre (événement général)</option>';
-    state.data.lots.forEach(lot => {
-        const selected = evt.lotId === lot.id ? 'selected' : '';
-        lotsOptions += '<option value="' + lot.id + '" ' + selected + '>' + lot.nom + ' (' + lot.type + ')</option>';
-    });
+state.data.lots.filter(l => !l.archive).forEach(lot => {  // NOUVEAU : Filtrer les archivés
+    const selected = evt.lotId === lot.id ? 'selected' : '';
+    lotsOptions += '<option value="' + lot.id + '" ' + selected + '>' + lot.nom + ' (' + lot.type + ')</option>';
+});
     
     overlay.innerHTML = `
         <div class="custom-modal-box">

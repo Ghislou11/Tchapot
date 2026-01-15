@@ -3618,8 +3618,9 @@ document.querySelectorAll('.day-cell').forEach(cell => {
 </div>
                     <div id="edit-previsions" class="text-xs text-gray-600 mt-2 hidden"></div>
                 </div>
-                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 mt-3">
-    <h4 class="font-semibold mb-2 text-yellow-800">Suivi agneaux (si applicable)</h4>
+                ${lot.type === 'Agneaux' ? `
+<div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 mt-3">
+    <h4 class="font-semibold mb-2 text-yellow-800">Suivi agneaux</h4>
     <div class="grid grid-cols-2 gap-2">
         <div>
             <label class="block text-xs font-medium mb-1">Date 1er né</label>
@@ -3633,6 +3634,7 @@ document.querySelectorAll('.day-cell').forEach(cell => {
         </div>
     </div>
 </div>
+` : ''}
                 <div class="flex gap-2">
                     <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">
                         Enregistrer

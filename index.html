@@ -1408,37 +1408,37 @@ parts.push('</div></div></div>');
             parts.push('<th class="px-2 py-2 text-right">Act.</th>');
             parts.push('</tr></thead><tbody class="divide-y">');
 
-            const rationsTries = state.data.rations
+// Trier toutes les rations
+const rationsTries = state.data.rations
     .slice()
     .sort((a, b) => {
-        // Trier par date décroissante
         const dateCompare = new Date(b.date) - new Date(a.date);
         if (dateCompare !== 0) return dateCompare;
-        // Si même date, trier par nom de lot
         return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
     });
 
+// Afficher seulement les N premières
 rationsTries
     .slice(0, state.rationsAffichees)
     .forEach(r => {
-                parts.push('<tr>');
-                parts.push('<td class="px-2 py-2">' + formatDate(r.date) + '</td>');
-                parts.push('<td class="px-2 py-2">' + getNomLot(r.lotId) + '</td>');
-                parts.push('<td class="px-2 py-2">' + r.typeAliment + '</td>');
-                parts.push('<td class="px-2 py-2">' + r.poidsParTete + '</td>');
-                parts.push('<td class="px-2 py-2 font-bold">' + r.quantiteTotale + '</td>');
-                parts.push('<td class="px-2 py-2 text-right">');
-                parts.push('<button onclick="window.deleteRation(\'' + r.id + '\')" class="text-red-600 font-bold text-lg">×</button>');
-                parts.push('</td></tr>');
-            });
+        parts.push('<tr>');
+        parts.push('<td class="px-2 py-2">' + formatDate(r.date) + '</td>');
+        parts.push('<td class="px-2 py-2">' + getNomLot(r.lotId) + '</td>');
+        parts.push('<td class="px-2 py-2">' + r.typeAliment + '</td>');
+        parts.push('<td class="px-2 py-2">' + r.poidsParTete + '</td>');
+        parts.push('<td class="px-2 py-2 font-bold">' + r.quantiteTotale + '</td>');
+        parts.push('<td class="px-2 py-2 text-right">');
+        parts.push('<button onclick="window.deleteRation(\'' + r.id + '\')" class="text-red-600 font-bold text-lg">×</button>');
+        parts.push('</td></tr>');
+    });
 
-            if (state.data.rations.length === 0) {
-                parts.push('<tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">Aucune ration</td></tr>');
-            }
+if (rationsTries.length === 0) {
+    parts.push('<tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">Aucune ration</td></tr>');
+}
 
-            parts.push('</tbody></table>');
+parts.push('</tbody></table>');
 
-// Bouton "Voir plus" si il y a plus de rations
+// Bouton "Voir plus" si il reste des rations
 if (rationsTries.length > state.rationsAffichees) {
     const restantes = rationsTries.length - state.rationsAffichees;
     parts.push('<div class="text-center py-3">');
@@ -1497,38 +1497,38 @@ return parts.join('');
             parts.push('<th class="px-2 py-2 text-left">Type</th>');
             parts.push('<th class="px-2 py-2 text-left">Balles</th>');
             parts.push('<th class="px-2 py-2 text-right">Act.</th>');
-            parts.push('</tr></thead><tbody class="divide-y">');
+           parts.push('</tr></thead><tbody class="divide-y">');
 
-            const fourragesTries = state.data.consoFourrage
+// Trier tous les fourrages
+const fourragesTries = state.data.consoFourrage
     .slice()
     .sort((a, b) => {
-        // Trier par date décroissante
         const dateCompare = new Date(b.date) - new Date(a.date);
         if (dateCompare !== 0) return dateCompare;
-        // Si même date, trier par nom de lot
         return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
     });
 
+// Afficher seulement les N premiers
 fourragesTries
     .slice(0, state.fourragesAffiches)
     .forEach(c => {
-                parts.push('<tr>');
-                parts.push('<td class="px-2 py-2">' + formatDate(c.date) + '</td>');
-                parts.push('<td class="px-2 py-2">' + getNomLot(c.lotId) + '</td>');
-                parts.push('<td class="px-2 py-2">' + c.typeFourrage + '</td>');
-                parts.push('<td class="px-2 py-2 font-bold">' + c.nombreBalles + '</td>');
-                parts.push('<td class="px-2 py-2 text-right">');
-                parts.push('<button onclick="window.deleteConsoFourrage(\'' + c.id + '\')" class="text-red-600 font-bold text-lg">×</button>');
-                parts.push('</td></tr>');
-            });
+        parts.push('<tr>');
+        parts.push('<td class="px-2 py-2">' + formatDate(c.date) + '</td>');
+        parts.push('<td class="px-2 py-2">' + getNomLot(c.lotId) + '</td>');
+        parts.push('<td class="px-2 py-2">' + c.typeFourrage + '</td>');
+        parts.push('<td class="px-2 py-2 font-bold">' + c.nombreBalles + '</td>');
+        parts.push('<td class="px-2 py-2 text-right">');
+        parts.push('<button onclick="window.deleteConsoFourrage(\'' + c.id + '\')" class="text-red-600 font-bold text-lg">×</button>');
+        parts.push('</td></tr>');
+    });
 
-            if (state.data.consoFourrage.length === 0) {
-                parts.push('<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Aucune consommation</td></tr>');
-            }
+if (fourragesTries.length === 0) {
+    parts.push('<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Aucune consommation</td></tr>');
+}
 
-            parts.push('</tbody></table>');
+parts.push('</tbody></table>');
 
-// Bouton "Voir plus" si il y a plus de fourrages
+// Bouton "Voir plus" si il reste des fourrages
 if (fourragesTries.length > state.fourragesAffiches) {
     const restantes = fourragesTries.length - state.fourragesAffiches;
     parts.push('<div class="text-center py-3">');

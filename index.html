@@ -203,6 +203,8 @@ const EMOJIS = {
         let state = {
             activeTab: 'tableau-bord',
             activeSubTab: 'rdv-pattounes',
+			rationsAffichees: 20,
+			fourragesAffiches: 20,
             data: {
                 batiments: [],
                 lots: [],
@@ -1406,7 +1408,7 @@ parts.push('</div></div></div>');
             parts.push('<th class="px-2 py-2 text-right">Act.</th>');
             parts.push('</tr></thead><tbody class="divide-y">');
 
-            state.data.rations
+            const rationsTries = state.data.rations
     .slice()
     .sort((a, b) => {
         // Trier par date décroissante
@@ -1414,8 +1416,10 @@ parts.push('</div></div></div>');
         if (dateCompare !== 0) return dateCompare;
         // Si même date, trier par nom de lot
         return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
-    })
-    .slice(0, 20)
+    });
+
+rationsTries
+    .slice(0, state.rationsAffichees)
     .forEach(r => {
                 parts.push('<tr>');
                 parts.push('<td class="px-2 py-2">' + formatDate(r.date) + '</td>');
@@ -1432,8 +1436,20 @@ parts.push('</div></div></div>');
                 parts.push('<tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">Aucune ration</td></tr>');
             }
 
-            parts.push('</tbody></table></div></div>');
-            return parts.join('');
+            parts.push('</tbody></table>');
+
+// Bouton "Voir plus" si il y a plus de rations
+if (rationsTries.length > state.rationsAffichees) {
+    const restantes = rationsTries.length - state.rationsAffichees;
+    parts.push('<div class="text-center py-3">');
+    parts.push('<button onclick="window.voirPlusRations()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">');
+    parts.push('Voir plus (' + restantes + ' ration' + (restantes > 1 ? 's' : '') + ' restante' + (restantes > 1 ? 's' : '') + ')');
+    parts.push('</button>');
+    parts.push('</div>');
+}
+
+parts.push('</div></div>');
+return parts.join('');
         }
 
         function renderFourrage() {
@@ -1483,7 +1499,7 @@ parts.push('</div></div></div>');
             parts.push('<th class="px-2 py-2 text-right">Act.</th>');
             parts.push('</tr></thead><tbody class="divide-y">');
 
-            state.data.consoFourrage
+            const fourragesTries = state.data.consoFourrage
     .slice()
     .sort((a, b) => {
         // Trier par date décroissante
@@ -1491,8 +1507,10 @@ parts.push('</div></div></div>');
         if (dateCompare !== 0) return dateCompare;
         // Si même date, trier par nom de lot
         return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
-    })
-    .slice(0, 20)
+    });
+
+fourragesTries
+    .slice(0, state.fourragesAffiches)
     .forEach(c => {
                 parts.push('<tr>');
                 parts.push('<td class="px-2 py-2">' + formatDate(c.date) + '</td>');
@@ -1508,8 +1526,20 @@ parts.push('</div></div></div>');
                 parts.push('<tr><td colspan="5" class="px-3 py-4 text-center text-gray-500">Aucune consommation</td></tr>');
             }
 
-            parts.push('</tbody></table></div></div>');
-            return parts.join('');
+            parts.push('</tbody></table>');
+
+// Bouton "Voir plus" si il y a plus de fourrages
+if (fourragesTries.length > state.fourragesAffiches) {
+    const restantes = fourragesTries.length - state.fourragesAffiches;
+    parts.push('<div class="text-center py-3">');
+    parts.push('<button onclick="window.voirPlusFourrages()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">');
+    parts.push('Voir plus (' + restantes + ' consommation' + (restantes > 1 ? 's' : '') + ' restante' + (restantes > 1 ? 's' : '') + ')');
+    parts.push('</button>');
+    parts.push('</div>');
+}
+
+parts.push('</div></div>');
+return parts.join('');
         }
 
 		function renderCalendrier() {
@@ -2462,9 +2492,15 @@ if (formEvt) {
         }
 
         window.changeTab = (tab) => {
-            state.activeTab = tab;
-            render();
-        };
+    state.activeTab = tab;
+    if (tab === 'rations') {
+        state.rationsAffichees = 20; // Réinitialiser à 20 quand on revient sur l'onglet
+    }
+    if (tab === 'fourrage') {
+        state.fourragesAffiches = 20; // Réinitialiser à 20 quand on revient sur l'onglet
+    }
+    render();
+};
 
         window.changeSubTab = (tab) => {
             state.activeSubTab = tab;
@@ -3822,6 +3858,16 @@ if (nouveauTypeLutte && nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATI
         overlay.remove();
         render();
     };
+};
+
+window.voirPlusRations = () => {
+    state.rationsAffichees += 20;
+    render();
+};
+
+window.voirPlusFourrages = () => {
+    state.fourragesAffiches += 20;
+    render();
 };
 
 window.logout = async () => {

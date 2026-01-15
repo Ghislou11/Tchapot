@@ -2554,6 +2554,69 @@ if (formEvt) {
     document.body.appendChild(overlay);
 };
 
+window.showArchives = () => {
+    const lotsArchives = state.data.lots.filter(l => l.archive);
+    
+    if (lotsArchives.length === 0) {
+        alert('Aucun lot archivé');
+        return;
+    }
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    let contenu = '';
+    lotsArchives.forEach(lot => {
+        contenu += '<div class="bg-gray-50 border-2 border-gray-300 rounded-lg p-3 mb-3">';
+        contenu += '<div class="font-bold text-lg">' + lot.nom + '</div>';
+        contenu += '<div class="text-sm text-gray-600">' + lot.type + ' • Archivé le ' + formatDate(lot.dateArchivage) + '</div>';
+        contenu += '<div class="flex gap-2 mt-2">';
+        contenu += '<button class="bg-green-600 text-white px-3 py-1 rounded text-sm" onclick="window.restaurerLot(\'' + lot.id + '\')">Restaurer</button>';
+        contenu += '<button class="bg-red-600 text-white px-3 py-1 rounded text-sm" onclick="window.supprimerDefinitivement(\'' + lot.id + '\')">Supprimer définitivement</button>';
+        contenu += '</div></div>';
+    });
+    
+    overlay.innerHTML = '<div class="custom-modal-box" style="max-width: 600px;">' +
+        '<div class="custom-modal-title">📦 Lots archivés</div>' +
+        '<div class="custom-modal-content" style="max-height: 60vh; overflow-y: auto;">' +
+        contenu +
+        '</div>' +
+        '<button class="custom-modal-btn bg-gray-400" onclick="this.closest(\'.custom-modal-overlay\').remove()">Fermer</button>' +
+        '</div>';
+    
+    document.body.appendChild(overlay);
+};
+
+window.restaurerLot = (id) => {
+    const lot = state.data.lots.find(l => l.id === id);
+    if (!lot) return;
+    
+    delete lot.archive;
+    delete lot.dateArchivage;
+    lot.nombreTetes = 0;
+    
+    saveData();
+    document.querySelector('.custom-modal-overlay').remove();
+    render();
+    alert('✅ Lot restauré ! Pensez à mettre à jour le nombre de têtes et le lieu.');
+};
+
+window.supprimerDefinitivement = (id) => {
+    const lot = state.data.lots.find(l => l.id === id);
+    if (!lot) return;
+    
+    if (!confirm('⚠️ ATTENTION : Supprimer définitivement ' + lot.nom + ' et TOUTES ses données ?\n\nCette action est IRRÉVERSIBLE.')) return;
+    
+    state.data.lots = state.data.lots.filter(l => l.id !== id);
+    state.data.rations = state.data.rations.filter(r => r.lotId !== id);
+    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== id);
+    state.data.evenements = state.data.evenements.filter(e => e.lotId !== id);
+    
+    saveData();
+    document.querySelector('.custom-modal-overlay').remove();
+    render();
+};
+
         window.deleteRation = (id) => {
     const ration = state.data.rations.find(r => r.id === id);
     if (!ration) return;

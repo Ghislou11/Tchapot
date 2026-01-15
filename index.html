@@ -2605,16 +2605,51 @@ window.supprimerDefinitivement = (id) => {
     const lot = state.data.lots.find(l => l.id === id);
     if (!lot) return;
     
-    if (!confirm('⚠️ ATTENTION : Supprimer définitivement ' + lot.nom + ' et TOUTES ses données ?\n\nCette action est IRRÉVERSIBLE.')) return;
+    const confirmOverlay = document.createElement('div');
+    confirmOverlay.className = 'custom-modal-overlay';
+    confirmOverlay.style.zIndex = '3000'; // Au-dessus du modal des archives
     
-    state.data.lots = state.data.lots.filter(l => l.id !== id);
-    state.data.rations = state.data.rations.filter(r => r.lotId !== id);
-    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== id);
-    state.data.evenements = state.data.evenements.filter(e => e.lotId !== id);
+    confirmOverlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title" style="color: #dc2626;">⚠️ SUPPRESSION DÉFINITIVE</div>
+            <div class="custom-modal-content">
+                Vous êtes sur le point de supprimer définitivement :
+                
+                <div class="mt-3 p-3 bg-red-100 border-2 border-red-500 rounded font-bold">
+                    ${lot.nom} (${lot.type})
+                </div>
+                
+                <div class="mt-3 text-red-700 font-semibold">
+                    ⚠️ Cette action supprimera :
+                    <ul class="list-disc ml-5 mt-2">
+                        <li>Le lot</li>
+                        <li>Toutes ses rations</li>
+                        <li>Toutes ses consommations de fourrage</li>
+                        <li>Tous ses événements</li>
+                    </ul>
+                </div>
+                
+                <div class="mt-3 p-3 bg-orange-50 border-l-4 border-orange-500 rounded text-sm">
+                    💡 Cette action est <strong>IRRÉVERSIBLE</strong>. Les données ne pourront pas être récupérées.
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="custom-modal-btn bg-red-600" onclick="
+                    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
+                    state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
+                    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
+                    state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
+                    saveData();
+                    document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
+                    render();
+                    alert('🗑️ Lot supprimé définitivement');
+                ">🗑️ Oui, supprimer définitivement</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+            </div>
+        </div>
+    `;
     
-    saveData();
-    document.querySelector('.custom-modal-overlay').remove();
-    render();
+    document.body.appendChild(confirmOverlay);
 };
 
         window.deleteRation = (id) => {
@@ -3570,17 +3605,17 @@ document.querySelectorAll('.day-cell').forEach(cell => {
         </select>
     </div>
     <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-medium mb-1">Début</label>
-                            <input type="date" id="edit-lutte-debut" value="${lutteDebut}" 
-                                   class="w-full px-2 py-1 border rounded text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium mb-1">Fin</label>
-                            <input type="date" id="edit-lutte-fin" value="${lutteFin}" 
-                                   class="w-full px-2 py-1 border rounded text-sm">
-                        </div>
-                    </div>
+    <div>
+        <label class="block text-xs font-medium mb-1" id="edit-label-debut">Début</label>
+        <input type="date" id="edit-lutte-debut" value="${lutteDebut}" 
+               class="w-full px-2 py-1 border rounded text-sm">
+    </div>
+    <div id="edit-fin-container">
+        <label class="block text-xs font-medium mb-1">Fin</label>
+        <input type="date" id="edit-lutte-fin" value="${lutteFin}" 
+               class="w-full px-2 py-1 border rounded text-sm">
+    </div>
+</div>
                     <div id="edit-previsions" class="text-xs text-gray-600 mt-2 hidden"></div>
                 </div>
                 <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 mt-3">
@@ -3614,7 +3649,39 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     overlay.onclick = (e) => {
         if (e.target === overlay) overlay.remove();
     };
+   
+// Gestion du changement de type de lutte en édition
+setTimeout(() => {
+    const editTypeLutteSelect = document.getElementById('edit-type-lutte');
+    const editLabelDebut = document.getElementById('edit-label-debut');
+    const editFinContainer = document.getElementById('edit-fin-container');
+    const editLutteFin = document.getElementById('edit-lutte-fin');
     
+    if (editTypeLutteSelect) {
+        // Fonction pour ajuster l'affichage
+        const ajusterAffichage = () => {
+            const typeLutte = editTypeLutteSelect.value;
+            if (typeLutte === 'IA') {
+                editFinContainer.classList.add('hidden');
+                editLabelDebut.textContent = 'Date IA';
+                editLutteFin.value = '';
+            } else if (typeLutte === 'LN') {
+                editFinContainer.classList.remove('hidden');
+                editLabelDebut.textContent = 'Début';
+            } else {
+                editFinContainer.classList.add('hidden');
+                editLabelDebut.textContent = 'Début';
+            }
+        };
+        
+        // Appliquer au chargement
+        ajusterAffichage();
+        
+        // Appliquer au changement
+        editTypeLutteSelect.addEventListener('change', ajusterAffichage);
+    }
+}, 100);
+   
     document.body.appendChild(overlay);
     
     // Calcul des prévisions pour l'édition

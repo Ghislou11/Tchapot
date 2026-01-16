@@ -19,7 +19,8 @@
     tailwind.config = {
         corePlugins: {
             preflight: false,
-        }
+        },
+        important: true
     }
 </script>
     
@@ -27,11 +28,19 @@
         .hidden { display: none !important; }
         
         /* FIX PWA : Forcer les bordures visibles */
-        input, select, textarea {
-            background-color: white !important;
-            border: 2px solid #6b7280 !important;
-            color: #111827 !important;
-        }
+input:not([type="submit"]):not([type="button"]):not([type="radio"]):not([type="checkbox"]),
+select:not(.day-cell select),
+textarea {
+    background-color: white !important;
+    border: 2px solid #6b7280 !important;
+    color: #111827 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
+}
+
+button:not(.day-cell button) {
+    cursor: pointer !important;
+}
         
         .modal-overlay {
             position: fixed;
@@ -131,6 +140,12 @@
         .gap-2 {
             gap: 0.5rem;
         }
+		space-y-3 > * + * {
+    margin-top: 0.75rem;
+}
+.space-y-4 > * + * {
+    margin-top: 1rem;
+}
     </style>
 </head>
 <body class="bg-gray-50">
@@ -3987,15 +4002,5 @@ auth.onAuthStateChanged(async (user) => {
 
 // L'initialisation se fait via onAuthStateChanged
 </script>
-	<style>
-        input:not([type="submit"]):not([type="button"]):not([type="radio"]):not([type="checkbox"]),
-        select,
-        textarea {
-            background-color: #ffffff !important;
-            border: 3px solid #374151 !important;
-            color: #000000 !important;
-            min-height: 42px !important;
-        }
-    </style>
 </body>
 </html>

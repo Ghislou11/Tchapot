@@ -6,10 +6,13 @@
     <title>Tchapot de Ghislain</title>
 	<link rel="icon" type="image/png" href="favicon.png">
 	<link rel="apple-touch-icon" href="favicon.png">
+	<link rel="manifest" href="/manifest.json">
+	<meta name="theme-color" content="#059669">
 	
 	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 	
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -133,6 +136,57 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+// Initialiser Firebase Messaging
+const messaging = firebase.messaging();
+
+// Enregistrement du Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('✅ Service Worker enregistré');
+        messaging.useServiceWorker(registration);
+      })
+      .catch((err) => console.error('❌ Erreur SW:', err));
+  });
+}
+
+// Demander permission pour notifications
+async function demanderPermissionNotifications() {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      const token = await messaging.getToken({
+        vapidKey: 'BPLDzN35U7lv4lCALzBxG5O60DkkUzQPv6BbZZI_hu8nrnjEg4J6SjcF3JIk6iD4kPUS0g3Z48bS9Q9z-lrqoVs'
+      });
+      
+      // Sauvegarder le token dans Firestore pour l'utilisateur
+      if (currentUser) {
+        await db.collection('users').doc(currentUser.uid).set({
+          fcmToken: token,
+          lastUpdate: new Date()
+        }, { merge: true });
+      }
+      
+      console.log('✅ Token FCM:', token);
+    }
+  } catch (error) {
+    console.error('❌ Erreur notifications:', error);
+  }
+}
+
+// Écouter les messages en foreground
+messaging.onMessage((payload) => {
+  console.log('Message reçu:', payload);
+  
+  // Afficher une notification locale
+  if (Notification.permission === 'granted') {
+    new Notification(payload.notification.title, {
+      body: payload.notification.body,
+      icon: '/favicon.png'
+    });
+  }
+});
 let currentUser = null;
 
 const TYPES_BATIMENT = ['Élevage', 'Stockage fourrage', 'Silos'];
@@ -623,6 +677,36 @@ async function saveData() {
             console.error('❌ Erreur localStorage:', err);
         }
     }
+}
+
+async function planifierNotifications() {
+  if (!currentUser) return;
+  
+  const aujourdhui = new Date();
+  aujourdhui.setHours(0, 0, 0, 0);
+  
+  const demain = new Date(aujourdhui);
+  demain.setDate(demain.getDate() + 1);
+  
+  // Récupérer événements de demain
+  const evtsDemain = state.data.evenements.filter(e => {
+    const evtDate = new Date(e.date);
+    evtDate.setHours(0, 0, 0, 0);
+    return evtDate.getTime() === demain.getTime() && !e.valide;
+  });
+  
+  // Sauvegarder dans Firestore pour Cloud Function
+  if (evtsDemain.length > 0) {
+    await db.collection('notifications_planifiees').doc(currentUser.uid).set({
+      evenements: evtsDemain.map(e => ({
+        titre: e.titre,
+        date: e.date,
+        heure: e.heure || '08:00'
+      })),
+      userId: currentUser.uid,
+      datePlanification: new Date()
+    });
+  }
 }
 
         function getNomBat(id) {
@@ -1813,11 +1897,13 @@ parts.push('</select></div>');
 
             const parts = [];
             parts.push('<div class="bg-green-700 text-white p-4 shadow-lg">');
-            parts.push('<div class="flex justify-between items-center">');
-parts.push('<h1 class="text-xl font-bold">Tchapot de Ghislain</h1>');
-parts.push('<button onclick="window.logout()" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Déconnexion</button>');
-parts.push('</div>');
-            parts.push('</div>');
+			parts.push('<div class="flex justify-between items-center">');
+			parts.push('<h1 class="text-xl font-bold">Tchapot de Ghislain</h1>');
+			parts.push('<div class="flex gap-2">');
+			parts.push('<button onclick="window.demanderPermissionNotifications()" class="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">🔔 Notifications</button>');
+			parts.push('<button onclick="window.logout()" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Déconnexion</button>');
+			parts.push('</div>');
+			parts.push('</div>');
             parts.push('<div class="bg-gray-100 p-2 overflow-x-auto">');
             parts.push('<div class="flex gap-1">');
 

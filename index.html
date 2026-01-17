@@ -25,143 +25,320 @@
 </script>
     
 <style>
-    /* Reset */
-    * { box-sizing: border-box; }
+    /* === RESET & BASE === */
+    * { 
+        box-sizing: border-box; 
+        margin: 0; 
+        padding: 0; 
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        min-height: 100vh;
+        padding-bottom: 100px;
+    }
     
     .hidden { display: none !important; }
     
-    /* Design moderne pour les formulaires */
+    /* === HEADER MODERNE === */
+    .app-header {
+        background: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 1rem 1.5rem;
+    }
+    
+    .app-logo {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #10b981, #059669);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.02em;
+    }
+    
+    /* === NAVIGATION DESKTOP === */
+    .nav-desktop {
+        display: none;
+        gap: 0.5rem;
+    }
+    
+    @media (min-width: 768px) {
+        .nav-desktop {
+            display: flex;
+        }
+        .nav-mobile {
+            display: none !important;
+        }
+    }
+    
+    .nav-tab {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: #6b7280;
+        white-space: nowrap;
+    }
+    
+    .nav-tab:hover {
+        background: #f3f4f6;
+        color: #059669;
+    }
+    
+    .nav-tab.active {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* === NAVIGATION MOBILE (BOTTOM BAR) === */
+    .nav-mobile {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-around;
+        padding: 0.5rem 0;
+        z-index: 1000;
+    }
+    
+    .nav-mobile-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        color: #9ca3af;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 60px;
+    }
+    
+    .nav-mobile-item.active {
+        color: #10b981;
+    }
+    
+    .nav-mobile-icon {
+        font-size: 1.5rem;
+    }
+    
+    /* === CARTES MODERNES XXL === */
+    .card-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+    
+    .card-modern:hover {
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .card-header {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #059669;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .card-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: #dcfce7;
+        color: #059669;
+    }
+    
+    /* === FORMULAIRES ÉLÉGANTS === */
     input:not([type="submit"]):not([type="button"]):not([type="radio"]):not([type="checkbox"]),
     select,
     textarea {
-        background: linear-gradient(to bottom, #ffffff, #f9fafb);
+        background: #f9fafb;
         border: 2px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        padding: 0.875rem 1rem;
         font-size: 0.95rem;
         color: #111827;
         transition: all 0.2s ease;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        width: 100%;
     }
     
     input:focus, select:focus, textarea:focus {
         outline: none;
         border-color: #10b981;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
-        background: #ffffff;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
     }
     
-    input:hover:not(:focus), select:hover:not(:focus), textarea:hover:not(:focus) {
-        border-color: #d1d5db;
-    }
-    
-    /* Labels élégants */
     label {
         display: block;
         margin-bottom: 0.5rem;
         font-size: 0.875rem;
         font-weight: 600;
         color: #374151;
-        letter-spacing: 0.01em;
     }
     
-    /* Boutons modernes */
+    /* === BOUTONS MODERNISÉS === */
     button {
         cursor: pointer;
         font-family: inherit;
         font-weight: 600;
         transition: all 0.2s ease;
         border: none;
+        border-radius: 12px;
     }
     
-    button:hover:not(:disabled) {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    .btn-primary {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 1rem 2rem;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
     }
     
-    button:active:not(:disabled) {
-        transform: translateY(0);
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
     }
     
-    /* Cartes avec ombre douce */
-    .bg-white {
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 0.75rem 1.5rem;
     }
     
-    /* Sections colorées plus douces */
-    .bg-green-50 {
-        background: linear-gradient(to bottom right, #f0fdf4, #dcfce7) !important;
+    .btn-secondary:hover {
+        background: #e5e7eb;
     }
     
-    .bg-blue-50 {
-        background: linear-gradient(to bottom right, #eff6ff, #dbeafe) !important;
+    /* === BADGES & TAGS === */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
     }
     
-    .bg-yellow-50 {
-        background: linear-gradient(to bottom right, #fefce8, #fef3c7) !important;
+    .badge-green {
+        background: #dcfce7;
+        color: #059669;
     }
     
-    .bg-orange-50 {
-        background: linear-gradient(to bottom right, #fff7ed, #ffedd5) !important;
+    .badge-blue {
+        background: #dbeafe;
+        color: #2563eb;
     }
     
-    /* Bordures plus élégantes */
-    .border-2 {
-        border-width: 2px;
-        border-style: solid;
+    .badge-orange {
+        background: #ffedd5;
+        color: #ea580c;
     }
     
-    .rounded-lg {
-        border-radius: 0.75rem !important;
+    .badge-purple {
+        background: #f3e8ff;
+        color: #9333ea;
     }
     
-    /* Modals modernes */
+    /* === GRILLE RESPONSIVE === */
+    .grid-modern {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: 1fr;
+    }
+    
+    @media (min-width: 640px) {
+        .grid-modern {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .grid-modern {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+    
+    /* === BARRES DE PROGRESSION === */
+    .progress-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #059669);
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    /* === TABLEAUX MODERNES === */
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    thead {
+        background: #f9fafb;
+    }
+    
+    th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.875rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.9rem;
+    }
+    
+    tbody tr {
+        transition: background 0.15s ease;
+    }
+    
+    tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    /* === MODALS REDESIGNÉS === */
     .modal-overlay {
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(4px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 20px;
-        animation: fadeIn 0.2s ease;
-    }
-    
-    .modal-content {
-        background: white;
-        border-radius: 1rem;
-        padding: 2rem;
-        max-width: 500px;
-        width: 100%;
-        max-height: 85vh;
-        overflow-y: auto;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        animation: slideUp 0.3s ease;
-    }
-    
-    .modal-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        color: #059669;
-        border-bottom: 3px solid #10b981;
-        padding-bottom: 0.75rem;
-    }
-    
-    .modal-text {
-        color: #4b5563;
-        line-height: 1.7;
-        white-space: pre-line;
-        margin-bottom: 1.5rem;
-    }
-    
-    .custom-modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.65);
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -170,54 +347,25 @@
         animation: fadeIn 0.2s ease;
     }
     
-    .custom-modal-box {
+    .modal-content {
         background: white;
-        border-radius: 1.25rem;
+        border-radius: 24px;
         padding: 2rem;
         max-width: 500px;
         width: 100%;
         max-height: 85vh;
         overflow-y: auto;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
         animation: slideUp 0.3s ease;
     }
     
-    .custom-modal-title {
-        font-size: 1.5rem;
+    .modal-title {
+        font-size: 1.75rem;
         font-weight: 700;
         margin-bottom: 1.5rem;
         color: #059669;
-        border-bottom: 3px solid #10b981;
-        padding-bottom: 0.75rem;
     }
     
-    .custom-modal-content {
-        color: #4b5563;
-        line-height: 1.8;
-        white-space: pre-line;
-        margin-bottom: 1.5rem;
-        font-size: 0.95rem;
-    }
-    
-    .custom-modal-btn {
-        width: 100%;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 0.875rem 1.5rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-    }
-    
-    .custom-modal-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
-    }
-    
-    /* Animations */
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
@@ -225,7 +373,7 @@
     
     @keyframes slideUp {
         from { 
-            transform: translateY(20px); 
+            transform: translateY(30px); 
             opacity: 0; 
         }
         to { 
@@ -234,57 +382,470 @@
         }
     }
     
-    /* Tableaux plus élégants */
-    table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    
-    thead {
-        background: linear-gradient(to right, #f9fafb, #f3f4f6);
-    }
-    
-    tbody tr {
-        transition: background-color 0.15s ease;
-    }
-    
-    tbody tr:hover {
-        background-color: #f9fafb;
-    }
-    
-    /* En-tête avec dégradé */
-    .bg-gradient-to-br {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-    }
-    
-    /* Utilities */
-    .flex { display: flex !important; }
-    .gap-2 { gap: 0.5rem !important; }
-    .gap-3 { gap: 0.75rem !important; }
-    .gap-4 { gap: 1rem !important; }
-    .space-y-3 > * + * { margin-top: 0.75rem !important; }
-    .space-y-4 > * + * { margin-top: 1rem !important; }
-    .w-full { width: 100% !important; }
-    .block { display: block !important; }
-    
-    /* Scrollbar personnalisée */
+    /* === CUSTOM SCROLLBAR === */
     ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
     }
     
     ::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: #f1f5f9;
         border-radius: 10px;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: #10b981;
+        background: linear-gradient(135deg, #10b981, #059669);
         border-radius: 10px;
+        border: 3px solid #f1f5f9;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: #059669;
+        background: linear-gradient(135deg, #059669, #047857);
+    }
+	
+	/* ===== FORMULAIRES MODERNES ===== */
+.modern-form {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.modern-form-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #059669;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #10b981;
+}
+
+.modern-form-group {
+    margin-bottom: 20px;
+}
+
+.modern-form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.modern-form-input,
+.modern-form-select,
+.modern-form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    color: #111827;
+    background: linear-gradient(to bottom, #ffffff, #f9fafb);
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.modern-form-input:focus,
+.modern-form-select:focus,
+.modern-form-textarea:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+}
+
+.modern-form-input:hover:not(:focus),
+.modern-form-select:hover:not(:focus),
+.modern-form-textarea:hover:not(:focus) {
+    border-color: #d1d5db;
+}
+
+.modern-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.modern-form-section {
+    background: linear-gradient(to bottom right, #f0fdf4, #dcfce7);
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.modern-form-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #047857;
+    margin-bottom: 12px;
+}
+
+.modern-form-btn {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.modern-form-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.modern-form-btn:active {
+    transform: translateY(0);
+}
+
+.modern-form-helper {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* ===== CARTES DE LOTS MODERNES ===== */
+.lot-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border: 2px solid #e5e7eb;
+}
+
+.lot-card:hover {
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+    transform: translateY(-4px);
+    border-color: #10b981;
+}
+
+.lot-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.lot-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #059669;
+    margin-bottom: 4px;
+}
+
+.lot-card-subtitle {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.lot-card-badge {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.lot-card-events {
+    background: linear-gradient(to bottom right, #eff6ff, #dbeafe);
+    border-left: 4px solid #3b82f6;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.lot-card-events-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 8px;
+}
+
+.lot-card-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 0.875rem;
+    color: #1f2937;
+}
+
+.lot-card-event-ongoing {
+    font-weight: 700;
+    color: #059669;
+}
+
+.lot-card-event-today {
+    font-weight: 700;
+    color: #dc2626;
+    animation: pulse 2s infinite;
+}
+
+.lot-card-event-emoji {
+    font-size: 1.25rem;
+}
+
+.lot-card-event-text {
+    flex: 1;
+}
+
+.lot-card-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.lot-card-stat {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.lot-card-stat-icon {
+    font-size: 1.5rem;
+}
+
+.lot-card-stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.lot-card-stat-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #059669;
+    margin-top: 2px;
+}
+
+.lot-card-stat-date {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.lot-card-history {
+    background: #f9fafb;
+    border-left: 4px solid #9ca3af;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.lot-card-history-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.lot-card-history-item {
+    font-size: 0.8rem;
+    color: #6b7280;
+    padding: 4px 0;
+}
+
+.lot-card-btn {
+    width: 100%;
+    padding: 10px 16px;
+    margin-top: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3b82f6;
+    background: #eff6ff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lot-card-btn:hover {
+    background: #dbeafe;
+    color: #2563eb;
+}
+    
+	/* ===== TABLEAUX MODERNES ===== */
+.modern-table-container {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead {
+    background: linear-gradient(to right, #f9fafb, #f3f4f6);
+}
+
+.modern-table th {
+    padding: 16px;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.modern-table td {
+    padding: 16px;
+    font-size: 0.95rem;
+    color: #1f2937;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.modern-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.modern-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table-empty {
+    padding: 48px 16px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.95rem;
+}
+
+.modern-table-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.modern-table-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.modern-table-btn {
+    padding: 8px 12px;
+    font-size: 1.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.modern-table-btn:hover {
+    background: #f3f4f6;
+    transform: scale(1.1);
+}
+
+.modern-table-btn-edit {
+    color: #3b82f6;
+}
+
+.modern-table-btn-delete {
+    color: #ef4444;
+}
+
+.modern-table-btn-add {
+    color: #10b981;
+}
+
+.modern-table-btn-remove {
+    color: #f59e0b;
+}
+	
+    /* === SWIPE ACTIONS (MOBILE) === */
+    .swipeable {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .swipe-actions {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .swipeable.swiped .swipe-actions {
+        transform: translateX(0);
+    }
+    
+    /* === ANIMATIONS === */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+    
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    /* === UTILITIES === */
+    .text-gradient {
+        background: linear-gradient(135deg, #10b981, #059669);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .shadow-soft {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    
+    .container-modern {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+    
+    /* === PAGE TITLES === */
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #059669;
+        margin-bottom: 2rem;
+        letter-spacing: -0.02em;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1.5rem;
     }
 </style>
 </head>
@@ -936,26 +1497,26 @@ async function planifierNotifications() {
     }, 0);
 }
 		function renderTableauBord() {
-            const parts = [];
-            parts.push('<div class="p-4"><h2 class="text-2xl font-bold mb-4">Tableau de Bord</h2>');
-            
-            parts.push('<div class="mb-4 flex gap-2 overflow-x-auto">');
-            const subtabs = ['rdv-pattounes', 'graines-piaf', 'miam-miam'];
-            const labels = ['Tchapot de Bête', 'Graines de Piaf', 'Miam Miam'];
-            subtabs.forEach((tab, i) => {
-                const active = state.activeSubTab === tab;
-                const cls = active ? 'bg-green-600 text-white' : 'bg-white text-gray-700';
-                parts.push('<button onclick="window.changeSubTab(\'' + tab + '\')" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ' + cls + '">');
-                parts.push(labels[i]);
-                parts.push('</button>');
-            });
-            parts.push('</div>');
+    const parts = [];
+    parts.push('<h1 class="page-title">📊 Tableau de Bord</h1>');
+    
+    // Sub-tabs modernes
+    parts.push('<div class="flex gap-2 mb-6 overflow-x-auto pb-2">');
+    const subtabs = ['rdv-pattounes', 'graines-piaf', 'miam-miam'];
+    const labels = ['🐑 Animaux', '🏠 Stocks', '📈 Consommations'];
+    subtabs.forEach((tab, i) => {
+        const active = state.activeSubTab === tab ? 'active' : '';
+        parts.push('<button onclick="window.changeSubTab(\'' + tab + '\')" class="nav-tab ' + active + '">');
+        parts.push(labels[i]);
+        parts.push('</button>');
+    });
+    parts.push('</div>');
 
-            if (state.activeSubTab === 'rdv-pattounes') {
-                parts.push('<h3 class="text-xl font-bold mb-3">Lots d\'animaux</h3>');
-                parts.push('<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">');
-                
-                state.data.lots.forEach(lot => {
+    if (state.activeSubTab === 'rdv-pattounes') {
+        parts.push('<h2 class="section-title">Lots d\'animaux</h2>');
+        parts.push('<div class="grid-modern">');
+        
+        state.data.lots.forEach(lot => {
     // Trouver la dernière ration
     const derniereRation = state.data.rations
         .filter(r => r.lotId === lot.id)
@@ -966,9 +1527,16 @@ async function planifierNotifications() {
         .filter(c => c.lotId === lot.id)
         .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
     
-    parts.push('<div class="bg-white border-2 border-gray-200 rounded-lg p-3">');
-    parts.push('<div class="font-bold text-lg mb-1">' + lot.nom + '</div>');
-    parts.push('<div class="text-sm text-gray-600 mb-2">' + lot.type + ' • ' + lot.nombreTetes + ' têtes • ' + getNomBat(lot.lieuActuel) + '</div>');
+    parts.push('<div class="lot-card">');
+    
+    // En-tête de la carte
+    parts.push('<div class="lot-card-header">');
+    parts.push('<div>');
+    parts.push('<div class="lot-card-title">' + lot.nom + '</div>');
+    parts.push('<div class="lot-card-subtitle">' + lot.type + ' • ' + lot.nombreTetes + ' têtes</div>');
+    parts.push('</div>');
+    parts.push('<div class="lot-card-badge">' + getNomBat(lot.lieuActuel) + '</div>');
+    parts.push('</div>');
     
     // === ÉVÉNEMENTS AUTOMATIQUES À VENIR ===
     const today = new Date();
@@ -987,27 +1555,26 @@ async function planifierNotifications() {
             const joursRestants = Math.ceil((evtDate - today) / (1000 * 60 * 60 * 24));
             if (joursRestants >= 0 && joursRestants <= 30 && !evt.dateFin) {
                 let emoji = '📅';
-                emoji = '📅';
-				if (evt.type === 'poseEponge') emoji = '🧽';
-				else if (evt.type === 'retraitEponge') emoji = '🧽❌';
-				else if (evt.type === 'poseSpiraleVache') emoji = '📍';
-				else if (evt.type === 'piqurePGF') emoji = '💉';
-				else if (evt.type === 'retraitSpiraleVache') emoji = '📍❌';
-				else if (evt.type === 'ouvertureAliments') emoji = '🍽️';
-				else if (evt.type === 'stopLait') emoji = '⛔🍼';
-				else if (evt.type === 'sevrage') emoji = '🍼❌';
-                else if (evt.type === 'echoRdv') emoji = '📷✓';
-                else if (evt.type === 'peseeRdv') emoji = '⚖️✓';
-				else if (evt.type === 'commandeGaz') emoji = '⛽';
-				else if (evt.type === 'commandeAliment') emoji = '🌽';
-				else if (evt.type === 'vaccin1') emoji = '💉';
-				else if (evt.type === 'vaccin2') emoji = '💉';
-				else if (evt.type === 'peseePoulet1') emoji = '⚖️';
-				else if (evt.type === 'peseePoulet2') emoji = '⚖️';
-				else if (evt.type === 'peseePoulet3') emoji = '⚖️';
-				else if (evt.type === 'biaminticRdv') emoji = '💉✔';
-				else if (evt.type === 'gallifenRdv') emoji = '💊✔';
-				else if (evt.type === 'lutteStart') emoji = '💕';
+                if (evt.type === 'poseEponge') emoji = '🧽';
+                else if (evt.type === 'retraitEponge') emoji = '🧽❌';
+                else if (evt.type === 'poseSpiraleVache') emoji = '🔵';
+                else if (evt.type === 'piqurePGF') emoji = '💉';
+                else if (evt.type === 'retraitSpiraleVache') emoji = '🔵❌';
+                else if (evt.type === 'ouvertureAliments') emoji = '🍽️';
+                else if (evt.type === 'stopLait') emoji = '⛔🍼';
+                else if (evt.type === 'sevrage') emoji = '🍼❌';
+                else if (evt.type === 'echoRdv') emoji = '📷✔';
+                else if (evt.type === 'peseeRdv') emoji = '⚖️✔';
+                else if (evt.type === 'commandeGaz') emoji = '⛽';
+                else if (evt.type === 'commandeAliment') emoji = '🌽';
+                else if (evt.type === 'vaccin1') emoji = '💉';
+                else if (evt.type === 'vaccin2') emoji = '💉';
+                else if (evt.type === 'peseePoulet1') emoji = '⚖️';
+                else if (evt.type === 'peseePoulet2') emoji = '⚖️';
+                else if (evt.type === 'peseePoulet3') emoji = '⚖️';
+                else if (evt.type === 'biaminticRdv') emoji = '💉✔';
+                else if (evt.type === 'gallifenRdv') emoji = '💊✔';
+                else if (evt.type === 'lutteStart') emoji = '💕';
                 
                 evtsProches.push({
                     titre: evt.titre.replace(lot.nom, '').trim(),
@@ -1028,7 +1595,7 @@ async function planifierNotifications() {
                     let emoji = '📅';
                     let titre = '';
                     if (evt.type === 'birthStart') {
-                        emoji = '🐑';
+                        emoji = '🐣';
                         titre = 'Mise bas EN COURS';
                     } else if (evt.type === 'echoStart') {
                         emoji = '📷';
@@ -1045,20 +1612,20 @@ async function planifierNotifications() {
                     } else if (evt.type === 'lutteRetourStart') {
                         emoji = '🔄';
                         titre = 'Lutte retours';
-					} else if (evt.type === 'biaminticStart') {
-						emoji = '💉';
-						titre = 'Période Biamintic';
-					} else if (evt.type === 'gallifenStart') {
-						emoji = '💊';
-						titre = 'Période Gallifen';
+                    } else if (evt.type === 'biaminticStart') {
+                        emoji = '💉';
+                        titre = 'Période Biamintic';
+                    } else if (evt.type === 'gallifenStart') {
+                        emoji = '💊';
+                        titre = 'Période Gallifen';
                     }
                     
                     if (titre) {
                         evtsProches.push({
                             titre: titre,
-                            jours: -1, // En cours
+                            jours: -1,
                             emoji: emoji,
-                            priorite: -1 // Priorité maximale
+                            priorite: -1
                         });
                     }
                 }
@@ -1074,34 +1641,55 @@ async function planifierNotifications() {
         // Afficher les 3 prochains événements
         if (evtsProches.length > 0) {
             evenementsAffiches = true;
-            parts.push('<div class="bg-blue-50 border-l-4 border-blue-500 p-2 mb-2 rounded">');
-            parts.push('<div class="text-xs font-semibold text-blue-800 mb-1">📅 Événements à venir :</div>');
+            parts.push('<div class="lot-card-events">');
+            parts.push('<div class="lot-card-events-title">📅 Événements à venir</div>');
             evtsProches.slice(0, 3).forEach(evt => {
+                let eventClass = 'lot-card-event';
+                if (evt.jours === -1) eventClass += ' lot-card-event-ongoing';
+                else if (evt.jours === 0) eventClass += ' lot-card-event-today';
+                
+                parts.push('<div class="' + eventClass + '">');
+                parts.push('<span class="lot-card-event-emoji">' + evt.emoji + '</span>');
                 if (evt.jours === -1) {
-                    parts.push('<div class="text-xs text-blue-700 font-bold">' + evt.emoji + ' ' + evt.titre + '</div>');
+                    parts.push('<span class="lot-card-event-text">' + evt.titre + '</span>');
                 } else if (evt.jours === 0) {
-                    parts.push('<div class="text-xs text-orange-700 font-bold">' + evt.emoji + ' ' + evt.titre + ' AUJOURD\'HUI !</div>');
+                    parts.push('<span class="lot-card-event-text">' + evt.titre + ' <strong>AUJOURD\'HUI !</strong></span>');
                 } else {
-                    parts.push('<div class="text-xs text-blue-600">' + evt.emoji + ' ' + evt.titre + ' dans ' + evt.jours + 'j</div>');
+                    parts.push('<span class="lot-card-event-text">' + evt.titre + ' dans ' + evt.jours + 'j</span>');
                 }
+                parts.push('</div>');
             });
             parts.push('</div>');
         }
     }
     
     // === DERNIÈRES RATIONS ET FOURRAGE ===
+    parts.push('<div class="lot-card-stats">');
     if (derniereRation) {
-        parts.push('<div class="text-xs text-gray-600 mt-1">🍽️ Dernière ration: ' + derniereRation.typeAliment + ' (' + formatDate(derniereRation.date) + ')</div>');
+        parts.push('<div class="lot-card-stat">');
+        parts.push('<div class="lot-card-stat-icon">🍽️</div>');
+        parts.push('<div>');
+        parts.push('<div class="lot-card-stat-label">Dernière ration</div>');
+        parts.push('<div class="lot-card-stat-value">' + derniereRation.typeAliment + '</div>');
+        parts.push('<div class="lot-card-stat-date">' + formatDate(derniereRation.date) + '</div>');
+        parts.push('</div></div>');
     }
     
     if (dernierFourrage) {
-        parts.push('<div class="text-xs text-gray-600 mt-1">🌾 Dernier fourrage: ' + dernierFourrage.typeFourrage + ' (' + formatDate(dernierFourrage.date) + ')</div>');
+        parts.push('<div class="lot-card-stat">');
+        parts.push('<div class="lot-card-stat-icon">🌾</div>');
+        parts.push('<div>');
+        parts.push('<div class="lot-card-stat-label">Dernier fourrage</div>');
+        parts.push('<div class="lot-card-stat-value">' + dernierFourrage.typeFourrage + '</div>');
+        parts.push('<div class="lot-card-stat-date">' + formatDate(dernierFourrage.date) + '</div>');
+        parts.push('</div></div>');
     }
+    parts.push('</div>');
     
     // === HISTORIQUE DES MODIFICATIONS ===
     if (lot.historique && lot.historique.length > 0) {
-        parts.push('<div class="bg-gray-50 border-l-4 border-gray-400 p-2 mt-2 rounded">');
-        parts.push('<div class="text-xs font-semibold text-gray-700 mb-1">📝 Dernières modifications :</div>');
+        parts.push('<div class="lot-card-history">');
+        parts.push('<div class="lot-card-history-title">📝 Dernières modifications</div>');
         lot.historique.slice().reverse().slice(0, 2).forEach(h => {
             let texte = formatDate(h.date) + ' : ';
             if (h.action === 'Déplacement') {
@@ -1111,13 +1699,17 @@ async function planifierNotifications() {
             } else {
                 texte += h.action;
             }
-            parts.push('<div class="text-xs text-gray-600">' + texte + '</div>');
+            parts.push('<div class="lot-card-history-item">' + texte + '</div>');
         });
         parts.push('</div>');
     }
     
-    parts.push('<button onclick="window.showHistoriqueLot(\'' + lot.id + '\')" class="mt-2 text-xs text-blue-600 underline hover:text-blue-800">Voir détails complets</button>');
-    parts.push('</div>');
+    // Bouton détails
+    parts.push('<button onclick="window.showHistoriqueLot(\'' + lot.id + '\')" class="lot-card-btn">');
+    parts.push('Voir détails complets');
+    parts.push('</button>');
+    
+    parts.push('</div>'); // Fin lot-card
 });
                 
                 if (state.data.lots.length === 0) {
@@ -1351,24 +1943,31 @@ if (stockages.length > 0) {
             parts.push('<div class="p-4 space-y-4 bg-gray-50">');
             parts.push('<h2 class="text-2xl font-bold">Stockage</h2>');
 
-            parts.push('<form id="form-bat" class="bg-white border-2 border-gray-200 rounded-lg p-4 space-y-3">');
-            parts.push('<div><label class="block text-sm font-medium mb-1">Nom</label>');
-            parts.push('<input type="text" id="bat-nom" class="w-full px-3 py-2 border rounded-lg" required></div>');
-            
-            parts.push('<div><label class="block text-sm font-medium mb-1">Type</label>');
-            parts.push('<select id="bat-type" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            TYPES_BATIMENT.forEach(t => {
-                parts.push('<option value="' + t + '">' + t + '</option>');
-            });
-            parts.push('</select></div>');
+            parts.push('<form id="form-bat" class="modern-form">');
+			parts.push('<div class="modern-form-title">Nouveau bâtiment</div>');
 
-            parts.push('<div id="bat-fields"></div>');
-            parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Ajouter</button>');
-            parts.push('</form>');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Nom</label>');
+parts.push('<input type="text" id="bat-nom" class="modern-form-input" placeholder="Ex: Bergerie A" required>');
+parts.push('</div>');
+
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Type</label>');
+parts.push('<select id="bat-type" class="modern-form-select" required>');
+parts.push('<option value="">Sélectionner...</option>');
+TYPES_BATIMENT.forEach(t => {
+    parts.push('<option value="' + t + '">' + t + '</option>');
+});
+parts.push('</select>');
+parts.push('</div>');
+
+parts.push('<div id="bat-fields"></div>');
+
+parts.push('<button type="submit" class="modern-form-btn">+ Ajouter le bâtiment</button>');
+parts.push('</form>');
 
             parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
-            parts.push('<table class="w-full text-sm"><thead class="bg-gray-50"><tr>');
+parts.push('<table class="w-full text-sm"><thead class="bg-gray-50"><tr>');
             parts.push('<th class="px-3 py-2 text-left font-semibold">Nom</th>');
             parts.push('<th class="px-3 py-2 text-left font-semibold">Type</th>');
             parts.push('<th class="px-3 py-2 text-left font-semibold">Capacité</th>');
@@ -1404,13 +2003,15 @@ if (stockages.length > 0) {
     parts.push('<td class="px-3 py-2">' + (b.capacite || '-') + '</td>');
     const decimales = b.type === 'Élevage' ? 0 : b.type === 'Silos' ? 3 : 0;
     parts.push('<td class="px-3 py-2 font-bold">' + stock.toFixed(decimales) + ' ' + unite + '</td>');
-                parts.push('<td class="px-3 py-2 text-right">');
-                if (b.type !== 'Élevage') {
-                    parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'entree\')" class="text-green-600 font-bold text-lg mr-2" title="Entrée">+</button>');
-                    parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'sortie\')" class="text-orange-600 font-bold text-lg mr-2" title="Sortie">−</button>');
-                }
-                parts.push('<button onclick="window.deleteBatiment(\'' + b.id + '\')" class="text-red-600 font-bold text-xl">×</button>');
-                parts.push('</td></tr>');
+                parts.push('<td>');
+parts.push('<div class="modern-table-actions">');
+if (b.type !== 'Élevage') {
+    parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'entree\')" class="modern-table-btn modern-table-btn-add" title="Entrée">+</button>');
+    parts.push('<button onclick="window.showEntreeSortie(\'' + b.id + '\', \'sortie\')" class="modern-table-btn modern-table-btn-remove" title="Sortie">−</button>');
+}
+parts.push('<button onclick="window.deleteBatiment(\'' + b.id + '\')" class="modern-table-btn modern-table-btn-delete">×</button>');
+parts.push('</div>');
+parts.push('</td></tr>');
             });
 
             if (state.data.batiments.length === 0) {
@@ -1429,74 +2030,93 @@ if (stockages.length > 0) {
 			parts.push('<button onclick="window.showArchives()" class="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm">📦 Voir les archives</button>');
 			parts.push('</div>');
 
-            parts.push('<form id="form-lot" class="bg-white border-2 rounded-lg p-4 space-y-3">');
-            parts.push('<div><label class="block text-sm font-medium mb-1">Nom du lot</label>');
-            parts.push('<input type="text" id="lot-nom" class="w-full px-3 py-2 border rounded-lg" required></div>');
-            
-            parts.push('<div><label class="block text-sm font-medium mb-1">Type d\'animaux</label>');
-            parts.push('<select id="lot-type" class="w-full px-3 py-2 border rounded-lg" required>');
-            parts.push('<option value="">Sélectionner...</option>');
-            TYPES_ANIMAUX.forEach(t => {
-                parts.push('<option value="' + t + '">' + t + '</option>');
-            });
-            parts.push('</select></div>');
-			
-			parts.push('<div id="lot-agneaux-section" class="hidden bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3">');
-			parts.push('<h4 class="font-semibold mb-2 text-yellow-800">Suivi agneaux</h4>');
-			parts.push('<div class="grid grid-cols-2 gap-2">');
-			parts.push('<div><label class="block text-xs font-medium mb-1">Date 1er né</label>');
-			parts.push('<input type="date" id="lot-premier-ne" class="w-full px-2 py-1 border rounded text-sm"></div>');
-			parts.push('<div><label class="block text-xs font-medium mb-1">Date dernier né</label>');
-			parts.push('<input type="date" id="lot-dernier-ne" class="w-full px-2 py-1 border rounded text-sm"></div>');
-			parts.push('</div></div>');
-			
-			parts.push('<div id="lot-poulets-section" class="hidden bg-orange-50 border-2 border-orange-200 rounded-lg p-3">');
-			parts.push('<h4 class="font-semibold mb-2 text-orange-800">Suivi poulets</h4>');
-			parts.push('<div><label class="block text-xs font-medium mb-1">Date d\'entrée du lot (J0)</label>');
-			parts.push('<input type="date" id="lot-date-entree-poulet" class="w-full px-2 py-1 border rounded text-sm"></div>');
-			parts.push('</div>');
+            parts.push('<form id="form-lot" class="modern-form">');
+parts.push('<div class="modern-form-title">Nouveau lot</div>');
 
-            parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de têtes</label>');
-            parts.push('<input type="number" id="lot-tetes" class="w-full px-3 py-2 border rounded-lg" required></div>');
+parts.push('<div class="modern-form-row">');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Nom du lot</label>');
+parts.push('<input type="text" id="lot-nom" class="modern-form-input" placeholder="Ex: Agnelles 2025" required>');
+parts.push('</div>');
 
-           parts.push('<div><label class="block text-sm font-medium mb-1">Lieu actuel</label>');
-parts.push('<select id="lot-lieu" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Type d\'animaux</label>');
+parts.push('<select id="lot-type" class="modern-form-select" required>');
+parts.push('<option value="">Sélectionner...</option>');
+TYPES_ANIMAUX.forEach(t => {
+    parts.push('<option value="' + t + '">' + t + '</option>');
+});
+parts.push('</select>');
+parts.push('</div>');
+parts.push('</div>');
+
+parts.push('<div id="lot-agneaux-section" class="hidden modern-form-section">');
+parts.push('<h4 class="modern-form-section-title">Suivi agneaux</h4>');
+parts.push('<div class="modern-form-row">');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Date 1er né</label>');
+parts.push('<input type="date" id="lot-premier-ne" class="modern-form-input">');
+parts.push('</div>');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Date dernier né</label>');
+parts.push('<input type="date" id="lot-dernier-ne" class="modern-form-input">');
+parts.push('</div>');
+parts.push('</div></div>');
+
+parts.push('<div id="lot-poulets-section" class="hidden modern-form-section">');
+parts.push('<h4 class="modern-form-section-title">Suivi poulets</h4>');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Date d\'entrée du lot (J0)</label>');
+parts.push('<input type="date" id="lot-date-entree-poulet" class="modern-form-input">');
+parts.push('</div></div>');
+
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Nombre de têtes</label>');
+parts.push('<input type="number" id="lot-tetes" class="modern-form-input" required>');
+parts.push('</div>');
+
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Lieu actuel</label>');
+parts.push('<select id="lot-lieu" class="modern-form-select" required>');
 parts.push('<option value="">Sélectionner...</option>');
 state.data.batiments.filter(b => b.type === 'Élevage').forEach(b => {
     parts.push('<option value="' + b.id + '">' + b.nom + '</option>');
 });
-parts.push('</select></div>');
+parts.push('</select>');
+parts.push('</div>');
 
-// Section mise à la lutte (optionnelle)
-parts.push('<div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 mt-3">');
-parts.push('<h4 class="font-semibold mb-2 text-green-800">Mise à la lutte (optionnel)</h4>');
+parts.push('<div class="modern-form-section">');
+parts.push('<h4 class="modern-form-section-title">Mise à la lutte (optionnel)</h4>');
 
-// Type de lutte
-parts.push('<div class="mb-2">');
-parts.push('<label class="block text-xs font-medium mb-1">Type de lutte</label>');
-parts.push('<select id="lot-type-lutte" class="w-full px-2 py-1 border rounded text-sm">');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label">Type de lutte</label>');
+parts.push('<select id="lot-type-lutte" class="modern-form-select">');
 parts.push('<option value="">Aucune</option>');
 parts.push('<option value="LN">Lutte Naturelle (LN)</option>');
 parts.push('<option value="IA">Insémination Artificielle (IA)</option>');
-parts.push('</select></div>');
-
-// Dates de lutte (caché par défaut)
-parts.push('<div id="lot-dates-lutte" class="hidden">');
-parts.push('<div class="grid grid-cols-2 gap-2">');
-parts.push('<div><label class="block text-xs font-medium mb-1" id="lot-label-debut">Début</label>');
-parts.push('<input type="date" id="lot-lutte-debut" class="w-full px-2 py-1 border rounded text-sm"></div>');
-parts.push('<div id="lot-fin-container"><label class="block text-xs font-medium mb-1">Fin</label>');
-parts.push('<input type="date" id="lot-lutte-fin" class="w-full px-2 py-1 border rounded text-sm"></div>');
-parts.push('</div></div>');
-
-parts.push('<div id="lot-previsions" class="text-xs text-gray-600 mt-2 hidden"></div>');
+parts.push('</select>');
 parts.push('</div>');
 
-parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Ajouter</button>');
-            parts.push('</form>');
+parts.push('<div id="lot-dates-lutte" class="hidden">');
+parts.push('<div class="modern-form-row">');
+parts.push('<div class="modern-form-group">');
+parts.push('<label class="modern-form-label" id="lot-label-debut">Début</label>');
+parts.push('<input type="date" id="lot-lutte-debut" class="modern-form-input">');
+parts.push('</div>');
+parts.push('<div id="lot-fin-container" class="modern-form-group">');
+parts.push('<label class="modern-form-label">Fin</label>');
+parts.push('<input type="date" id="lot-lutte-fin" class="modern-form-input">');
+parts.push('</div>');
+parts.push('</div></div>');
 
-            parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
-            parts.push('<table class="w-full text-sm"><thead class="bg-gray-50"><tr>');
+parts.push('<div id="lot-previsions" class="modern-form-helper hidden"></div>');
+parts.push('</div>');
+
+parts.push('<button type="submit" class="modern-form-btn">+ Ajouter le lot</button>');
+parts.push('</form>');
+
+            parts.push('<div class="modern-table-container">');
+parts.push('<table class="modern-table"><thead><tr>');
             parts.push('<th class="px-3 py-2 text-left font-semibold">Nom</th>');
             parts.push('<th class="px-3 py-2 text-left font-semibold">Type</th>');
             parts.push('<th class="px-3 py-2 text-left font-semibold">Têtes</th>');
@@ -1519,10 +2139,12 @@ lotsTries.forEach(l => {
                 parts.push('<td class="px-3 py-2">' + l.type + '</td>');
                 parts.push('<td class="px-3 py-2">' + l.nombreTetes + '</td>');
                 parts.push('<td class="px-3 py-2">' + getNomBat(l.lieuActuel) + '</td>');
-                 parts.push('<td class="px-3 py-2 text-right">');
-                parts.push('<button onclick="window.editLot(\'' + l.id + '\')" class="text-blue-600 font-bold text-lg mr-2" title="Modifier">✎</button>');
-                parts.push('<button onclick="window.deleteLot(\'' + l.id + '\')" class="text-red-600 font-bold text-xl">×</button>');
-                parts.push('</td></tr>');
+                parts.push('<td>');
+parts.push('<div class="modern-table-actions">');
+parts.push('<button onclick="window.editLot(\'' + l.id + '\')" class="modern-table-btn modern-table-btn-edit" title="Modifier">✎</button>');
+parts.push('<button onclick="window.deleteLot(\'' + l.id + '\')" class="modern-table-btn modern-table-btn-delete">×</button>');
+parts.push('</div>');
+parts.push('</td></tr>');
             });
 
             if (state.data.lots.length === 0) {
@@ -2053,43 +2675,63 @@ parts.push('</select></div>');
             return parts.join('');
         }
         function render() {
-            const tabs = [
-                { id: 'tableau-bord', label: 'Tableau de Bord', fn: renderTableauBord },
-                { id: 'batiments', label: 'Stockage', fn: renderBatiments },
-                { id: 'lots', label: 'Élevage', fn: renderLots },
-                { id: 'rations', label: 'Rations', fn: renderRations },
-                { id: 'fourrage', label: 'Fourrage', fn: renderFourrage },
-                { id: 'calendrier', label: 'Calendrier', fn: renderCalendrier }
-            ];
+    const tabs = [
+        { id: 'tableau-bord', label: 'Tableau de Bord', icon: '📊' },
+        { id: 'batiments', label: 'Stockage', icon: '🏠' },
+        { id: 'lots', label: 'Élevage', icon: '🐑' },
+        { id: 'rations', label: 'Rations', icon: '🌾' },
+        { id: 'fourrage', label: 'Fourrage', icon: '🌿' },
+        { id: 'calendrier', label: 'Calendrier', icon: '📅' }
+    ];
 
-            const parts = [];
-            parts.push('<div class="bg-gray-50 border-b-2 border-green-600 p-4 shadow-sm">');
-			parts.push('<div class="flex justify-between items-center">');
-			parts.push('<h1 class="text-xl font-bold text-green-800">Tchapot de Ghislain</h1>');
-			parts.push('<div class="flex gap-2">');
-			parts.push('<button onclick="window.demanderPermissionNotifications()" class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">🔔 Notifications</button>');
-			parts.push('<button onclick="window.logout()" class="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Déconnexion</button>');
-			parts.push('</div>');
-			parts.push('</div>');
-            parts.push('<div class="bg-gray-100 p-2 overflow-x-auto">');
-            parts.push('<div class="flex gap-1">');
+    const parts = [];
+    
+    // === HEADER MODERNE ===
+    parts.push('<div class="app-header">');
+    parts.push('<div class="flex justify-between items-center">');
+    
+    // Logo
+    parts.push('<div class="app-logo">🐑 Tchapot</div>');
+    
+    // Navigation Desktop
+    parts.push('<div class="nav-desktop">');
+    tabs.forEach(tab => {
+        const active = state.activeTab === tab.id ? 'active' : '';
+        parts.push('<button onclick="window.changeTab(\'' + tab.id + '\')" class="nav-tab ' + active + '">');
+        parts.push(tab.icon + ' ' + tab.label);
+        parts.push('</button>');
+    });
+    parts.push('</div>');
+    
+    // Actions
+    parts.push('<div class="flex gap-2 items-center">');
+    parts.push('<button onclick="window.demanderPermissionNotifications()" class="btn-secondary">🔔</button>');
+    parts.push('<button onclick="window.logout()" class="btn-secondary">Déconnexion</button>');
+    parts.push('</div>');
+    
+    parts.push('</div>');
+    parts.push('</div>');
+    
+    // === NAVIGATION MOBILE (BOTTOM BAR) ===
+    parts.push('<div class="nav-mobile">');
+    const mainTabs = tabs.slice(0, 5); // 5 onglets principaux
+    mainTabs.forEach(tab => {
+        const active = state.activeTab === tab.id ? 'active' : '';
+        parts.push('<button onclick="window.changeTab(\'' + tab.id + '\')" class="nav-mobile-item ' + active + '">');
+        parts.push('<span class="nav-mobile-icon">' + tab.icon + '</span>');
+        parts.push('<span>' + tab.label.split(' ')[0] + '</span>'); // Premier mot seulement
+        parts.push('</button>');
+    });
+    parts.push('</div>');
 
-            tabs.forEach(tab => {
-                const active = state.activeTab === tab.id;
-                const cls = active ? 'bg-green-600 text-white' : 'bg-white text-gray-700';
-                parts.push('<button onclick="window.changeTab(\'' + tab.id + '\')" class="relative px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap ' + cls + '">');
-                parts.push(tab.label);
-                parts.push('</button>');
-            });
+    const activeRender = tabs.find(t => t.id === state.activeTab)?.fn || renderTableauBord;
+    parts.push('<div class="container-modern">');
+    parts.push(activeRender());
+    parts.push('</div>');
 
-            parts.push('</div></div>');
-
-            const activeRender = tabs.find(t => t.id === state.activeTab)?.fn || renderTableauBord;
-            parts.push(activeRender());
-
-            document.getElementById('app').innerHTML = parts.join('');
-            attachEventListeners();
-        }
+    document.getElementById('app').innerHTML = parts.join('');
+    attachEventListeners();
+}
 
         function attachEventListeners() {
             const formBat = document.getElementById('form-bat');
@@ -4139,6 +4781,69 @@ auth.onAuthStateChanged(async (user) => {
         showLoginScreen();
     }
 });
+
+// ===== SWIPE GESTURES (MOBILE) =====
+let touchStartX = 0;
+let touchEndX = 0;
+let currentSwipeElement = null;
+
+function handleSwipe(element, onSwipeLeft, onSwipeRight) {
+    element.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+        currentSwipeElement = element;
+    }, { passive: true });
+
+    element.addEventListener('touchend', e => {
+        if (currentSwipeElement !== element) return;
+        
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        
+        // Swipe left (supprimer)
+        if (diff > 50 && onSwipeLeft) {
+            element.style.transform = 'translateX(-100px)';
+            element.style.opacity = '0.5';
+            setTimeout(() => {
+                if (confirm('Supprimer cet élément ?')) {
+                    onSwipeLeft();
+                } else {
+                    element.style.transform = '';
+                    element.style.opacity = '';
+                }
+            }, 200);
+        }
+        
+        // Swipe right (modifier)
+        if (diff < -50 && onSwipeRight) {
+            element.style.transform = 'translateX(100px)';
+            element.style.opacity = '0.5';
+            setTimeout(() => {
+                onSwipeRight();
+                element.style.transform = '';
+                element.style.opacity = '';
+            }, 200);
+        }
+        
+        currentSwipeElement = null;
+    }, { passive: true });
+}
+
+// Activer sur les cartes de lots (mobile uniquement)
+if (window.innerWidth < 768) {
+    setTimeout(() => {
+        document.querySelectorAll('.lot-card').forEach((card, index) => {
+            const lots = state.data.lots.filter(l => !l.archive);
+            const lot = lots[index];
+            if (!lot) return;
+            
+            handleSwipe(
+                card,
+                () => window.deleteLot(lot.id), // Swipe left = supprimer
+                () => window.editLot(lot.id)    // Swipe right = modifier
+            );
+        });
+    }, 500);
+}
 
 // L'initialisation se fait via onAuthStateChanged
 </script>

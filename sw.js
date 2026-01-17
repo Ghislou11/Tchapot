@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tchapot-v1';
+const CACHE_NAME = 'tchapot-v3';
 const urlsToCache = [
   '/',
   '/index.html',

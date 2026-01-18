@@ -2724,17 +2724,24 @@ parts.push('</select></div>');
     });
     parts.push('</div>');
 
-let activeRender;
-if (state.activeTab === 'tableau-bord') activeRender = renderTableauBord();
-else if (state.activeTab === 'batiments') activeRender = renderBatiments();
-else if (state.activeTab === 'lots') activeRender = renderLots();
-else if (state.activeTab === 'rations') activeRender = renderRations();
-else if (state.activeTab === 'fourrage') activeRender = renderFourrage();
-else if (state.activeTab === 'calendrier') activeRender = renderCalendrier();
-else activeRender = renderTableauBord();
-
 parts.push('<div class="container-modern">');
-parts.push(activeRender());
+
+if (state.activeTab === 'tableau-bord') {
+    parts.push(renderTableauBord());
+} else if (state.activeTab === 'batiments') {
+    parts.push(renderBatiments());
+} else if (state.activeTab === 'lots') {
+    parts.push(renderLots());
+} else if (state.activeTab === 'rations') {
+    parts.push(renderRations());
+} else if (state.activeTab === 'fourrage') {
+    parts.push(renderFourrage());
+} else if (state.activeTab === 'calendrier') {
+    parts.push(renderCalendrier());
+} else {
+    parts.push(renderTableauBord());
+}
+
 parts.push('</div>');
 
 document.getElementById('app').innerHTML = parts.join('');

@@ -358,6 +358,62 @@
         box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
         animation: slideUp 0.3s ease;
     }
+	
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.custom-modal-box {
+    background: white;
+    border-radius: 24px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.3s ease;
+}
+
+.custom-modal-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #059669;
+}
+
+.custom-modal-content {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.custom-modal-btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.custom-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
     
     .modal-title {
         font-size: 1.75rem;
@@ -3778,8 +3834,8 @@ overlay.style.justifyContent = 'center';
 overlay.style.zIndex = '2000';
 overlay.style.padding = '20px';
     
-    ooverlay.innerHTML = `
-    <div class="modal-content" style="max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto;">
+   overlay.innerHTML = `
+    <div class="custom-modal-box">
         <div class="modal-title">Modifier l'événement</div>
         <div style="padding: 1rem;">
                 <div class="mb-3">
@@ -3822,16 +3878,7 @@ window.deleteEvtAuto = (lotId, evtType, dateEvt) => {
     if (!lot || !lot.evenementsAuto) return;
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-overlay.style.position = 'fixed';
-overlay.style.inset = '0';
-overlay.style.background = 'rgba(0, 0, 0, 0.6)';
-overlay.style.backdropFilter = 'blur(8px)';
-overlay.style.display = 'flex';
-overlay.style.alignItems = 'center';
-overlay.style.justifyContent = 'center';
-overlay.style.zIndex = '2000';
-overlay.style.padding = '20px';;
+    overlay.className = 'custom-modal-overlay';
     
     overlay.innerHTML = `
         <div class="custom-modal-box">

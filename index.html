@@ -3765,10 +3765,10 @@ window.editEvt = (id) => {
                         evt.description = document.getElementById('edit-evt-desc').value;
                         
                         saveData();
-                        this.closest('.modal-overlay').remove();
+                        this.closest('.custom-modal-overlay').remove();
                         render();
                     ">Enregistrer</button>
-                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="this.closest('.modal-overlay').remove()">Annuler</button>
+                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
                 </div>
             </div>
         </div>
@@ -4500,7 +4500,7 @@ window.showHistoriqueLot = (lotId) => {
             <div class="custom-modal-title">${lot.nom}</div>
             <div style="padding: 1rem;">
                 ${content}
-                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="this.closest('.modal-overlay').remove()">Fermer</button>
+                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="this.closest('.custom-modal-overlay').remove()">Fermer</button>
             </div>
         </div>
     `;
@@ -4569,11 +4569,10 @@ window.showHistoriqueLot = (lotId) => {
                             state.data.sortiesBat.push(mouvement);
                         }
                         saveData();
-                        this.closest('.modal-overlay').remove();
+                        this.closest('.custom-modal-overlay').remove();
                         render();
                     ">Valider</button>
-                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="this.closest('.modal-overlay').remove()">Annuler</button>
-                </div>
+                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="this.closest('.custom-modal-overlay').remove()"
             </div>
         </div>
     `;
@@ -4668,7 +4667,7 @@ window.showHistoriqueLot = (lotId) => {
                     <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">
                         Enregistrer
                     </button>
-                    <button type="button" onclick="this.closest('.modal-overlay').remove()" 
+                    <button type="button" onclick="this.closest('.custom-modal-overlay').remove()"
                             class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold">
                         Annuler
                     </button>

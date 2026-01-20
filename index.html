@@ -900,7 +900,7 @@ const auth = firebase.auth();
 const messaging = firebase.messaging();
 
 // Enregistrement du Service Worker
-/*if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
   .then((registration) => {
@@ -909,7 +909,6 @@ const messaging = firebase.messaging();
   .catch((err) => console.error('❌ Erreur SW:', err));
   });
 }
-*/
 
 // Demander permission pour notifications
 async function demanderPermissionNotifications() {
@@ -3457,20 +3456,21 @@ if (formEvt) {
     overlay.className = 'custom-modal-overlay';
     
     overlay.innerHTML = `
-        <div class="custom-modal-box">
-            <div class="custom-modal-title">Supprimer le bâtiment</div>
-            <div class="custom-modal-content">Voulez-vous vraiment supprimer "${bat.nom}" ?\n\nCette action est irréversible.</div>
-            <div class="flex gap-2">
-                <button class="custom-modal-btn bg-red-600" onclick="
-                    state.data.batiments = state.data.batiments.filter(b => b.id !== '${id}');
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">Oui, supprimer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
-            </div>
+    <div class="custom-modal-box">
+        <div class="custom-modal-title">Supprimer le bâtiment</div>
+        <div class="custom-modal-content">Voulez-vous vraiment supprimer "${bat.nom}" ?\n\nCette action est irréversible.</div>
+        <div class="flex gap-2">
+            <button class="custom-modal-btn bg-red-600" onclick="
+                state.data.batiments = state.data.batiments.filter(b => b.id !== '${id}');
+                saveData();
+                const modal = this.closest('.custom-modal-overlay');
+                if(modal) modal.remove();
+                render();
+            ">Oui, supprimer</button>
+            <button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
         </div>
-    `;
+    </div>
+`;
     
     document.body.appendChild(overlay);
 };
@@ -3497,17 +3497,18 @@ if (formEvt) {
                 </div>
             </div>
             <div class="flex gap-2">
-                <button class="custom-modal-btn bg-orange-600" onclick="
-                    const lot = state.data.lots.find(l => l.id === '${id}');
-                    lot.archive = true;
-                    lot.dateArchivage = new Date().toISOString().split('T')[0];
-                    lot.lieuActuel = null;
-                    lot.nombreTetes = 0;
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">📦 Archiver</button>
-                <button class="custom-modal-btn bg-red-600" onclick="
+               <button class="custom-modal-btn bg-orange-600" onclick="
+    const lot = state.data.lots.find(l => l.id === '${id}');
+    lot.archive = true;
+    lot.dateArchivage = new Date().toISOString().split('T')[0];
+    lot.lieuActuel = null;
+    lot.nombreTetes = 0;
+    saveData();
+    const modal = this.closest('.custom-modal-overlay');
+    if(modal) modal.remove();
+    render();
+">📦 Archiver</button>
+<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
                     if (!confirm('⚠️ ATTENTION : Supprimer définitivement ${lot.nom} et TOUTES ses données ?\\n\\nCette action est IRRÉVERSIBLE.')) return;
                     
                     // Supprimer le lot
@@ -3523,10 +3524,10 @@ if (formEvt) {
                     state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
                     
                     saveData();
-                    this.closest('.custom-modal-overlay').remove();
+                    thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                     render();
                 ">🗑️ Supprimer définitivement</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
             </div>
         </div>
     `;
@@ -3561,7 +3562,7 @@ window.showArchives = () => {
         '<div class="custom-modal-content" style="max-height: 60vh; overflow-y: auto;">' +
         contenu +
         '</div>' +
-        '<button class="custom-modal-btn bg-gray-400" onclick="this.closest(\'.custom-modal-overlay\').remove()">Fermer</button>' +
+       '<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest(\'.custom-modal-overlay\'); if(modal) modal.remove();">Fermer</button>' +
         '</div>';
     
     document.body.appendChild(overlay);
@@ -3576,7 +3577,8 @@ window.restaurerLot = (id) => {
     lot.nombreTetes = 0;
     
     saveData();
-    document.querySelector('.custom-modal-overlay').remove();
+    const modal = document.querySelector('.custom-modal-overlay'); // ← CHANGEMENT ICI
+    if(modal) modal.remove();
     render();
     alert('✅ Lot restauré ! Pensez à mettre à jour le nombre de têtes et le lieu.');
 };
@@ -3615,16 +3617,16 @@ window.supprimerDefinitivement = (id) => {
             </div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-                    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
-                    state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
-                    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
-                    state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
-                    saveData();
-                    document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
-                    render();
-                    alert('🗑️ Lot supprimé définitivement');
-                ">🗑️ Oui, supprimer définitivement</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+					state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
+					state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
+					state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
+					state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
+					saveData();
+					document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
+					render();
+					alert('🗑️ Lot supprimé définitivement');
+					">🗑️ Oui, supprimer définitivement</button>
+					<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>.remove()">Annuler</button>
             </div>
         </div>
     `;
@@ -3645,12 +3647,13 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer cette ration ?\n\nDate : ${formatDate(ration.date)}\nAliment : ${ration.typeAliment}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-                    state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">Oui, supprimer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+    state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
+    saveData();
+    const modal = this.closest('.custom-modal-overlay');
+    if(modal) modal.remove();
+    render();
+">Oui, supprimer</button>
+<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>.remove()">Annuler</button>
             </div>
         </div>
     `;
@@ -3671,12 +3674,13 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer cette consommation ?\n\nDate : ${formatDate(conso.date)}\nFourrage : ${conso.typeFourrage}\nBalles : ${conso.nombreBalles}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-                    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.id !== '${id}');
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">Oui, supprimer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+    state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
+    saveData();
+    const modal = this.closest('.custom-modal-overlay');
+    if(modal) modal.remove();
+    render();
+">Oui, supprimer</button>
+<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
             </div>
         </div>
     `;
@@ -3697,12 +3701,13 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer l'événement "${evt.titre}" ?\n\nDate : ${formatDate(evt.date)}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-                    state.data.evenements = state.data.evenements.filter(e => e.id !== '${id}');
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">Oui, supprimer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+					state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
+					saveData();
+					const modal = this.closest('.custom-modal-overlay');
+					if(modal) modal.remove();
+					render();
+					">Oui, supprimer</button>
+					<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
             </div>
         </div>
     `;
@@ -3765,10 +3770,10 @@ window.editEvt = (id) => {
                         evt.description = document.getElementById('edit-evt-desc').value;
                         
                         saveData();
-                        this.closest('.custom-modal-overlay').remove();
+                        thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                         render();
                     ">Enregistrer</button>
-                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
                 </div>
             </div>
         </div>
@@ -3819,10 +3824,10 @@ window.editEvtAuto = (lotId, evtType, dateEvt) => {
                     evt.date = newDate;
                     ${evt.dateFin ? `evt.dateFin = document.getElementById('edit-evt-datefin').value;` : ''}
                     saveData();
-                    this.closest('.custom-modal-overlay').remove();
+                    thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                     render();
                 ">Enregistrer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
             </div>
         </div>
     `;
@@ -3847,10 +3852,10 @@ window.deleteEvtAuto = (lotId, evtType, dateEvt) => {
                     const lot = state.data.lots.find(l => l.id === '${lotId}');
                     lot.evenementsAuto = lot.evenementsAuto.filter(e => !(e.type === '${evtType}' && e.date === '${dateEvt}'));
                     saveData();
-                    this.closest('.custom-modal-overlay').remove();
+                    thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                     render();
                 ">Oui, supprimer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
             </div>
         </div>
     `;
@@ -4500,7 +4505,7 @@ window.showHistoriqueLot = (lotId) => {
             <div class="custom-modal-title">${lot.nom}</div>
             <div style="padding: 1rem;">
                 ${content}
-                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="this.closest('.custom-modal-overlay').remove()">Fermer</button>
+                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Fermer</button>
             </div>
         </div>
     `;
@@ -4569,10 +4574,10 @@ window.showHistoriqueLot = (lotId) => {
                             state.data.sortiesBat.push(mouvement);
                         }
                         saveData();
-                        this.closest('.custom-modal-overlay').remove();
+                        thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                         render();
                     ">Valider</button>
-                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="this.closest('.custom-modal-overlay').remove()"
+                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();"
             </div>
         </div>
     `;
@@ -4667,7 +4672,7 @@ window.showHistoriqueLot = (lotId) => {
                     <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">
                         Enregistrer
                     </button>
-                    <button type="button" onclick="this.closest('.custom-modal-overlay').remove()"
+                    <button type="button" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();"
                             class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold">
                         Annuler
                     </button>
@@ -4940,30 +4945,17 @@ if (window.innerWidth < 768) {
     }, 500);
 }
 
-window.testModal = () => {
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-    `;
-    
-    overlay.innerHTML = `
-        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 400px;">
-            <h2>Test Modal</h2>
-            <p>Si vous voyez ce message, les modales fonctionnent !</p>
-            <button onclick="this.closest('div[style*=fixed]').remove()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer;">Fermer</button>
-        </div>
-    `;
-    
-    document.body.appendChild(overlay);
+// Fonction pour fermer le modal parent
+window.closeModal = function(button) {
+    const modal = button.closest('.custom-modal-overlay');
+    if (modal) modal.remove();
+};
+
+// Fonction pour valider et fermer
+window.validateAndClose = function(button, callback) {
+    if (callback) callback();
+    const modal = button.closest('.custom-modal-overlay');
+    if (modal) modal.remove();
 };
 
 // L'initialisation se fait via onAuthStateChanged

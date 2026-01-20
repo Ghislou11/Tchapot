@@ -3683,64 +3683,77 @@ window.editEvt = (id) => {
     if (!evt) return;
     
     const overlay = document.createElement('div');
-    overlay.className = 'custom-modal-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+    overlay.style.backdropFilter = 'blur(8px)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '2000';
+    overlay.style.padding = '20px';
     
     // Options pour les lots
     let lotsOptions = '<option value="">Autre (événement général)</option>';
-state.data.lots.filter(l => !l.archive).forEach(lot => {  // NOUVEAU : Filtrer les archivés
-    const selected = evt.lotId === lot.id ? 'selected' : '';
-    lotsOptions += '<option value="' + lot.id + '" ' + selected + '>' + lot.nom + ' (' + lot.type + ')</option>';
-});
+    state.data.lots.filter(l => !l.archive).forEach(lot => {
+        const selected = evt.lotId === lot.id ? 'selected' : '';
+        lotsOptions += '<option value="' + lot.id + '" ' + selected + '>' + lot.nom + ' (' + lot.type + ')</option>';
+    });
     
     overlay.innerHTML = `
-        <div class="custom-modal-box">
-            <div class="custom-modal-title">Modifier l'événement</div>
-            <div class="custom-modal-content">
-                <div class="mb-3">
+        <div class="modal-content" style="max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-title">Modifier l'événement</div>
+            <div style="padding: 1rem;">
+                <div style="margin-bottom: 1rem;">
                     <label class="block text-sm font-medium mb-1">Associer à un lot</label>
                     <select id="edit-evt-lot" class="w-full px-3 py-2 border rounded-lg">
                         ${lotsOptions}
                     </select>
                 </div>
-                <div class="mb-3">
+                <div style="margin-bottom: 1rem;">
                     <label class="block text-sm font-medium mb-1">Titre</label>
                     <input type="text" id="edit-evt-titre" value="${evt.titre}" class="w-full px-3 py-2 border rounded-lg">
                 </div>
-                <div class="mb-3">
+                <div style="margin-bottom: 1rem;">
                     <label class="block text-sm font-medium mb-1">Date</label>
                     <input type="date" id="edit-evt-date" value="${evt.date}" class="w-full px-3 py-2 border rounded-lg">
                 </div>
-                <div class="mb-3">
+                <div style="margin-bottom: 1rem;">
                     <label class="block text-sm font-medium mb-1">Heure (optionnel)</label>
                     <input type="time" id="edit-evt-heure" value="${evt.heure || ''}" class="w-full px-3 py-2 border rounded-lg">
                 </div>
-                <div class="mb-3">
+                <div style="margin-bottom: 1rem;">
                     <label class="block text-sm font-medium mb-1">Description</label>
                     <textarea id="edit-evt-desc" class="w-full px-3 py-2 border rounded-lg" rows="3">${evt.description || ''}</textarea>
                 </div>
-            </div>
-            <div class="flex gap-2">
-                <button class="custom-modal-btn bg-green-600" onclick="
-                    const lotId = document.getElementById('edit-evt-lot').value;
-                    const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
-                    
-                    const evt = state.data.evenements.find(e => e.id === '${id}');
-                    evt.lotId = lotId || null;
-                    evt.lotNom = lot ? lot.nom : null;
-                    evt.categorie = lot ? 'Élevage' : 'Autre';
-                    evt.titre = document.getElementById('edit-evt-titre').value;
-                    evt.date = document.getElementById('edit-evt-date').value;
-                    evt.heure = document.getElementById('edit-evt-heure').value;
-                    evt.description = document.getElementById('edit-evt-desc').value;
-                    
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">Enregistrer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+                <div class="flex gap-2">
+                    <button class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold" onclick="
+                        const lotId = document.getElementById('edit-evt-lot').value;
+                        const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
+                        
+                        const evt = state.data.evenements.find(e => e.id === '${id}');
+                        evt.lotId = lotId || null;
+                        evt.lotNom = lot ? lot.nom : null;
+                        evt.categorie = lot ? 'Élevage' : 'Autre';
+                        evt.titre = document.getElementById('edit-evt-titre').value;
+                        evt.date = document.getElementById('edit-evt-date').value;
+                        evt.heure = document.getElementById('edit-evt-heure').value;
+                        evt.description = document.getElementById('edit-evt-desc').value;
+                        
+                        saveData();
+                        this.closest('.modal-overlay').remove();
+                        render();
+                    ">Enregistrer</button>
+                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="this.closest('.modal-overlay').remove()">Annuler</button>
+                </div>
             </div>
         </div>
     `;
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+    };
     
     document.body.appendChild(overlay);
 };
@@ -3754,12 +3767,21 @@ window.editEvtAuto = (lotId, evtType, dateEvt) => {
     if (!evt) return;
     
     const overlay = document.createElement('div');
-    overlay.className = 'custom-modal-overlay';
+    overlay.className = 'modal-overlay';
+overlay.style.position = 'fixed';
+overlay.style.inset = '0';
+overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+overlay.style.backdropFilter = 'blur(8px)';
+overlay.style.display = 'flex';
+overlay.style.alignItems = 'center';
+overlay.style.justifyContent = 'center';
+overlay.style.zIndex = '2000';
+overlay.style.padding = '20px';
     
-    overlay.innerHTML = `
-        <div class="custom-modal-box">
-            <div class="custom-modal-title">Modifier l'événement</div>
-            <div class="custom-modal-content">
+    ooverlay.innerHTML = `
+    <div class="modal-content" style="max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto;">
+        <div class="modal-title">Modifier l'événement</div>
+        <div style="padding: 1rem;">
                 <div class="mb-3">
                     <label class="block text-sm font-medium mb-1">Titre</label>
                     <input type="text" id="edit-evt-titre" value="${evt.titre}" class="w-full px-3 py-2 border rounded-lg">
@@ -3800,7 +3822,16 @@ window.deleteEvtAuto = (lotId, evtType, dateEvt) => {
     if (!lot || !lot.evenementsAuto) return;
     
     const overlay = document.createElement('div');
-    overlay.className = 'custom-modal-overlay';
+    overlay.className = 'modal-overlay';
+overlay.style.position = 'fixed';
+overlay.style.inset = '0';
+overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+overlay.style.backdropFilter = 'blur(8px)';
+overlay.style.display = 'flex';
+overlay.style.alignItems = 'center';
+overlay.style.justifyContent = 'center';
+overlay.style.zIndex = '2000';
+overlay.style.padding = '20px';;
     
     overlay.innerHTML = `
         <div class="custom-modal-box">
@@ -4384,28 +4415,50 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     });
 });
         }
-		window.showHistoriqueLot = (lotId) => {
+window.showHistoriqueLot = (lotId) => {
     const lot = state.data.lots.find(l => l.id === lotId);
     if (!lot) return;
     
-    let message = 'Type: ' + lot.type + '\n';
-    message += 'Têtes: ' + lot.nombreTetes + '\n';
-    message += 'Lieu: ' + getNomBat(lot.lieuActuel) + '\n';
-    message += 'Créé le: ' + formatDate(lot.dateCreation) + '\n\n';
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+    overlay.style.backdropFilter = 'blur(8px)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '2000';
+    overlay.style.padding = '20px';
+    
+    let content = '';
+    
+    // Infos générales
+    content += '<div class="mb-4 p-4 bg-gray-50 rounded-lg">';
+    content += '<div class="grid grid-cols-2 gap-2 text-sm">';
+    content += '<div><span class="font-semibold">Type:</span> ' + lot.type + '</div>';
+    content += '<div><span class="font-semibold">Têtes:</span> ' + lot.nombreTetes + '</div>';
+    content += '<div><span class="font-semibold">Lieu:</span> ' + getNomBat(lot.lieuActuel) + '</div>';
+    content += '<div><span class="font-semibold">Créé le:</span> ' + formatDate(lot.dateCreation) + '</div>';
+    content += '</div></div>';
     
     // Historique des modifications
     if (lot.historique && lot.historique.length > 0) {
-        message += '📝 HISTORIQUE DES MODIFICATIONS:\n';
+        content += '<div class="mb-4">';
+        content += '<h3 class="font-bold text-lg mb-2">📝 Historique</h3>';
+        content += '<div class="space-y-2">';
         lot.historique.slice().reverse().forEach(h => {
-            message += '  • ' + formatDate(h.date) + ' : ' + h.action + '\n';
+            content += '<div class="p-2 bg-blue-50 rounded text-sm">';
+            content += '<div class="font-semibold">' + formatDate(h.date) + ' - ' + h.action + '</div>';
             if (h.action === 'Déplacement') {
-                message += '    De: ' + getNomBat(h.ancienLieu) + ' → ' + getNomBat(h.nouveauLieu) + '\n';
+                content += '<div class="text-xs text-gray-600">De: ' + getNomBat(h.ancienLieu) + ' → ' + getNomBat(h.nouveauLieu) + '</div>';
             }
             if (h.ancienTetes !== h.nouveauTetes) {
-                message += '    Têtes: ' + h.ancienTetes + ' → ' + h.nouveauTetes + '\n';
+                content += '<div class="text-xs text-gray-600">Têtes: ' + h.ancienTetes + ' → ' + h.nouveauTetes + '</div>';
             }
+            content += '</div>';
         });
-        message += '\n';
+        content += '</div></div>';
     }
     
     // Dernières rations
@@ -4415,27 +4468,52 @@ document.querySelectorAll('.day-cell').forEach(cell => {
         .slice(0, 5);
     
     if (rations.length > 0) {
-        message += '🍽️ DERNIÈRES RATIONS:\n';
+        content += '<div class="mb-4">';
+        content += '<h3 class="font-bold text-lg mb-2">🍽️ Dernières rations</h3>';
+        content += '<div class="space-y-1">';
         rations.forEach(r => {
-            message += '  • ' + formatDate(r.date) + ' : ' + r.typeAliment + ' (' + r.quantiteTotale + ' kg)\n';
+            content += '<div class="text-sm p-2 bg-green-50 rounded">';
+            content += '<span class="font-semibold">' + formatDate(r.date) + '</span> : ';
+            content += r.typeAliment + ' (' + r.quantiteTotale + ' kg)';
+            content += '</div>';
         });
-        message += '\n';
+        content += '</div></div>';
     }
     
-    // Dernier fourrage
+    // Derniers fourrages
     const fourrage = state.data.consoFourrage
         .filter(c => c.lotId === lotId)
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5);
     
     if (fourrage.length > 0) {
-        message += '🌾 DERNIER FOURRAGE:\n';
+        content += '<div class="mb-4">';
+        content += '<h3 class="font-bold text-lg mb-2">🌾 Derniers fourrages</h3>';
+        content += '<div class="space-y-1">';
         fourrage.forEach(f => {
-            message += '  • ' + formatDate(f.date) + ' : ' + f.typeFourrage + ' (' + f.nombreBalles + ' balles)\n';
+            content += '<div class="text-sm p-2 bg-yellow-50 rounded">';
+            content += '<span class="font-semibold">' + formatDate(f.date) + '</span> : ';
+            content += f.typeFourrage + ' (' + f.nombreBalles + ' balles)';
+            content += '</div>';
         });
+        content += '</div></div>';
     }
     
-    window.showCustomModal(lot.nom, message);
+    overlay.innerHTML = `
+        <div class="modal-content" style="max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-title">${lot.nom}</div>
+            <div style="padding: 1rem;">
+                ${content}
+                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="this.closest('.modal-overlay').remove()">Fermer</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+    };
+    
+    document.body.appendChild(overlay);
 };
 		window.showEntreeSortie = (batId, type) => {
     const bat = state.data.batiments.find(b => b.id === batId);
@@ -4446,7 +4524,16 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     const color = type === 'entree' ? 'green' : 'orange';
     
     const overlay = document.createElement('div');
-    overlay.className = 'custom-modal-overlay';
+    overlay.className = 'modal-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+    overlay.style.backdropFilter = 'blur(8px)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '2000';
+    overlay.style.padding = '20px';
     
     // Créer les options de type
     let optionsType = '<option value="">Sélectionner...</option>';
@@ -4457,50 +4544,56 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     }
     
     overlay.innerHTML = `
-        <div class="custom-modal-box">
-            <div class="custom-modal-title">${titre}</div>
-            <div class="custom-modal-content">Bâtiment : ${bat.nom}</div>
-            <div class="mb-3">
-                <label class="block text-sm font-medium mb-1">Type</label>
-                <select id="type-stock-input" class="w-full px-3 py-2 border rounded-lg">${optionsType}</select>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Quantité (${unite})</label>
-                <input type="number" step="0.001" id="quantite-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Entrez la quantité">
-            </div>
-            <div class="flex gap-2">
-                <button class="custom-modal-btn bg-${color}-600" onclick="
-                    const typeStock = document.getElementById('type-stock-input').value;
-                    const quantite = document.getElementById('quantite-input').value;
-                    if (!typeStock) {
-                        alert('Veuillez sélectionner un type');
-                        return;
-                    }
-                    if (!quantite || isNaN(quantite) || parseFloat(quantite) <= 0) {
-                        alert('Veuillez entrer une quantité valide');
-                        return;
-                    }
-                    const mouvement = {
-                        id: Date.now().toString(),
-                        batimentId: '${batId}',
-                        typeStock: typeStock,
-                        quantite: parseFloat(quantite),
-                        date: new Date().toISOString().split('T')[0],
-                        type: '${type}'
-                    };
-                    if ('${type}' === 'entree') {
-                        state.data.entreesBat.push(mouvement);
-                    } else {
-                        state.data.sortiesBat.push(mouvement);
-                    }
-                    saveData();
-                    this.closest('.custom-modal-overlay').remove();
-                    render();
-                ">Valider</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="this.closest('.custom-modal-overlay').remove()">Annuler</button>
+        <div class="modal-content" style="max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-title">${titre}</div>
+            <div style="padding: 1rem;">
+                <div style="margin-bottom: 1rem; color: #666;">Bâtiment : ${bat.nom}</div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="block text-sm font-medium mb-1">Type</label>
+                    <select id="type-stock-input" class="w-full px-3 py-2 border rounded-lg">${optionsType}</select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label class="block text-sm font-medium mb-1">Quantité (${unite})</label>
+                    <input type="number" step="0.001" id="quantite-input" class="w-full px-3 py-2 border rounded-lg" placeholder="Entrez la quantité">
+                </div>
+                <div class="flex gap-2">
+                    <button class="flex-1 bg-${color}-600 text-white py-2 rounded-lg font-semibold" onclick="
+                        const typeStock = document.getElementById('type-stock-input').value;
+                        const quantite = document.getElementById('quantite-input').value;
+                        if (!typeStock) {
+                            alert('Veuillez sélectionner un type');
+                            return;
+                        }
+                        if (!quantite || isNaN(quantite) || parseFloat(quantite) <= 0) {
+                            alert('Veuillez entrer une quantité valide');
+                            return;
+                        }
+                        const mouvement = {
+                            id: Date.now().toString(),
+                            batimentId: '${batId}',
+                            typeStock: typeStock,
+                            quantite: parseFloat(quantite),
+                            date: new Date().toISOString().split('T')[0],
+                            type: '${type}'
+                        };
+                        if ('${type}' === 'entree') {
+                            state.data.entreesBat.push(mouvement);
+                        } else {
+                            state.data.sortiesBat.push(mouvement);
+                        }
+                        saveData();
+                        this.closest('.modal-overlay').remove();
+                        render();
+                    ">Valider</button>
+                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="this.closest('.modal-overlay').remove()">Annuler</button>
+                </div>
             </div>
         </div>
     `;
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+    };
     
     document.body.appendChild(overlay);
     
@@ -4515,6 +4608,15 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+    overlay.style.backdropFilter = 'blur(8px)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '2000';
+    overlay.style.padding = '20px';
     
     let batsOptions = '';
     state.data.batiments.filter(b => b.type === 'Élevage').forEach(b => {
@@ -4527,9 +4629,9 @@ document.querySelectorAll('.day-cell').forEach(cell => {
     const lutteFin = lot.reproduction?.lutteFin || '';
     
     overlay.innerHTML = `
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 600px; width: 100%; max-height: 85vh; overflow-y: auto;">
             <div class="modal-title">Modifier le lot - ${lot.nom}</div>
-            <form id="form-edit-lot" class="space-y-3">
+            <form id="form-edit-lot" class="space-y-3" style="padding: 1rem;">
                 <div>
                     <label class="block text-sm font-medium mb-1">Nombre de têtes</label>
                     <input type="number" id="edit-tetes" value="${lot.nombreTetes}" 
@@ -4543,46 +4645,48 @@ document.querySelectorAll('.day-cell').forEach(cell => {
                 </div>
                 
                 <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3">
-    <h4 class="font-semibold mb-2 text-green-800">Mise à la lutte (optionnel)</h4>
-    <div class="mb-2">
-        <label class="block text-xs font-medium mb-1">Type de lutte</label>
-        <select id="edit-type-lutte" class="w-full px-2 py-1 border rounded text-sm">
-            <option value="">Aucune</option>
-            <option value="LN" ${lot.reproduction?.typeLutte === 'LN' ? 'selected' : ''}>Lutte Naturelle (LN)</option>
-            <option value="IA" ${lot.reproduction?.typeLutte === 'IA' ? 'selected' : ''}>Insémination Artificielle (IA)</option>
-        </select>
-    </div>
-    <div class="grid grid-cols-2 gap-2">
-    <div>
-        <label class="block text-xs font-medium mb-1" id="edit-label-debut">Début</label>
-        <input type="date" id="edit-lutte-debut" value="${lutteDebut}" 
-               class="w-full px-2 py-1 border rounded text-sm">
-    </div>
-    <div id="edit-fin-container">
-        <label class="block text-xs font-medium mb-1">Fin</label>
-        <input type="date" id="edit-lutte-fin" value="${lutteFin}" 
-               class="w-full px-2 py-1 border rounded text-sm">
-    </div>
-</div>
+                    <h4 class="font-semibold mb-2 text-green-800">Mise à la lutte (optionnel)</h4>
+                    <div class="mb-2">
+                        <label class="block text-xs font-medium mb-1">Type de lutte</label>
+                        <select id="edit-type-lutte" class="w-full px-2 py-1 border rounded text-sm">
+                            <option value="">Aucune</option>
+                            <option value="LN" ${lot.reproduction?.typeLutte === 'LN' ? 'selected' : ''}>Lutte Naturelle (LN)</option>
+                            <option value="IA" ${lot.reproduction?.typeLutte === 'IA' ? 'selected' : ''}>Insémination Artificielle (IA)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium mb-1" id="edit-label-debut">Début</label>
+                            <input type="date" id="edit-lutte-debut" value="${lutteDebut}" 
+                                   class="w-full px-2 py-1 border rounded text-sm">
+                        </div>
+                        <div id="edit-fin-container">
+                            <label class="block text-xs font-medium mb-1">Fin</label>
+                            <input type="date" id="edit-lutte-fin" value="${lutteFin}" 
+                                   class="w-full px-2 py-1 border rounded text-sm">
+                        </div>
+                    </div>
                     <div id="edit-previsions" class="text-xs text-gray-600 mt-2 hidden"></div>
                 </div>
+                
                 ${lot.type === 'Agneaux' ? `
-<div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 mt-3">
-    <h4 class="font-semibold mb-2 text-yellow-800">Suivi agneaux</h4>
-    <div class="grid grid-cols-2 gap-2">
-        <div>
-            <label class="block text-xs font-medium mb-1">Date 1er né</label>
-            <input type="date" id="edit-premier-ne" value="${lot.agneaux?.premierNe || ''}" 
-                   class="w-full px-2 py-1 border rounded text-sm">
-        </div>
-        <div>
-            <label class="block text-xs font-medium mb-1">Date dernier né</label>
-            <input type="date" id="edit-dernier-ne" value="${lot.agneaux?.dernierNe || ''}" 
-                   class="w-full px-2 py-1 border rounded text-sm">
-        </div>
-    </div>
-</div>
-` : ''}
+                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3 mt-3">
+                    <h4 class="font-semibold mb-2 text-yellow-800">Suivi agneaux</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium mb-1">Date 1er né</label>
+                            <input type="date" id="edit-premier-ne" value="${lot.agneaux?.premierNe || ''}" 
+                                   class="w-full px-2 py-1 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium mb-1">Date dernier né</label>
+                            <input type="date" id="edit-dernier-ne" value="${lot.agneaux?.dernierNe || ''}" 
+                                   class="w-full px-2 py-1 border rounded text-sm">
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                
                 <div class="flex gap-2">
                     <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">
                         Enregistrer
@@ -4600,37 +4704,37 @@ document.querySelectorAll('.day-cell').forEach(cell => {
         if (e.target === overlay) overlay.remove();
     };
    
-// Gestion du changement de type de lutte en édition
-setTimeout(() => {
-    const editTypeLutteSelect = document.getElementById('edit-type-lutte');
-    const editLabelDebut = document.getElementById('edit-label-debut');
-    const editFinContainer = document.getElementById('edit-fin-container');
-    const editLutteFin = document.getElementById('edit-lutte-fin');
-    
-    if (editTypeLutteSelect) {
-        // Fonction pour ajuster l'affichage
-        const ajusterAffichage = () => {
-            const typeLutte = editTypeLutteSelect.value;
-            if (typeLutte === 'IA') {
-                editFinContainer.classList.add('hidden');
-                editLabelDebut.textContent = 'Date IA';
-                editLutteFin.value = '';
-            } else if (typeLutte === 'LN') {
-                editFinContainer.classList.remove('hidden');
-                editLabelDebut.textContent = 'Début';
-            } else {
-                editFinContainer.classList.add('hidden');
-                editLabelDebut.textContent = 'Début';
-            }
-        };
+    // Gestion du changement de type de lutte en édition
+    setTimeout(() => {
+        const editTypeLutteSelect = document.getElementById('edit-type-lutte');
+        const editLabelDebut = document.getElementById('edit-label-debut');
+        const editFinContainer = document.getElementById('edit-fin-container');
+        const editLutteFin = document.getElementById('edit-lutte-fin');
         
-        // Appliquer au chargement
-        ajusterAffichage();
-        
-        // Appliquer au changement
-        editTypeLutteSelect.addEventListener('change', ajusterAffichage);
-    }
-}, 100);
+        if (editTypeLutteSelect) {
+            // Fonction pour ajuster l'affichage
+            const ajusterAffichage = () => {
+                const typeLutte = editTypeLutteSelect.value;
+                if (typeLutte === 'IA') {
+                    editFinContainer.classList.add('hidden');
+                    editLabelDebut.textContent = 'Date IA';
+                    editLutteFin.value = '';
+                } else if (typeLutte === 'LN') {
+                    editFinContainer.classList.remove('hidden');
+                    editLabelDebut.textContent = 'Début';
+                } else {
+                    editFinContainer.classList.add('hidden');
+                    editLabelDebut.textContent = 'Début';
+                }
+            };
+            
+            // Appliquer au chargement
+            ajusterAffichage();
+            
+            // Appliquer au changement
+            editTypeLutteSelect.addEventListener('change', ajusterAffichage);
+        }
+    }, 100);
    
     document.body.appendChild(overlay);
     
@@ -4694,11 +4798,11 @@ setTimeout(() => {
         lot.lieuActuel = document.getElementById('edit-lieu').value;
         
         // Mise à jour des données de reproduction
-const nouveauTypeLutte = document.getElementById('edit-type-lutte').value;
-const nouveauLutteDebut = document.getElementById('edit-lutte-debut').value;
-const nouveauLutteFin = document.getElementById('edit-lutte-fin').value;
+        const nouveauTypeLutte = document.getElementById('edit-type-lutte').value;
+        const nouveauLutteDebut = document.getElementById('edit-lutte-debut').value;
+        const nouveauLutteFin = document.getElementById('edit-lutte-fin').value;
 
-if (nouveauTypeLutte && nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATION[lot.type]) {
+        if (nouveauTypeLutte && nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATION[lot.type]) {
             const config = PERIODES_GESTATION[lot.type];
             const dateDebut = new Date(nouveauLutteDebut);
             const dateFin = new Date(nouveauLutteFin);
@@ -4716,7 +4820,7 @@ if (nouveauTypeLutte && nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATI
             echoFin.setDate(echoFin.getDate() + PERIODE_ECHO.fin);
             
             lot.reproduction = {
-				typeLutte: nouveauTypeLutte,
+                typeLutte: nouveauTypeLutte,
                 lutteDebut: nouveauLutteDebut,
                 lutteFin: nouveauLutteFin,
                 miseBasDebut: mbDebut.toISOString().split('T')[0],
@@ -4727,12 +4831,12 @@ if (nouveauTypeLutte && nouveauLutteDebut && nouveauLutteFin && PERIODES_GESTATI
         } else {
             // Supprimer les données de reproduction si champs vides
             delete lot.reproduction;
-			delete lot.evenementsAuto;
+            delete lot.evenementsAuto;
         }
         
-// Ajouter les données agneaux
-        const premierNe = document.getElementById('edit-premier-ne').value;
-        const dernierNe = document.getElementById('edit-dernier-ne').value;
+        // Ajouter les données agneaux
+        const premierNe = document.getElementById('edit-premier-ne')?.value || '';
+        const dernierNe = document.getElementById('edit-dernier-ne')?.value || '';
         
         if (lot.type === 'Agneaux' && premierNe && dernierNe) {
             lot.agneaux = {

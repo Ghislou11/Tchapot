@@ -11,3 +11,27 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('📩 Message reçu en arrière-plan:', payload);
+  
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    vibrate: [200, 100, 200],
+    tag: 'tchapot-notification',
+    requireInteraction: true
+  };
+  
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Gestion du clic sur notification
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('/')
+  );
+});

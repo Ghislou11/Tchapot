@@ -2705,6 +2705,17 @@ parts.push('</select></div>');
             parts.push('</div>');
             return parts.join('');
         }
+		
+	// === FONCTIONS UTILITAIRES POUR MODALS ===
+window.closeModal = function(element) {
+    const modal = element.closest('.custom-modal-overlay');
+    if (modal) modal.remove();
+};
+
+window.closeAllModals = function() {
+    document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
+};	
+		
         function render() {
     const tabs = [
         { id: 'tableau-bord', label: 'Tableau de Bord', icon: '📊' },
@@ -3463,11 +3474,10 @@ if (formEvt) {
             <button class="custom-modal-btn bg-red-600" onclick="
                 state.data.batiments = state.data.batiments.filter(b => b.id !== '${id}');
                 saveData();
-                const modal = this.closest('.custom-modal-overlay');
-                if(modal) modal.remove();
+                window.closeModal(this);
                 render();
             ">Oui, supprimer</button>
-            <button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
+            <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
         </div>
     </div>
 `;
@@ -3504,30 +3514,21 @@ if (formEvt) {
     lot.lieuActuel = null;
     lot.nombreTetes = 0;
     saveData();
-    const modal = this.closest('.custom-modal-overlay');
-    if(modal) modal.remove();
+    window.closeModal(this);
     render();
 ">📦 Archiver</button>
-<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
-                    if (!confirm('⚠️ ATTENTION : Supprimer définitivement ${lot.nom} et TOUTES ses données ?\\n\\nCette action est IRRÉVERSIBLE.')) return;
-                    
-                    // Supprimer le lot
-                    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
-                    
-                    // Supprimer toutes les rations du lot
-                    state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
-                    
-                    // Supprimer toutes les consommations de fourrage du lot
-                    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
-                    
-                    // Supprimer tous les événements manuels du lot
-                    state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
-                    
-                    saveData();
-                    thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
-                    render();
-                ">🗑️ Supprimer définitivement</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
+<button class="custom-modal-btn bg-red-600" onclick="
+    if (!confirm('⚠️ ATTENTION : Supprimer définitivement ${lot.nom} et TOUTES ses données ?\\n\\nCette action est IRRÉVERSIBLE.')) return;
+    
+    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
+    state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
+    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
+    state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
+    saveData();
+    window.closeModal(this);
+    render();
+">🗑️ Supprimer définitivement</button>
+<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3557,13 +3558,13 @@ window.showArchives = () => {
         contenu += '</div></div>';
     });
     
-    overlay.innerHTML = '<div class="custom-modal-box" style="max-width: 600px;">' +
-        '<div class="custom-modal-title">📦 Lots archivés</div>' +
-        '<div class="custom-modal-content" style="max-height: 60vh; overflow-y: auto;">' +
-        contenu +
-        '</div>' +
-       '<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest(\'.custom-modal-overlay\'); if(modal) modal.remove();">Fermer</button>' +
-        '</div>';
+	overlay.innerHTML = '<div class="custom-modal-box" style="max-width: 600px;">' +
+		'<div class="custom-modal-title">📦 Lots archivés</div>' +
+		'<div class="custom-modal-content" style="max-height: 60vh; overflow-y: auto;">' +
+		contenu +
+		'</div>' +
+		'<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Fermer</button>' +
+		'</div>';
     
     document.body.appendChild(overlay);
 };
@@ -3577,8 +3578,7 @@ window.restaurerLot = (id) => {
     lot.nombreTetes = 0;
     
     saveData();
-    const modal = document.querySelector('.custom-modal-overlay'); // ← CHANGEMENT ICI
-    if(modal) modal.remove();
+    window.closeAllModals();
     render();
     alert('✅ Lot restauré ! Pensez à mettre à jour le nombre de têtes et le lieu.');
 };
@@ -3622,11 +3622,11 @@ window.supprimerDefinitivement = (id) => {
 					state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
 					state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
 					saveData();
-					document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
+					window.closeAllModals();
 					render();
 					alert('🗑️ Lot supprimé définitivement');
-					">🗑️ Oui, supprimer définitivement</button>
-					<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>.remove()">Annuler</button>
+				">🗑️ Oui, supprimer définitivement</button>
+				<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3647,13 +3647,12 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer cette ration ?\n\nDate : ${formatDate(ration.date)}\nAliment : ${ration.typeAliment}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-    state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
-    saveData();
-    const modal = this.closest('.custom-modal-overlay');
-    if(modal) modal.remove();
-    render();
-">Oui, supprimer</button>
-<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>.remove()">Annuler</button>
+					state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
+					saveData();
+					window.closeModal(this);
+					render();
+				">Oui, supprimer</button>
+				button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3674,13 +3673,12 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer cette consommation ?\n\nDate : ${formatDate(conso.date)}\nFourrage : ${conso.typeFourrage}\nBalles : ${conso.nombreBalles}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-    state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
-    saveData();
-    const modal = this.closest('.custom-modal-overlay');
-    if(modal) modal.remove();
-    render();
-">Oui, supprimer</button>
-<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
+					state.data.consoFourrage = state.data.consoFourrage.filter(c => c.id !== '${id}');
+					saveData();
+					window.closeModal(this);
+					render();
+				">Oui, supprimer</button>
+				<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3701,13 +3699,12 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer l'événement "${evt.titre}" ?\n\nDate : ${formatDate(evt.date)}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-					state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
+					state.data.evenements = state.data.evenements.filter(e => e.id !== '${id}');
 					saveData();
-					const modal = this.closest('.custom-modal-overlay');
-					if(modal) modal.remove();
+					window.closeModal(this);
 					render();
-					">Oui, supprimer</button>
-					<button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
+				">Oui, supprimer</button>
+				<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3756,7 +3753,7 @@ window.editEvt = (id) => {
                     <textarea id="edit-evt-desc" class="w-full px-3 py-2 border rounded-lg" rows="3">${evt.description || ''}</textarea>
                 </div>
                 <div class="flex gap-2">
-                    <button class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold" onclick="
+                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="window.closeModal(this)">Annuler</button>
                         const lotId = document.getElementById('edit-evt-lot').value;
                         const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
                         
@@ -3827,7 +3824,7 @@ window.editEvtAuto = (lotId, evtType, dateEvt) => {
                     thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                     render();
                 ">Enregistrer</button>
-                <button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3899,12 +3896,12 @@ window.showCustomModal = (title, content) => {
     overlay.className = 'custom-modal-overlay';
     
     overlay.innerHTML = `
-        <div class="custom-modal-box">
-            <div class="custom-modal-title">${title}</div>
-            <div class="custom-modal-content">${content}</div>
-            <button class="custom-modal-btn">Fermer</button>
-        </div>
-    `;
+    <div class="custom-modal-box">
+        <div class="custom-modal-title">${title}</div>
+        <div class="custom-modal-content">${content}</div>
+        <button class="custom-modal-btn" onclick="window.closeModal(this)">Fermer</button>
+    </div>
+`;
     
     overlay.onclick = (e) => {
         if (e.target === overlay || e.target.classList.contains('custom-modal-btn')) {
@@ -4080,7 +4077,7 @@ window.handleDayClick = (dateStr) => {
         buttonsHtml += '</button>';
         
         // Bouton "Annuler"
-        buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="this.closest(\'.custom-modal-overlay\').remove()">Fermer</button>';
+        buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Fermer</button>';
         
         overlay.innerHTML = '<div class="custom-modal-box">' +
             '<div class="custom-modal-title">Actions</div>' +
@@ -4505,7 +4502,7 @@ window.showHistoriqueLot = (lotId) => {
             <div class="custom-modal-title">${lot.nom}</div>
             <div style="padding: 1rem;">
                 ${content}
-                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Fermer</button>
+                <button class="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold mt-4" onclick="window.closeModal(this)">Fermer</button>
             </div>
         </div>
     `;
@@ -4577,7 +4574,7 @@ window.showHistoriqueLot = (lotId) => {
                         thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
                         render();
                     ">Valider</button>
-                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();"
+                    <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -4672,10 +4669,10 @@ window.showHistoriqueLot = (lotId) => {
                     <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold">
                         Enregistrer
                     </button>
-                    <button type="button" onclick="thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();"
-                            class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold">
-                        Annuler
-                    </button>
+                    <button type="button" onclick="window.closeModal(this)" 
+						class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold">
+						Annuler
+					</button>
                 </div>
             </form>
         </div>

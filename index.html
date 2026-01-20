@@ -4593,7 +4593,7 @@ window.showHistoriqueLot = (lotId) => {
     const lot = state.data.lots.find(l => l.id === lotId);
     if (!lot) return;
     
-    cconst overlay = document.createElement('div');
+    const overlay = document.createElement('div');
     overlay.className = 'custom-modal-overlay';
     let batsOptions = '';
     state.data.batiments.filter(b => b.type === 'Élevage').forEach(b => {

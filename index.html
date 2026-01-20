@@ -3818,20 +3818,11 @@ window.editEvtAuto = (lotId, evtType, dateEvt) => {
     if (!evt) return;
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-overlay.style.position = 'fixed';
-overlay.style.inset = '0';
-overlay.style.background = 'rgba(0, 0, 0, 0.6)';
-overlay.style.backdropFilter = 'blur(8px)';
-overlay.style.display = 'flex';
-overlay.style.alignItems = 'center';
-overlay.style.justifyContent = 'center';
-overlay.style.zIndex = '2000';
-overlay.style.padding = '20px';
+    overlay.className = 'custom-modal-overlay';
     
    overlay.innerHTML = `
-    <div class="custom-modal-box">
-        <div class="modal-title">Modifier l'événement</div>
+    <div class="custom-modal-box" style="max-width: 600px;">
+        <div class="modal-title">${lot.nom}</div>
         <div style="padding: 1rem;">
                 <div class="mb-3">
                     <label class="block text-sm font-medium mb-1">Titre</label>
@@ -4557,16 +4548,7 @@ overlay.className = 'custom-modal-overlay';
     const color = type === 'entree' ? 'green' : 'orange';
     
     const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0, 0, 0, 0.6)';
-    overlay.style.backdropFilter = 'blur(8px)';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '2000';
-    overlay.style.padding = '20px';
+overlay.className = 'custom-modal-overlay';
     
     // Créer les options de type
     let optionsType = '<option value="">Sélectionner...</option>';

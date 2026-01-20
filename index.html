@@ -900,7 +900,7 @@ const auth = firebase.auth();
 const messaging = firebase.messaging();
 
 // Enregistrement du Service Worker
-if ('serviceWorker' in navigator) {
+/*if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
   .then((registration) => {
@@ -909,6 +909,7 @@ if ('serviceWorker' in navigator) {
   .catch((err) => console.error('❌ Erreur SW:', err));
   });
 }
+*/
 
 // Demander permission pour notifications
 async function demanderPermissionNotifications() {
@@ -4939,6 +4940,33 @@ if (window.innerWidth < 768) {
         });
     }, 500);
 }
+
+/ FONCTION DE TEST - À AJOUTER À LA FIN DU SCRIPT
+window.testModal = () => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    overlay.innerHTML = `
+        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 400px;">
+            <h2>Test Modal</h2>
+            <p>Si vous voyez ce message, les modales fonctionnent !</p>
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer;">Fermer</button>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
 
 // L'initialisation se fait via onAuthStateChanged
 </script>

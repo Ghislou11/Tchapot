@@ -3485,7 +3485,7 @@ if (formEvt) {
     document.body.appendChild(overlay);
 };
 
-       window.deleteLot = (id) => {
+window.deleteLot = (id) => {
     const lot = state.data.lots.find(l => l.id === id);
     if (!lot) return;
     
@@ -3507,28 +3507,28 @@ if (formEvt) {
                 </div>
             </div>
             <div class="flex gap-2">
-               <button class="custom-modal-btn bg-orange-600" onclick="
-    const lot = state.data.lots.find(l => l.id === '${id}');
-    lot.archive = true;
-    lot.dateArchivage = new Date().toISOString().split('T')[0];
-    lot.lieuActuel = null;
-    lot.nombreTetes = 0;
-    saveData();
-    window.closeModal(this);
-    render();
-">📦 Archiver</button>
-<button class="custom-modal-btn bg-red-600" onclick="
-    if (!confirm('⚠️ ATTENTION : Supprimer définitivement ${lot.nom} et TOUTES ses données ?\\n\\nCette action est IRRÉVERSIBLE.')) return;
-    
-    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
-    state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
-    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
-    state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
-    saveData();
-    window.closeModal(this);
-    render();
-">🗑️ Supprimer définitivement</button>
-<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
+                <button class="custom-modal-btn bg-orange-600" onclick="
+                    const lot = state.data.lots.find(l => l.id === '${id}');
+                    lot.archive = true;
+                    lot.dateArchivage = new Date().toISOString().split('T')[0];
+                    lot.lieuActuel = null;
+                    lot.nombreTetes = 0;
+                    saveData();
+                    window.closeModal(this);
+                    render();
+                ">📦 Archiver</button>
+                <button class="custom-modal-btn bg-red-600" onclick="
+                    if (!confirm('⚠️ ATTENTION : Supprimer définitivement ${lot.nom} et TOUTES ses données ?\\n\\nCette action est IRRÉVERSIBLE.')) return;
+                    
+                    state.data.lots = state.data.lots.filter(l => l.id !== '${id}');
+                    state.data.rations = state.data.rations.filter(r => r.lotId !== '${id}');
+                    state.data.consoFourrage = state.data.consoFourrage.filter(c => c.lotId !== '${id}');
+                    state.data.evenements = state.data.evenements.filter(e => e.lotId !== '${id}');
+                    saveData();
+                    window.closeModal(this);
+                    render();
+                ">🗑️ Supprimer définitivement</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;
@@ -3647,12 +3647,12 @@ window.supprimerDefinitivement = (id) => {
             <div class="custom-modal-content">Voulez-vous vraiment supprimer cette ration ?\n\nDate : ${formatDate(ration.date)}\nAliment : ${ration.typeAliment}\n\nCette action est irréversible.</div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-red-600" onclick="
-					state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
-					saveData();
-					window.closeModal(this);
-					render();
-				">Oui, supprimer</button>
-				button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
+                    state.data.rations = state.data.rations.filter(r => r.id !== '${id}');
+                    saveData();
+                    window.closeModal(this);
+                    render();
+                ">Oui, supprimer</button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
     `;

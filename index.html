@@ -4047,67 +4047,68 @@ window.handleDayClick = (dateStr) => {
     // === 5. AFFICHER LE MODAL PRINCIPAL ===
     window.showCustomModal('Événements', message);
     
-// === 6. AFFICHER LES BOUTONS D'ACTION ===
-setTimeout(() => {
-    const overlay = document.createElement('div');
-    overlay.className = 'custom-modal-overlay';
-    
-    let buttonsHtml = '';
-    
-    // Bouton "Prendre RDV" si période en cours
-    if (periodesEnCours.length > 0) {
-        periodesEnCours.forEach(p => {
-            let typeLabel = '';
-            let typeRdv = '';
-            if (p.type === 'echoStart') {
-                typeLabel = 'Échographie';
-                typeRdv = 'echo';
-            } else if (p.type === 'peseeStart') {
-                typeLabel = 'Pesée';
-                typeRdv = 'pesee';
-            } else if (p.type === 'biaminticStart') {
-                typeLabel = 'Biamintic';
-                typeRdv = 'biamintic';
-            } else if (p.type === 'gallifenStart') {
-                typeLabel = 'Gallifen';
-                typeRdv = 'gallifen';
-            }
-            
-            buttonsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + typeRdv + '\', \'' + clickDate + '\'); window.closeAllModals();">';
-            buttonsHtml += '📅 RDV ' + typeLabel + ' - ' + p.lot.nom;
-            buttonsHtml += '</button>';
-        });
-    }
-    
-    // Bouton "Créer un événement"
-    buttonsHtml += '<button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + clickDate + '\'; window.showModal(); window.closeAllModals();">';
-    buttonsHtml += '➕ Créer un événement';
-    buttonsHtml += '</button>';
-    
-    // Bouton "Annuler"
-    buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Fermer</button>';
-    
-    overlay.innerHTML = '<div class="custom-modal-box">' +
-        '<div class="custom-modal-title">Actions</div>' +
-        '<div class="custom-modal-content">Que voulez-vous faire ?</div>' +
-        buttonsHtml +
-        '</div>';
-    
-    document.body.appendChild(overlay);
-}, 300);
+    // === 6. AFFICHER LES BOUTONS D'ACTION ===
+    setTimeout(() => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        
+        let buttonsHtml = '';
+        
+        // Bouton "Prendre RDV" si période en cours
+        if (periodesEnCours.length > 0) {
+            periodesEnCours.forEach(p => {
+                let typeLabel = '';
+                let typeRdv = '';
+                if (p.type === 'echoStart') {
+                    typeLabel = 'Échographie';
+                    typeRdv = 'echo';
+                } else if (p.type === 'peseeStart') {
+                    typeLabel = 'Pesée';
+                    typeRdv = 'pesee';
+                } else if (p.type === 'biaminticStart') {
+                    typeLabel = 'Biamintic';
+                    typeRdv = 'biamintic';
+                } else if (p.type === 'gallifenStart') {
+                    typeLabel = 'Gallifen';
+                    typeRdv = 'gallifen';
+                }
+                
+                buttonsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + typeRdv + '\', \'' + clickDate + '\'); window.closeAllModals();">';
+                buttonsHtml += '📅 RDV ' + typeLabel + ' - ' + p.lot.nom;
+                buttonsHtml += '</button>';
+            });
+        }
+        
+        // Bouton "Créer un événement"
+        buttonsHtml += '<button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + clickDate + '\'; window.showModal(); window.closeAllModals();">';
+        buttonsHtml += '➕ Créer un événement';
+        buttonsHtml += '</button>';
+        
+        // Bouton "Annuler"
+        buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Fermer</button>';
+        
+        overlay.innerHTML = '<div class="custom-modal-box">' +
+            '<div class="custom-modal-title">Actions</div>' +
+            '<div class="custom-modal-content">Que voulez-vous faire ?</div>' +
+            buttonsHtml +
+            '</div>';
+        
+        document.body.appendChild(overlay);
+    }, 300);
+}; // ← ACCOLADE MANQUANTE #1 : Ferme window.handleDayClick
 
 window.prendreRdv = (lotId, typeRdv, dateRdv) => {
     const lot = state.data.lots.find(l => l.id === lotId);
     if (!lot || !lot.evenementsAuto) return;
     
     // Trouver l'événement de période correspondant
-const indexPeriode = lot.evenementsAuto.findIndex(evt => {
-    if (typeRdv === 'echo' && evt.type === 'echoStart') return true;
-    if (typeRdv === 'pesee' && evt.type === 'peseeStart') return true;
-    if (typeRdv === 'biamintic' && evt.type === 'biaminticStart') return true;
-    if (typeRdv === 'gallifen' && evt.type === 'gallifenStart') return true;
-    return false;
-});
+    const indexPeriode = lot.evenementsAuto.findIndex(evt => {
+        if (typeRdv === 'echo' && evt.type === 'echoStart') return true;
+        if (typeRdv === 'pesee' && evt.type === 'peseeStart') return true;
+        if (typeRdv === 'biamintic' && evt.type === 'biaminticStart') return true;
+        if (typeRdv === 'gallifen' && evt.type === 'gallifenStart') return true;
+        return false;
+    });
     
     if (indexPeriode === -1) return;
     
@@ -4115,20 +4116,20 @@ const indexPeriode = lot.evenementsAuto.findIndex(evt => {
     lot.evenementsAuto.splice(indexPeriode, 1);
     
     // Ajouter le RDV ponctuel
-let typeRdvFinal, titreRdv;
-if (typeRdv === 'echo') {
-    typeRdvFinal = 'echoRdv';
-    titreRdv = 'RDV Échographie ';
-} else if (typeRdv === 'pesee') {
-    typeRdvFinal = 'peseeRdv';
-    titreRdv = 'RDV Pesée ';
-} else if (typeRdv === 'biamintic') {
-    typeRdvFinal = 'biaminticRdv';
-    titreRdv = 'RDV Biamintic ';
-} else if (typeRdv === 'gallifen') {
-    typeRdvFinal = 'gallifenRdv';
-    titreRdv = 'RDV Gallifen ';
-}
+    let typeRdvFinal, titreRdv;
+    if (typeRdv === 'echo') {
+        typeRdvFinal = 'echoRdv';
+        titreRdv = 'RDV Échographie ';
+    } else if (typeRdv === 'pesee') {
+        typeRdvFinal = 'peseeRdv';
+        titreRdv = 'RDV Pesée ';
+    } else if (typeRdv === 'biamintic') {
+        typeRdvFinal = 'biaminticRdv';
+        titreRdv = 'RDV Biamintic ';
+    } else if (typeRdv === 'gallifen') {
+        typeRdvFinal = 'gallifenRdv';
+        titreRdv = 'RDV Gallifen ';
+    }
     
     lot.evenementsAuto.push({
         type: typeRdvFinal,
@@ -4142,17 +4143,17 @@ if (typeRdv === 'echo') {
     alert('✅ Rendez-vous fixé au ' + new Date(dateRdv).toLocaleDateString('fr-FR'));
 };
 
-        window.changeMonth = (delta) => {
-            window.currentCalendarMonth += delta;
-            if (window.currentCalendarMonth > 11) {
-                window.currentCalendarMonth = 0;
-                window.currentCalendarYear++;
-            } else if (window.currentCalendarMonth < 0) {
-                window.currentCalendarMonth = 11;
-                window.currentCalendarYear--;
-            }
-            renderCalendarGrid();
-        };
+window.changeMonth = (delta) => {
+    window.currentCalendarMonth += delta;
+    if (window.currentCalendarMonth > 11) {
+        window.currentCalendarMonth = 0;
+        window.currentCalendarYear++;
+    } else if (window.currentCalendarMonth < 0) {
+        window.currentCalendarMonth = 11;
+        window.currentCalendarYear--;
+    }
+    renderCalendarGrid();
+};
 
         function renderCalendarGrid() {
             const monthTitle = document.getElementById('month-title');

@@ -4073,14 +4073,13 @@ setTimeout(() => {
                 typeRdv = 'gallifen';
             }
             
-            // CETTE LIGNE À CORRIGER :
             buttonsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + typeRdv + '\', \'' + clickDate + '\'); window.closeAllModals();">';
             buttonsHtml += '📅 RDV ' + typeLabel + ' - ' + p.lot.nom;
             buttonsHtml += '</button>';
         });
     }
     
-    // Bouton "Créer un événement" - CETTE LIGNE AUSSI À CORRIGER :
+    // Bouton "Créer un événement"
     buttonsHtml += '<button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + clickDate + '\'; window.showModal(); window.closeAllModals();">';
     buttonsHtml += '➕ Créer un événement';
     buttonsHtml += '</button>';

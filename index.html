@@ -3753,23 +3753,23 @@ window.editEvt = (id) => {
                     <textarea id="edit-evt-desc" class="w-full px-3 py-2 border rounded-lg" rows="3">${evt.description || ''}</textarea>
                 </div>
                 <div class="flex gap-2">
-                    <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="window.closeModal(this)">Annuler</button>
-                        const lotId = document.getElementById('edit-evt-lot').value;
-                        const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
-                        
-                        const evt = state.data.evenements.find(e => e.id === '${id}');
-                        evt.lotId = lotId || null;
-                        evt.lotNom = lot ? lot.nom : null;
-                        evt.categorie = lot ? 'Élevage' : 'Autre';
-                        evt.titre = document.getElementById('edit-evt-titre').value;
-                        evt.date = document.getElementById('edit-evt-date').value;
-                        evt.heure = document.getElementById('edit-evt-heure').value;
-                        evt.description = document.getElementById('edit-evt-desc').value;
-                        
-                        saveData();
-                        thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
-                        render();
-                    ">Enregistrer</button>
+                    <button class="flex-1 bg-green-600 text-white py-2 rounded-lg font-semibold" onclick="
+    const lotId = document.getElementById('edit-evt-lot').value;
+    const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
+    
+    const evt = state.data.evenements.find(e => e.id === '${id}');
+    evt.lotId = lotId || null;
+    evt.lotNom = lot ? lot.nom : null;
+    evt.categorie = lot ? 'Élevage' : 'Autre';
+    evt.titre = document.getElementById('edit-evt-titre').value;
+    evt.date = document.getElementById('edit-evt-date').value;
+    evt.heure = document.getElementById('edit-evt-heure').value;
+    evt.description = document.getElementById('edit-evt-desc').value;
+    
+    saveData();
+    window.closeModal(this);
+    render();
+">Enregistrer</button>
                     <button class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>
                 </div>
             </div>
@@ -3814,16 +3814,24 @@ window.editEvtAuto = (lotId, evtType, dateEvt) => {
             </div>
             <div class="flex gap-2">
                 <button class="custom-modal-btn bg-green-600" onclick="
-                    const newTitre = document.getElementById('edit-evt-titre').value;
-                    const newDate = document.getElementById('edit-evt-date').value;
-                    const evt = state.data.lots.find(l => l.id === '${lotId}').evenementsAuto.find(e => e.type === '${evtType}' && e.date === '${dateEvt}');
-                    evt.titre = newTitre;
-                    evt.date = newDate;
-                    ${evt.dateFin ? `evt.dateFin = document.getElementById('edit-evt-datefin').value;` : ''}
-                    saveData();
-                    thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
-                    render();
-                ">Enregistrer</button>
+    const newTitre = document.getElementById('edit-evt-titre').value;
+    const newDate = document.getElementById('edit-evt-date').value;
+    const lot = state.data.lots.find(l => l.id === '${lotId}');
+    if (lot && lot.evenementsAuto) {
+        const evt = lot.evenementsAuto.find(e => e.type === '${evtType}' && e.date === '${dateEvt}');
+        if (evt) {
+            evt.titre = newTitre;
+            evt.date = newDate;
+            ${evt.dateFin ? `
+            const dateFin = document.getElementById('edit-evt-datefin');
+            if (dateFin) evt.dateFin = dateFin.value;
+            ` : ''}
+        }
+    }
+    saveData();
+    window.closeModal(this);
+    render();
+">Enregistrer</button>
                 <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>
@@ -4039,55 +4047,62 @@ window.handleDayClick = (dateStr) => {
     // === 5. AFFICHER LE MODAL PRINCIPAL ===
     window.showCustomModal('Événements', message);
     
-    // === 6. AFFICHER LES BOUTONS D'ACTION ===
-    setTimeout(() => {
-        const overlay = document.createElement('div');
-        overlay.className = 'custom-modal-overlay';
-        
-        let buttonsHtml = '';
-        
-        // Bouton "Prendre RDV" si période en cours
-        if (periodesEnCours.length > 0) {
-            periodesEnCours.forEach(p => {
-                let typeLabel = '';
-                let typeRdv = '';
-                if (p.type === 'echoStart') {
-                    typeLabel = 'Échographie';
-                    typeRdv = 'echo';
-                } else if (p.type === 'peseeStart') {
-                    typeLabel = 'Pesée';
-                    typeRdv = 'pesee';
-                } else if (p.type === 'biaminticStart') {
-                    typeLabel = 'Biamintic';
-                    typeRdv = 'biamintic';
-                } else if (p.type === 'gallifenStart') {
-                    typeLabel = 'Gallifen';
-                    typeRdv = 'gallifen';
-                }
-                
-                buttonsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + typeRdv + '\', \'' + clickDate + '\'); this.closest(\'.custom-modal-overlay\').remove();">';
-                buttonsHtml += '📅 RDV ' + typeLabel + ' - ' + p.lot.nom;
-                buttonsHtml += '</button>';
-            });
-        }
-        
-        // Bouton "Créer un événement"
-        buttonsHtml += '<button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + clickDate + '\'; window.showModal(); this.closest(\'.custom-modal-overlay\').remove();">';
-        buttonsHtml += '➕ Créer un événement';
-        buttonsHtml += '</button>';
-        
-        // Bouton "Annuler"
-        buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Fermer</button>';
-        
-        overlay.innerHTML = '<div class="custom-modal-box">' +
-            '<div class="custom-modal-title">Actions</div>' +
-            '<div class="custom-modal-content">Que voulez-vous faire ?</div>' +
-            buttonsHtml +
-            '</div>';
-        
-        document.body.appendChild(overlay);
-    }, 300);
-};
+// === 6. AFFICHER LES BOUTONS D'ACTION ===
+setTimeout(() => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    let buttonsHtml = '';
+    
+    // Bouton "Prendre RDV" si période en cours
+    if (periodesEnCours.length > 0) {
+        periodesEnCours.forEach(p => {
+            let typeLabel = '';
+            let typeRdv = '';
+            if (p.type === 'echoStart') {
+                typeLabel = 'Échographie';
+                typeRdv = 'echo';
+            } else if (p.type === 'peseeStart') {
+                typeLabel = 'Pesée';
+                typeRdv = 'pesee';
+            } else if (p.type === 'biaminticStart') {
+                typeLabel = 'Biamintic';
+                typeRdv = 'biamintic';
+            } else if (p.type === 'gallifenStart') {
+                typeLabel = 'Gallifen';
+                typeRdv = 'gallifen';
+            }
+            
+            // CETTE LIGNE À CORRIGER :
+            buttonsHtml += '<button class="custom-modal-btn bg-purple-600 mb-2" onclick="window.prendreRdv(\'' + p.lot.id + '\', \'' + typeRdv + '\', \'' + clickDate + '\'); window.closeAllModals();">';
+            buttonsHtml += '📅 RDV ' + typeLabel + ' - ' + p.lot.nom;
+            buttonsHtml += '</button>';
+        });
+    }
+    
+    // Bouton "Créer un événement" - CETTE LIGNE AUSSI À CORRIGER :
+    buttonsHtml += '<button class="custom-modal-btn bg-green-600" onclick="document.getElementById(\'evt-date\').value = \'' + clickDate + '\'; window.showModal(); window.closeAllModals();">';
+    buttonsHtml += '➕ Créer un événement';
+    buttonsHtml += '</button>';
+    
+    // Bouton "Annuler"
+    buttonsHtml += '<button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">Fermer</button>';
+    
+    overlay.innerHTML = '<div class="custom-modal-box">' +
+        '<div class="custom-modal-title">Actions</div>' +
+        '<div class="custom-modal-content">Que voulez-vous faire ?</div>' +
+        buttonsHtml +
+        '</div>';
+    
+    document.body.appendChild(overlay);
+}, 300);
+```
+
+## Recherche alternative
+
+Si vous ne trouvez toujours pas, faites une recherche pour :
+```
+window.prendreRdv
 
 window.prendreRdv = (lotId, typeRdv, dateRdv) => {
     const lot = state.data.lots.find(l => l.id === lotId);
@@ -4410,7 +4425,7 @@ if (evtsJour.length > 0) {
      html += '</div>';
 }
     
-    html += '</div>'; // ← CETTE LIGNE MANQUE - Ferme la div day-cell
+    html += '</div>';
 }
 
             calendarGrid.innerHTML = html;
@@ -4547,33 +4562,33 @@ window.showHistoriqueLot = (lotId) => {
                 </div>
                 <div class="flex gap-2">
                     <button class="flex-1 bg-${color}-600 text-white py-2 rounded-lg font-semibold" onclick="
-                        const typeStock = document.getElementById('type-stock-input').value;
-                        const quantite = document.getElementById('quantite-input').value;
-                        if (!typeStock) {
-                            alert('Veuillez sélectionner un type');
-                            return;
-                        }
-                        if (!quantite || isNaN(quantite) || parseFloat(quantite) <= 0) {
-                            alert('Veuillez entrer une quantité valide');
-                            return;
-                        }
-                        const mouvement = {
-                            id: Date.now().toString(),
-                            batimentId: '${batId}',
-                            typeStock: typeStock,
-                            quantite: parseFloat(quantite),
-                            date: new Date().toISOString().split('T')[0],
-                            type: '${type}'
-                        };
-                        if ('${type}' === 'entree') {
-                            state.data.entreesBat.push(mouvement);
-                        } else {
-                            state.data.sortiesBat.push(mouvement);
-                        }
-                        saveData();
-                        thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
-                        render();
-                    ">Valider</button>
+    const typeStock = document.getElementById('type-stock-input').value;
+    const quantite = document.getElementById('quantite-input').value;
+    if (!typeStock) {
+        alert('Veuillez sélectionner un type');
+        return;
+    }
+    if (!quantite || isNaN(quantite) || parseFloat(quantite) <= 0) {
+        alert('Veuillez entrer une quantité valide');
+        return;
+    }
+    const mouvement = {
+        id: Date.now().toString(),
+        batimentId: '${batId}',
+        typeStock: typeStock,
+        quantite: parseFloat(quantite),
+        date: new Date().toISOString().split('T')[0],
+        type: '${type}'
+    };
+    if ('${type}' === 'entree') {
+        state.data.entreesBat.push(mouvement);
+    } else {
+        state.data.sortiesBat.push(mouvement);
+    }
+    saveData();
+    window.closeModal(this);
+    render();
+">Valider</button>
                     <button class="flex-1 bg-gray-400 text-white py-2 rounded-lg font-semibold" onclick="window.closeModal(this)">Annuler</button>
             </div>
         </div>

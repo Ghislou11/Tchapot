@@ -6,7 +6,7 @@ admin.initializeApp();
 
 // ===== FONCTION PRINCIPALE - TOUS LES JOURS À 8H =====
 exports.envoyerNotificationsQuotidiennes = onSchedule({
-  schedule: '0 8 * * *',
+  schedule: '* * * * *',
   timeZone: 'Europe/Paris',
   memory: '256MiB'
 }, async (event) => {

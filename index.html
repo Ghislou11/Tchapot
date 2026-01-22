@@ -2719,6 +2719,243 @@ window.closeAllModals = function() {
     document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
 };	
 
+window.detecterDoublonRation = (lotId, typeAliment, date, batimentId) => {
+    const doublons = state.data.rations.filter(r => 
+        r.lotId === lotId && 
+        r.typeAliment === typeAliment && 
+        r.date === date &&
+        r.batimentId === batimentId
+    );
+    
+    return doublons.length > 0 ? doublons : null;
+};
+
+window.confirmerAjoutRationDoublon = (rationData, doublons) => {
+    const lot = state.data.lots.find(l => l.id === rationData.lotId);
+    const lotNom = lot ? lot.nom : 'Lot inconnu';
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    let doublonsHtml = '';
+    doublons.forEach(d => {
+        doublonsHtml += '<div class="p-2 bg-orange-100 rounded text-sm mb-2">';
+        doublonsHtml += '<strong>' + d.typeAliment + '</strong> : ' + d.quantiteTotale + ' kg ';
+        doublonsHtml += '(' + d.poidsParTete + ' kg/tête)';
+        doublonsHtml += '</div>';
+    });
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title" style="color: #f97316;">⚠️ Doublon détecté</div>
+            <div class="custom-modal-content">
+                <div class="mb-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                    <p class="font-bold mb-2">Une ration identique existe déjà :</p>
+                    <p><strong>Lot :</strong> ${lotNom}</p>
+                    <p><strong>Date :</strong> ${formatDate(rationData.date)}</p>
+                    <p><strong>Aliment :</strong> ${rationData.typeAliment}</p>
+                </div>
+                
+                <p class="text-sm text-gray-700 mb-3">Ration(s) existante(s) :</p>
+                ${doublonsHtml}
+                
+                <p class="text-sm text-gray-700 mb-3">Nouvelle ration :</p>
+                <div class="p-2 bg-green-100 rounded text-sm mb-4">
+                    <strong>${rationData.typeAliment}</strong> : ${rationData.quantiteTotale} kg 
+                    (${rationData.poidsParTete} kg/tête)
+                </div>
+                
+                <p class="text-sm font-semibold text-gray-800">Que voulez-vous faire ?</p>
+            </div>
+            <div class="flex flex-col gap-2 mt-4">
+                <button class="custom-modal-btn bg-green-600" onclick="window.remplacerRation(${JSON.stringify(rationData).replace(/"/g, '&quot;')}, ${JSON.stringify(doublons.map(d => d.id)).replace(/"/g, '&quot;')})">
+                    🔄 Remplacer l'ancienne ration
+                </button>
+                <button class="custom-modal-btn bg-orange-600" onclick="window.ajouterRationQuandMeme(${JSON.stringify(rationData).replace(/"/g, '&quot;')})">
+                    ➕ Ajouter quand même (créer un doublon)
+                </button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">
+                    ❌ Annuler
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+window.remplacerRation = (rationData, doublonsIds) => {
+    const ids = JSON.parse(doublonsIds);
+    ids.forEach(id => {
+        state.data.rations = state.data.rations.filter(r => r.id !== id);
+    });
+    
+    state.data.rations.push(rationData);
+    
+    saveData();
+    window.closeAllModals();
+    render();
+    
+    alert('✅ Ration remplacée avec succès !');
+};
+
+window.ajouterRationQuandMeme = (rationData) => {
+    state.data.rations.push(rationData);
+    
+    saveData();
+    window.closeAllModals();
+    render();
+    
+    alert('✅ Ration ajoutée (doublon créé)');
+};
+
+// Nouvelle fonction pour traiter les rations une par une
+window.traiterRationsCopieRapide = (rationsToCopy, index) => {
+    if (index >= rationsToCopy.length) {
+        saveData();
+        render();
+        alert('✅ Toutes les rations ont été copiées avec succès !');
+        return;
+    }
+    
+    const rationData = rationsToCopy[index];
+    
+    const doublons = window.detecterDoublonRation(
+        rationData.lotId, 
+        rationData.typeAliment, 
+        rationData.date, 
+        rationData.batimentId
+    );
+    
+    if (doublons) {
+        window.confirmerAjoutRationDoublonCopie(rationData, doublons, rationsToCopy, index);
+    } else {
+        state.data.rations.push({
+            id: Date.now().toString() + Math.random(),
+            date: rationData.date,
+            lotId: rationData.lotId,
+            batimentId: rationData.batimentId,
+            typeAliment: rationData.typeAliment,
+            poidsParTete: rationData.poidsParTete,
+            quantiteTotale: rationData.quantiteTotale
+        });
+        
+        window.traiterRationsCopieRapide(rationsToCopy, index + 1);
+    }
+};
+
+window.confirmerAjoutRationDoublonCopie = (rationData, doublons, rationsToCopy, index) => {
+    const lot = state.data.lots.find(l => l.id === rationData.lotId);
+    const lotNom = lot ? lot.nom : 'Lot inconnu';
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    let doublonsHtml = '';
+    doublons.forEach(d => {
+        doublonsHtml += '<div class="p-2 bg-orange-100 rounded text-sm mb-2">';
+        doublonsHtml += '<strong>' + d.typeAliment + '</strong> : ' + d.quantiteTotale + ' kg ';
+        doublonsHtml += '(' + d.poidsParTete + ' kg/tête)';
+        doublonsHtml += '</div>';
+    });
+    
+    const progression = (index + 1) + ' / ' + rationsToCopy.length;
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title" style="color: #f97316;">⚠️ Doublon détecté (${progression})</div>
+            <div class="custom-modal-content">
+                <div class="mb-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                    <p class="font-bold mb-2">Une ration identique existe déjà :</p>
+                    <p><strong>Lot :</strong> ${lotNom}</p>
+                    <p><strong>Date :</strong> ${formatDate(rationData.date)}</p>
+                    <p><strong>Aliment :</strong> ${rationData.typeAliment}</p>
+                </div>
+                
+                <p class="text-sm text-gray-700 mb-3">Ration(s) existante(s) :</p>
+                ${doublonsHtml}
+                
+                <p class="text-sm text-gray-700 mb-3">Nouvelle ration (copiée) :</p>
+                <div class="p-2 bg-green-100 rounded text-sm mb-4">
+                    <strong>${rationData.typeAliment}</strong> : ${rationData.quantiteTotale} kg 
+                    (${rationData.poidsParTete} kg/tête)
+                </div>
+                
+                <p class="text-sm font-semibold text-gray-800">Que voulez-vous faire ?</p>
+            </div>
+            <div class="flex flex-col gap-2 mt-4">
+                <button class="custom-modal-btn bg-green-600" onclick="window.remplacerRationCopie(${JSON.stringify(rationData).replace(/"/g, '&quot;')}, ${JSON.stringify(doublons.map(d => d.id)).replace(/"/g, '&quot;')}, ${JSON.stringify(rationsToCopy).replace(/"/g, '&quot;')}, ${index})">
+                    🔄 Remplacer l'ancienne ration
+                </button>
+                <button class="custom-modal-btn bg-orange-600" onclick="window.ajouterRationQuandMemeCopie(${JSON.stringify(rationData).replace(/"/g, '&quot;')}, ${JSON.stringify(rationsToCopy).replace(/"/g, '&quot;')}, ${index})">
+                    ➕ Ajouter quand même (créer un doublon)
+                </button>
+                <button class="custom-modal-btn bg-blue-600" onclick="window.ignorerRationCopie(${JSON.stringify(rationsToCopy).replace(/"/g, '&quot;')}, ${index})">
+                    ⏭️ Ignorer cette ration
+                </button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.annulerCopieTotale()">
+                    ❌ Annuler tout
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+window.remplacerRationCopie = (rationData, doublonsIds, rationsToCopy, index) => {
+    const ids = JSON.parse(doublonsIds);
+    ids.forEach(id => {
+        state.data.rations = state.data.rations.filter(r => r.id !== id);
+    });
+    
+    state.data.rations.push({
+        id: Date.now().toString() + Math.random(),
+        date: rationData.date,
+        lotId: rationData.lotId,
+        batimentId: rationData.batimentId,
+        typeAliment: rationData.typeAliment,
+        poidsParTete: rationData.poidsParTete,
+        quantiteTotale: rationData.quantiteTotale
+    });
+    
+    window.closeAllModals();
+    
+    const rations = JSON.parse(rationsToCopy);
+    window.traiterRationsCopieRapide(rations, index + 1);
+};
+
+window.ajouterRationQuandMemeCopie = (rationData, rationsToCopy, index) => {
+    state.data.rations.push({
+        id: Date.now().toString() + Math.random(),
+        date: rationData.date,
+        lotId: rationData.lotId,
+        batimentId: rationData.batimentId,
+        typeAliment: rationData.typeAliment,
+        poidsParTete: rationData.poidsParTete,
+        quantiteTotale: rationData.quantiteTotale
+    });
+    
+    window.closeAllModals();
+    
+    const rations = JSON.parse(rationsToCopy);
+    window.traiterRationsCopieRapide(rations, index + 1);
+};
+
+window.ignorerRationCopie = (rationsToCopy, index) => {
+    window.closeAllModals();
+    
+    const rations = JSON.parse(rationsToCopy);
+    window.traiterRationsCopieRapide(rations, index + 1);
+};
+
+window.annulerCopieTotale = () => {
+    window.closeAllModals();
+    saveData();
+    render();
+    alert('❌ Copie annulée');
+};
+
 // === COPIE RAPIDE DES RATIONS ===
 window.showCopieRationsRapide = () => {
     const dateSelectionnee = document.getElementById('ration-date')?.value || new Date().toISOString().split('T')[0];

@@ -2190,7 +2190,10 @@ parts.push('</td></tr>');
             const today = new Date().toISOString().split('T')[0];
             const parts = [];
             parts.push('<div class="p-4 space-y-4 bg-gray-50">');
-            parts.push('<h2 class="text-2xl font-bold">Rations d\'aliment</h2>');
+            parts.push('<div class="flex justify-between items-center mb-4">');
+			parts.push('<h2 class="text-2xl font-bold">Rations d\'aliment</h2>');
+			parts.push('<button onclick="window.showCopieRationsRapide()" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition">⚡ Même ration qu\'hier</button>');
+			parts.push('</div>');
 
             parts.push('<form id="form-ration" class="bg-white border-2 rounded-lg p-4 space-y-3">');
             parts.push('<div><label class="block text-sm font-medium mb-1">Date</label>');
@@ -2715,6 +2718,281 @@ window.closeModal = function(element) {
 window.closeAllModals = function() {
     document.querySelectorAll('.custom-modal-overlay').forEach(m => m.remove());
 };	
+
+// === COPIE RAPIDE DES RATIONS ===
+window.showCopieRationsRapide = () => {
+    const dateSelectionnee = document.getElementById('ration-date')?.value || new Date().toISOString().split('T')[0];
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    // Calculer la date de la veille
+    const dateObj = new Date(dateSelectionnee);
+    dateObj.setDate(dateObj.getDate() - 1);
+    const dateVeille = dateObj.toISOString().split('T')[0];
+    
+    // Récupérer tous les lots actifs
+    const lotsActifs = state.data.lots.filter(l => !l.archive);
+    
+    // Pour chaque lot, vérifier s'il y a des rations la veille
+    const lotsAvecRations = lotsActifs.filter(lot => {
+        const rationsDuLot = state.data.rations.filter(r => r.lotId === lot.id && r.date === dateVeille);
+        return rationsDuLot.length > 0;
+    });
+    
+    if (lotsAvecRations.length === 0) {
+        alert('❌ Aucune ration trouvée pour le ' + new Date(dateVeille).toLocaleDateString('fr-FR'));
+        return;
+    }
+    
+    let checkboxesHtml = '';
+	lotsAvecRations.forEach(lot => {
+    const rations = state.data.rations.filter(r => r.lotId === lot.id && r.date === dateVeille);
+    const rationsTxt = rations.map(r => r.typeAliment + ' (' + r.quantiteTotale + ' kg)').join(' + ');
+    
+    // Décocher par défaut si c'est un lot de poulets
+    const isChecked = lot.type !== 'Poulet' ? 'checked' : '';
+    
+		checkboxesHtml += '<div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg mb-2">';
+		checkboxesHtml += '<input type="checkbox" id="lot-' + lot.id + '" value="' + lot.id + '" ' + isChecked + ' class="mt-1 w-5 h-5 text-green-600 cursor-pointer">';
+        checkboxesHtml += '<label for="lot-' + lot.id + '" class="flex-1 cursor-pointer">';
+        checkboxesHtml += '<div class="font-bold text-green-700">' + lot.nom + '</div>';
+        checkboxesHtml += '<div class="text-sm text-gray-600">' + rationsTxt + '</div>';
+        checkboxesHtml += '</label>';
+        checkboxesHtml += '</div>';
+    });
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box" style="max-width: 600px;">
+            <div class="custom-modal-title">⚡ Copie rapide des rations</div>
+            <div class="custom-modal-content">
+                <div class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                    <strong>📅 Date cible :</strong> ${new Date(dateSelectionnee).toLocaleDateString('fr-FR')}<br>
+                    <strong>📋 Copie depuis :</strong> ${new Date(dateVeille).toLocaleDateString('fr-FR')}
+                </div>
+                
+                <p class="text-sm text-gray-600 mb-3">
+                    Sélectionnez les lots dont vous voulez copier les rations :
+                </p>
+                
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${checkboxesHtml}
+                </div>
+                
+                <div class="mt-4 p-3 bg-green-50 border-l-4 border-green-500 rounded text-sm">
+                    💡 <strong>Astuce :</strong> Décochez les lots dont la ration a changé pour les remplir manuellement après.
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button class="custom-modal-btn bg-green-600" onclick="window.executerCopieRations('${dateSelectionnee}', '${dateVeille}')">
+                    ✅ Copier les rations sélectionnées
+                </button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.closeModal(this)">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+window.executerCopieRations = (dateCible, dateVeille) => {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][id^="lot-"]:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('⚠️ Veuillez sélectionner au moins un lot');
+        return;
+    }
+    
+    // Collecter toutes les rations à copier
+    const rationsToCopy = [];
+    
+    checkboxes.forEach(checkbox => {
+        const lotId = checkbox.value;
+        
+        // Récupérer toutes les rations du lot de la veille
+        const rationsVeille = state.data.rations.filter(r => r.lotId === lotId && r.date === dateVeille);
+        
+        rationsVeille.forEach(ration => {
+            rationsToCopy.push({
+                lotId: ration.lotId,
+                batimentId: ration.batimentId,
+                typeAliment: ration.typeAliment,
+                poidsParTete: ration.poidsParTete,
+                quantiteTotale: ration.quantiteTotale,
+                date: dateCible
+            });
+        });
+    });
+    
+    // Fermer le modal de sélection
+    window.closeAllModals();
+    
+    // Traiter les rations une par une
+    window.traiterRationsCopieRapide(rationsToCopy, 0);
+};
+
+// Nouvelle fonction pour traiter les rations une par une
+window.traiterRationsCopieRapide = (rationsToCopy, index) => {
+    // Si toutes les rations ont été traitées
+    if (index >= rationsToCopy.length) {
+        saveData();
+        render();
+        alert('✅ Toutes les rations ont été copiées avec succès !');
+        return;
+    }
+    
+    const rationData = rationsToCopy[index];
+    
+    // Vérifier si un doublon existe
+    const doublons = window.detecterDoublonRation(
+        rationData.lotId, 
+        rationData.typeAliment, 
+        rationData.date, 
+        rationData.batimentId
+    );
+    
+    if (doublons) {
+        // Afficher le modal de confirmation pour ce doublon
+        window.confirmerAjoutRationDoublonCopie(rationData, doublons, rationsToCopy, index);
+    } else {
+        // Pas de doublon, ajouter directement
+        state.data.rations.push({
+            id: Date.now().toString() + Math.random(),
+            date: rationData.date,
+            lotId: rationData.lotId,
+            batimentId: rationData.batimentId,
+            typeAliment: rationData.typeAliment,
+            poidsParTete: rationData.poidsParTete,
+            quantiteTotale: rationData.quantiteTotale
+        });
+        
+        // Passer à la ration suivante
+        window.traiterRationsCopieRapide(rationsToCopy, index + 1);
+    }
+};
+
+// Modal de confirmation spécifique pour la copie rapide
+window.confirmerAjoutRationDoublonCopie = (rationData, doublons, rationsToCopy, index) => {
+    const lot = state.data.lots.find(l => l.id === rationData.lotId);
+    const lotNom = lot ? lot.nom : 'Lot inconnu';
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    // Résumé des doublons
+    let doublonsHtml = '';
+    doublons.forEach(d => {
+        doublonsHtml += '<div class="p-2 bg-orange-100 rounded text-sm mb-2">';
+        doublonsHtml += '<strong>' + d.typeAliment + '</strong> : ' + d.quantiteTotale + ' kg ';
+        doublonsHtml += '(' + d.poidsParTete + ' kg/tête)';
+        doublonsHtml += '</div>';
+    });
+    
+    // Progression
+    const progression = (index + 1) + ' / ' + rationsToCopy.length;
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <div class="custom-modal-title" style="color: #f97316;">⚠️ Doublon détecté (${progression})</div>
+            <div class="custom-modal-content">
+                <div class="mb-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                    <p class="font-bold mb-2">Une ration identique existe déjà :</p>
+                    <p><strong>Lot :</strong> ${lotNom}</p>
+                    <p><strong>Date :</strong> ${formatDate(rationData.date)}</p>
+                    <p><strong>Aliment :</strong> ${rationData.typeAliment}</p>
+                </div>
+                
+                <p class="text-sm text-gray-700 mb-3">Ration(s) existante(s) :</p>
+                ${doublonsHtml}
+                
+                <p class="text-sm text-gray-700 mb-3">Nouvelle ration (copiée) :</p>
+                <div class="p-2 bg-green-100 rounded text-sm mb-4">
+                    <strong>${rationData.typeAliment}</strong> : ${rationData.quantiteTotale} kg 
+                    (${rationData.poidsParTete} kg/tête)
+                </div>
+                
+                <p class="text-sm font-semibold text-gray-800">Que voulez-vous faire ?</p>
+            </div>
+            <div class="flex flex-col gap-2 mt-4">
+                <button class="custom-modal-btn bg-green-600" onclick="window.remplacerRationCopie(${JSON.stringify(rationData).replace(/"/g, '&quot;')}, ${JSON.stringify(doublons.map(d => d.id)).replace(/"/g, '&quot;')}, ${JSON.stringify(rationsToCopy).replace(/"/g, '&quot;')}, ${index})">
+                    🔄 Remplacer l'ancienne ration
+                </button>
+                <button class="custom-modal-btn bg-orange-600" onclick="window.ajouterRationQuandMemeCopie(${JSON.stringify(rationData).replace(/"/g, '&quot;')}, ${JSON.stringify(rationsToCopy).replace(/"/g, '&quot;')}, ${index})">
+                    ➕ Ajouter quand même (créer un doublon)
+                </button>
+                <button class="custom-modal-btn bg-blue-600" onclick="window.ignorerRationCopie(${JSON.stringify(rationsToCopy).replace(/"/g, '&quot;')}, ${index})">
+                    ⏭️ Ignorer cette ration
+                </button>
+                <button class="custom-modal-btn bg-gray-400" onclick="window.annulerCopieTotale()">
+                    ❌ Annuler tout
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+};
+
+window.remplacerRationCopie = (rationData, doublonsIds, rationsToCopy, index) => {
+    // Supprimer les anciennes rations
+    const ids = JSON.parse(doublonsIds);
+    ids.forEach(id => {
+        state.data.rations = state.data.rations.filter(r => r.id !== id);
+    });
+    
+    // Ajouter la nouvelle
+    state.data.rations.push({
+        id: Date.now().toString() + Math.random(),
+        date: rationData.date,
+        lotId: rationData.lotId,
+        batimentId: rationData.batimentId,
+        typeAliment: rationData.typeAliment,
+        poidsParTete: rationData.poidsParTete,
+        quantiteTotale: rationData.quantiteTotale
+    });
+    
+    window.closeAllModals();
+    
+    // Passer à la ration suivante
+    const rations = JSON.parse(rationsToCopy);
+    window.traiterRationsCopieRapide(rations, index + 1);
+};
+
+window.ajouterRationQuandMemeCopie = (rationData, rationsToCopy, index) => {
+    // Ajouter la ration (créer le doublon)
+    state.data.rations.push({
+        id: Date.now().toString() + Math.random(),
+        date: rationData.date,
+        lotId: rationData.lotId,
+        batimentId: rationData.batimentId,
+        typeAliment: rationData.typeAliment,
+        poidsParTete: rationData.poidsParTete,
+        quantiteTotale: rationData.quantiteTotale
+    });
+    
+    window.closeAllModals();
+    
+    // Passer à la ration suivante
+    const rations = JSON.parse(rationsToCopy);
+    window.traiterRationsCopieRapide(rations, index + 1);
+};
+
+window.ignorerRationCopie = (rationsToCopy, index) => {
+    // Ne rien ajouter, passer à la suivante
+    window.closeAllModals();
+    
+    const rations = JSON.parse(rationsToCopy);
+    window.traiterRationsCopieRapide(rations, index + 1);
+};
+
+window.annulerCopieTotale = () => {
+    window.closeAllModals();
+    saveData();
+    render();
+    alert('❌ Copie annulée');
+};
 		
         function render() {
     const tabs = [
@@ -2754,17 +3032,17 @@ window.closeAllModals = function() {
     parts.push('</div>');
     parts.push('</div>');
     
-    // === NAVIGATION MOBILE (BOTTOM BAR) ===
-    parts.push('<div class="nav-mobile">');
-    const mainTabs = tabs.slice(0, 5); // 5 onglets principaux
-    mainTabs.forEach(tab => {
-        const active = state.activeTab === tab.id ? 'active' : '';
-        parts.push('<button onclick="window.changeTab(\'' + tab.id + '\')" class="nav-mobile-item ' + active + '">');
-        parts.push('<span class="nav-mobile-icon">' + tab.icon + '</span>');
-        parts.push('<span>' + tab.label.split(' ')[0] + '</span>'); // Premier mot seulement
-        parts.push('</button>');
-    });
-    parts.push('</div>');
+// === NAVIGATION MOBILE (BOTTOM BAR) ===
+parts.push('<div class="nav-mobile">');
+const mainTabs = tabs.slice(0, 6);
+mainTabs.forEach(tab => {
+    const active = state.activeTab === tab.id ? 'active' : '';
+    parts.push('<button onclick="window.changeTab(\'' + tab.id + '\')" class="nav-mobile-item ' + active + '">');
+    parts.push('<span class="nav-mobile-icon">' + tab.icon + '</span>');
+    parts.push('<span>' + tab.label.split(' ')[0] + '</span>'); // Premier mot seulement
+    parts.push('</button>');
+});
+parts.push('</div>');
 
 parts.push('<div class="container-modern">');
 
@@ -3292,89 +3570,141 @@ if (rationAliment3 && rationAliment3.value && rationPoids3.value) {
 				if (rationPoids3) rationPoids3.addEventListener('input', updateTotaux);
 
                 formRation.onsubmit = (e) => {
-                    e.preventDefault();
-                    const lotSelect = document.getElementById('ration-lot');
-                    const tetes = parseFloat(lotSelect.options[lotSelect.selectedIndex].getAttribute('data-tetes'));
-                    
-                    // Aliment 1
-                    const poids1 = parseFloat(document.getElementById('ration-poids1').value);
-                    const mode1 = document.getElementById('ration-mode1').value;
-                    const aliment1 = document.getElementById('ration-aliment1').value;
-                    
-                    let poidsParTete1, total1;
-                    if (mode1 === 'partete') {
-                        poidsParTete1 = poids1;
-                        total1 = (tetes * poids1).toFixed(3);
-                    } else {
-                        total1 = poids1.toFixed(3);
-                        poidsParTete1 = (poids1 / tetes).toFixed(3);
-                    }
-                    
-                    state.data.rations.push({
-                        id: Date.now().toString(),
-                        date: document.getElementById('ration-date').value,
-                        lotId: lotSelect.value,
-                        batimentId: document.getElementById('ration-bat').value,
-                        typeAliment: aliment1,
-                        poidsParTete: poidsParTete1,
-                        quantiteTotale: total1
-                    });
-                    
-                    // Aliment 2 (si renseigné)
-                    const aliment2 = document.getElementById('ration-aliment2').value;
-                    if (aliment2) {
-                        const poids2 = parseFloat(document.getElementById('ration-poids2').value);
-                        const mode2 = document.getElementById('ration-mode2').value;
-                        
-                        let poidsParTete2, total2;
-                        if (mode2 === 'partete') {
-                            poidsParTete2 = poids2;
-                            total2 = (tetes * poids2).toFixed(3);
-                        } else {
-                            total2 = poids2.toFixed(3);
-                            poidsParTete2 = (poids2 / tetes).toFixed(3);
-                        }
-                        
-                        state.data.rations.push({
-                            id: (Date.now() + 1).toString(),
-                            date: document.getElementById('ration-date').value,
-                            lotId: lotSelect.value,
-                            batimentId: document.getElementById('ration-bat2').value,
-                            typeAliment: aliment2,
-                            poidsParTete: poidsParTete2,
-                            quantiteTotale: total2
-                        });
-						
-						// Aliment 3 (si renseigné)
-const aliment3 = document.getElementById('ration-aliment3').value;
-if (aliment3) {
-    const poids3 = parseFloat(document.getElementById('ration-poids3').value);
-    const mode3 = document.getElementById('ration-mode3').value;
+    e.preventDefault();
+    const lotSelect = document.getElementById('ration-lot');
+    const tetes = parseFloat(lotSelect.options[lotSelect.selectedIndex].getAttribute('data-tetes'));
+    const dateRation = document.getElementById('ration-date').value;
+    const lotId = lotSelect.value;
     
-    let poidsParTete3, total3;
-    if (mode3 === 'partete') {
-        poidsParTete3 = poids3;
-        total3 = (tetes * poids3).toFixed(3);
+    // === ALIMENT 1 ===
+    const poids1 = parseFloat(document.getElementById('ration-poids1').value);
+    const mode1 = document.getElementById('ration-mode1').value;
+    const aliment1 = document.getElementById('ration-aliment1').value;
+    const batiment1 = document.getElementById('ration-bat').value;
+    
+    let poidsParTete1, total1;
+    if (mode1 === 'partete') {
+        poidsParTete1 = poids1;
+        total1 = (tetes * poids1).toFixed(3);
     } else {
-        total3 = poids3.toFixed(3);
-        poidsParTete3 = (poids3 / tetes).toFixed(3);
+        total1 = poids1.toFixed(3);
+        poidsParTete1 = (poids1 / tetes).toFixed(3);
     }
     
-    state.data.rations.push({
-        id: (Date.now() + 2).toString(),
-        date: document.getElementById('ration-date').value,
-        lotId: lotSelect.value,
-        batimentId: document.getElementById('ration-bat3').value,
-        typeAliment: aliment3,
-        poidsParTete: poidsParTete3,
-        quantiteTotale: total3
-    });
-}
-                    }
-                    
-                    saveData();
-                    render();
-                };
+    const ration1 = {
+        id: Date.now().toString(),
+        date: dateRation,
+        lotId: lotId,
+        batimentId: batiment1,
+        typeAliment: aliment1,
+        poidsParTete: poidsParTete1,
+        quantiteTotale: total1
+    };
+    
+    // Vérifier doublon pour aliment 1
+    const doublons1 = window.detecterDoublonRation(lotId, aliment1, dateRation, batiment1);
+    
+    if (doublons1) {
+        // Afficher le modal de confirmation
+        window.confirmerAjoutRationDoublon(ration1, doublons1);
+        return; // Arrêter ici
+    }
+    
+    // === ALIMENT 2 (si renseigné) ===
+    const aliment2 = document.getElementById('ration-aliment2').value;
+    let ration2 = null;
+    let doublons2 = null;
+    
+    if (aliment2) {
+        const poids2 = parseFloat(document.getElementById('ration-poids2').value);
+        const mode2 = document.getElementById('ration-mode2').value;
+        const batiment2 = document.getElementById('ration-bat2').value;
+        
+        let poidsParTete2, total2;
+        if (mode2 === 'partete') {
+            poidsParTete2 = poids2;
+            total2 = (tetes * poids2).toFixed(3);
+        } else {
+            total2 = poids2.toFixed(3);
+            poidsParTete2 = (poids2 / tetes).toFixed(3);
+        }
+        
+        ration2 = {
+            id: (Date.now() + 1).toString(),
+            date: dateRation,
+            lotId: lotId,
+            batimentId: batiment2,
+            typeAliment: aliment2,
+            poidsParTete: poidsParTete2,
+            quantiteTotale: total2
+        };
+        
+        // Vérifier doublon pour aliment 2
+        doublons2 = window.detecterDoublonRation(lotId, aliment2, dateRation, batiment2);
+        
+        if (doublons2) {
+            // Si aliment 1 pas de doublon, l'ajouter d'abord
+            state.data.rations.push(ration1);
+            saveData();
+            
+            // Puis afficher confirmation pour aliment 2
+            window.confirmerAjoutRationDoublon(ration2, doublons2);
+            return;
+        }
+    }
+    
+    // === ALIMENT 3 (si renseigné) ===
+    const aliment3 = document.getElementById('ration-aliment3').value;
+    let ration3 = null;
+    let doublons3 = null;
+    
+    if (aliment3) {
+        const poids3 = parseFloat(document.getElementById('ration-poids3').value);
+        const mode3 = document.getElementById('ration-mode3').value;
+        const batiment3 = document.getElementById('ration-bat3').value;
+        
+        let poidsParTete3, total3;
+        if (mode3 === 'partete') {
+            poidsParTete3 = poids3;
+            total3 = (tetes * poids3).toFixed(3);
+        } else {
+            total3 = poids3.toFixed(3);
+            poidsParTete3 = (poids3 / tetes).toFixed(3);
+        }
+        
+        ration3 = {
+            id: (Date.now() + 2).toString(),
+            date: dateRation,
+            lotId: lotId,
+            batimentId: batiment3,
+            typeAliment: aliment3,
+            poidsParTete: poidsParTete3,
+            quantiteTotale: total3
+        };
+        
+        // Vérifier doublon pour aliment 3
+        doublons3 = window.detecterDoublonRation(lotId, aliment3, dateRation, batiment3);
+        
+        if (doublons3) {
+            // Ajouter aliment 1 et 2 d'abord
+            state.data.rations.push(ration1);
+            if (ration2) state.data.rations.push(ration2);
+            saveData();
+            
+            // Puis afficher confirmation pour aliment 3
+            window.confirmerAjoutRationDoublon(ration3, doublons3);
+            return;
+        }
+    }
+    
+    // Si aucun doublon détecté, ajouter toutes les rations
+    state.data.rations.push(ration1);
+    if (ration2) state.data.rations.push(ration2);
+    if (ration3) state.data.rations.push(ration3);
+    
+    saveData();
+    render();
+};
             }
 
             const formFourrage = document.getElementById('form-fourrage');

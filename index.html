@@ -3940,20 +3940,6 @@ if (formFourrage) {
         alert('✅ Consommation enregistrée pour ' + nbLots + ' lot' + (nbLots > 1 ? 's' : ''));
     };
 }
-    
-    formFourrage.onsubmit = (e) => {
-        e.preventDefault();
-        state.data.consoFourrage.push({
-            id: Date.now().toString(),
-            date: document.getElementById('cf-date').value,
-            lotId: document.getElementById('cf-lot').value,
-            batimentId: document.getElementById('cf-bat').value,
-            typeFourrage: document.getElementById('cf-type').value,
-            nombreBalles: document.getElementById('cf-nombre').value
-        });
-        saveData();
-        render();
-    };
 }
 
             const formEvt = document.getElementById('form-evt');

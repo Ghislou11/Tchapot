@@ -4458,20 +4458,40 @@ window.showCustomModal = (title, content) => {
     document.body.appendChild(overlay);
 };
 
-        window.showModal = () => {
-            const modal = document.getElementById('modal-evt');
-            if (modal) modal.classList.remove('hidden');
-        };
-
-        window.hideModal = () => {
-            const modal = document.getElementById('modal-evt');
-            if (modal) modal.classList.add('hidden');
-        };
-		// Variables pour le calendrier
-        if (!window.currentCalendarMonth) {
-            window.currentCalendarMonth = new Date().getMonth();
-            window.currentCalendarYear = new Date().getFullYear();
+window.showModal = () => {
+    const modal = document.getElementById('modal-evt');
+    if (modal) {
+        modal.classList.remove('hidden');
+        
+        // Attacher l'événement de soumission ICI
+        const formEvt = document.getElementById('form-evt');
+        if (formEvt) {
+            formEvt.onsubmit = async (e) => {
+                e.preventDefault();
+                
+                const lotId = document.getElementById('evt-lot').value;
+                const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
+                
+                state.data.evenements.push({
+                    id: Date.now().toString(),
+                    lotId: lotId || null,
+                    lotNom: lot ? lot.nom : null,
+                    categorie: lot ? 'Élevage' : 'Autre',
+                    titre: document.getElementById('evt-titre').value,
+                    date: document.getElementById('evt-date').value,
+                    heure: document.getElementById('evt-heure').value || '',
+                    description: document.getElementById('evt-desc').value || '',
+                    valide: false
+                });
+                
+                await saveData();
+                formEvt.reset(); // Réinitialiser le formulaire
+                window.hideModal();
+                render(); // Rafraîchir l'affichage
+            };
         }
+    }
+};
 		
 window.handleDayClick = (dateStr) => {
     const clickDate = dateStr.split('T')[0];

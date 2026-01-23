@@ -1496,17 +1496,31 @@ async function planifierNotifications() {
         const stockInitial = bat.stocks.find(s => s.type === typeStock)?.quantite || 0;
         
         if (bat.type === 'Stockage fourrage') {
-            const entrees = state.data.entreesBat
-                .filter(e => e.batimentId === batId && e.typeStock === typeStock)
-                .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
-            const sorties = state.data.sortiesBat
-                .filter(s => s.batimentId === batId && s.typeStock === typeStock)
-                .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
-            const conso = state.data.consoFourrage
-                .filter(c => c.batimentId === batId && c.typeFourrage === typeStock)
-                .reduce((sum, c) => sum + parseFloat(c.nombreBalles || 0), 0);
-            return parseFloat(stockInitial) + entrees - sorties - conso;
-        }
+    const entrees = state.data.entreesBat
+        .filter(e => e.batimentId === batId && e.typeStock === typeStock)
+        .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
+    const sorties = state.data.sortiesBat
+        .filter(s => s.batimentId === batId && s.typeStock === typeStock)
+        .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
+    
+    // MODIFICATION ICI : Gérer les deux formats (lotId et lotIds)
+    const conso = state.data.consoFourrage
+        .filter(c => {
+            // Vérifier le bâtiment et le type
+            if (c.batimentId !== batId || c.typeFourrage !== typeStock) return false;
+            
+            // Ancien format (un seul lot)
+            if (c.lotId) return true;
+            
+            // Nouveau format (plusieurs lots)
+            if (c.lotIds && Array.isArray(c.lotIds)) return true;
+            
+            return false;
+        })
+        .reduce((sum, c) => sum + parseFloat(c.nombreBalles || 0), 0);
+    
+    return parseFloat(stockInitial) + entrees - sorties - conso;
+}
 
         if (bat.type === 'Silos') {
             const entrees = state.data.entreesBat
@@ -2369,51 +2383,53 @@ return parts.join('');
             parts.push('<div><label class="block text-sm font-medium mb-1">Date</label>');
             parts.push('<input type="date" id="cf-date" value="' + today + '" class="w-full px-3 py-2 border rounded-lg" required></div>');
 
-            parts.push('<div><label class="block text-sm font-medium mb-1">Lot d\'animaux</label>');
-            parts.push('<select id="cf-lot" class="w-full px-3 py-2 border rounded-lg" required>');
-			parts.push('<option value="">Sélectionner...</option>');
-			state.data.lots.filter(l => !l.archive).forEach(l => {  // NOUVEAU : Filtrer les archivés
-			parts.push('<option value="' + l.id + '">' + l.nom + '</option>');
-			});
-            parts.push('</select></div>');
+            parts.push('<div><label class="block text-sm font-medium mb-1">Lot(s) d\'animaux</label>');
+parts.push('<div class="border-2 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto">');
+state.data.lots.filter(l => !l.archive).forEach(l => {
+    parts.push('<div class="flex items-center gap-2 mb-2">');
+    parts.push('<input type="checkbox" id="cf-lot-' + l.id + '" value="' + l.id + '" class="w-4 h-4 text-green-600 cursor-pointer">');
+    parts.push('<label for="cf-lot-' + l.id + '" class="cursor-pointer flex-1">');
+    parts.push('<span class="font-medium">' + l.nom + '</span>');
+    parts.push('<span class="text-xs text-gray-500 ml-2">(' + getNomBat(l.lieuActuel) + ')</span>');
+    parts.push('</label>');
+    parts.push('</div>');
+});
+parts.push('</div>');
+parts.push('<p class="text-xs text-gray-500 mt-1">Sélectionnez un ou plusieurs lots</p>');
+parts.push('</div>');
 
-            parts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
-			parts.push('<select id="cf-type" class="w-full px-3 py-2 border rounded-lg" required>');
-			parts.push('<option value="">Sélectionner...</option>');
-			TYPES_FOURRAGE.forEach(f => {
-			parts.push('<option value="' + f + '">' + f + '</option>');
-			});
-			parts.push('</select></div>');
+parts.push('<div><label class="block text-sm font-medium mb-1">Type de fourrage</label>');
+parts.push('<select id="cf-type" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<option value="">Sélectionner...</option>');
+TYPES_FOURRAGE.forEach(f => {
+    parts.push('<option value="' + f + '">' + f + '</option>');
+});
+parts.push('</select></div>');
 
-			parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (stockage)</label>');
-			parts.push('<select id="cf-bat" class="w-full px-3 py-2 border rounded-lg" required>');
-			parts.push('<option value="">Sélectionner...</option>');
-			parts.push('</select></div>');
+parts.push('<div><label class="block text-sm font-medium mb-1">Bâtiment (stockage)</label>');
+parts.push('<select id="cf-bat" class="w-full px-3 py-2 border rounded-lg" required>');
+parts.push('<option value="">Sélectionner...</option>');
+parts.push('</select></div>');
 
+parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de balles</label>');
+parts.push('<input type="number" step="0.1" id="cf-nombre" class="w-full px-3 py-2 border rounded-lg" required></div>');
 
-            parts.push('<div><label class="block text-sm font-medium mb-1">Nombre de balles</label>');
-            parts.push('<input type="number" step="0.1" id="cf-nombre" class="w-full px-3 py-2 border rounded-lg" required></div>');
+parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Enregistrer</button>');
+parts.push('</form>');
 
-            parts.push('<button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold">+ Enregistrer</button>');
-            parts.push('</form>');
-
-            parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
-            parts.push('<table class="w-full text-xs"><thead class="bg-gray-50"><tr>');
-            parts.push('<th class="px-2 py-2 text-left">Date</th>');
-            parts.push('<th class="px-2 py-2 text-left">Lot</th>');
-            parts.push('<th class="px-2 py-2 text-left">Type</th>');
-            parts.push('<th class="px-2 py-2 text-left">Balles</th>');
-            parts.push('<th class="px-2 py-2 text-right">Act.</th>');
-           parts.push('</tr></thead><tbody class="divide-y">');
+parts.push('<div class="bg-white border-2 rounded-lg overflow-x-auto">');
+parts.push('<table class="w-full text-xs"><thead class="bg-gray-50"><tr>');
+parts.push('<th class="px-2 py-2 text-left">Date</th>');
+parts.push('<th class="px-2 py-2 text-left">Lot(s)</th>');
+parts.push('<th class="px-2 py-2 text-left">Type</th>');
+parts.push('<th class="px-2 py-2 text-left">Balles</th>');
+parts.push('<th class="px-2 py-2 text-right">Act.</th>');
+parts.push('</tr></thead><tbody class="divide-y">');
 
 // Trier tous les fourrages
 const fourragesTries = state.data.consoFourrage
     .slice()
-    .sort((a, b) => {
-        const dateCompare = new Date(b.date) - new Date(a.date);
-        if (dateCompare !== 0) return dateCompare;
-        return getNomLot(a.lotId).localeCompare(getNomLot(b.lotId));
-    });
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
 // Afficher seulement les N premiers
 fourragesTries
@@ -2421,7 +2437,21 @@ fourragesTries
     .forEach(c => {
         parts.push('<tr>');
         parts.push('<td class="px-2 py-2">' + formatDate(c.date) + '</td>');
-        parts.push('<td class="px-2 py-2">' + getNomLot(c.lotId) + '</td>');
+        
+        // NOUVEAU : Afficher tous les lots sur la même ligne
+        parts.push('<td class="px-2 py-2">');
+        if (c.lotIds && Array.isArray(c.lotIds)) {
+            // Nouveau format avec plusieurs lots
+            const nomsLots = c.lotIds.map(id => getNomLot(id)).join(', ');
+            parts.push(nomsLots);
+        } else if (c.lotId) {
+            // Ancien format (un seul lot) - rétrocompatibilité
+            parts.push(getNomLot(c.lotId));
+        } else {
+            parts.push('<span class="text-gray-400">N/A</span>');
+        }
+        parts.push('</td>');
+        
         parts.push('<td class="px-2 py-2">' + c.typeFourrage + '</td>');
         parts.push('<td class="px-2 py-2 font-bold">' + c.nombreBalles + '</td>');
         parts.push('<td class="px-2 py-2 text-right">');
@@ -3842,26 +3872,74 @@ if (rationAliment3 && rationAliment3.value && rationPoids3.value) {
 };
             }
 
-            const formFourrage = document.getElementById('form-fourrage');
+const formFourrage = document.getElementById('form-fourrage');
 if (formFourrage) {
     const cfType = document.getElementById('cf-type');
     const cfBat = document.getElementById('cf-bat');
     
-    // Filtrer les stockages selon le type de fourrage choisi
+    // Filtrer ET préremplir le bâtiment selon le type de fourrage
     if (cfType && cfBat) {
         cfType.onchange = () => {
             const typeFourrage = cfType.value;
             cfBat.innerHTML = '<option value="">Sélectionner...</option>';
             
             if (typeFourrage) {
-                state.data.batiments
-                    .filter(b => b.type === 'Stockage fourrage' && b.stocks && b.stocks.some(s => s.type === typeFourrage))
-                    .forEach(b => {
-                        cfBat.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
-                    });
+                // Récupérer les bâtiments qui ont ce type de fourrage
+                const batimentsDisponibles = state.data.batiments
+                    .filter(b => b.type === 'Stockage fourrage' && b.stocks && b.stocks.some(s => s.type === typeFourrage));
+                
+                // Trouver le dernier bâtiment utilisé pour ce type
+                const derniereUtilisation = state.data.consoFourrage
+                    .filter(c => c.typeFourrage === typeFourrage)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                
+                const dernierBatId = derniereUtilisation ? derniereUtilisation.batimentId : null;
+                
+                // Remplir le select
+                batimentsDisponibles.forEach(b => {
+                    const selected = b.id === dernierBatId ? 'selected' : '';
+                    cfBat.innerHTML += '<option value="' + b.id + '" ' + selected + '>' + b.nom + '</option>';
+                });
             }
         };
     }
+    
+    formFourrage.onsubmit = (e) => {
+        e.preventDefault();
+        
+        // Récupérer tous les lots cochés
+        const lotsCoches = [];
+        state.data.lots.filter(l => !l.archive).forEach(l => {
+            const checkbox = document.getElementById('cf-lot-' + l.id);
+            if (checkbox && checkbox.checked) {
+                lotsCoches.push(l.id);
+            }
+        });
+        
+        // Vérifier qu'au moins un lot est sélectionné
+        if (lotsCoches.length === 0) {
+            alert('⚠️ Veuillez sélectionner au moins un lot');
+            return;
+        }
+        
+        // Créer UNE SEULE consommation avec TOUS les lots
+        state.data.consoFourrage.push({
+            id: Date.now().toString(),
+            date: document.getElementById('cf-date').value,
+            lotIds: lotsCoches, // NOUVEAU : Tableau de lots au lieu d'un seul
+            batimentId: document.getElementById('cf-bat').value,
+            typeFourrage: document.getElementById('cf-type').value,
+            nombreBalles: document.getElementById('cf-nombre').value
+        });
+        
+        saveData();
+        render();
+        
+        // Message de confirmation
+        const nbLots = lotsCoches.length;
+        alert('✅ Consommation enregistrée pour ' + nbLots + ' lot' + (nbLots > 1 ? 's' : ''));
+    };
+}
     
     formFourrage.onsubmit = (e) => {
         e.preventDefault();

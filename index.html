@@ -3230,6 +3230,12 @@ if (state.activeTab === 'tableau-bord') {
 parts.push('</div>');
 
 document.getElementById('app').innerHTML = parts.join('');
+if (state.activeTab === 'calendrier') {
+    // Attendre que le DOM soit prêt
+    setTimeout(() => {
+        renderCalendarGrid();
+    }, 50);
+}
 attachEventListeners();
 }
 
@@ -3942,9 +3948,9 @@ if (formFourrage) {
 }
 }
 
-            const formEvt = document.getElementById('form-evt');
+const formEvt = document.getElementById('form-evt');
 if (formEvt) {
-    formEvt.onsubmit = (e) => {
+    formEvt.onsubmit = async (e) => {
         e.preventDefault();
         
         const lotId = document.getElementById('evt-lot').value;
@@ -3952,17 +3958,21 @@ if (formEvt) {
         
         state.data.evenements.push({
             id: Date.now().toString(),
-            lotId: lotId || null,  // NOUVEAU : ID du lot ou null
-            lotNom: lot ? lot.nom : null,  // NOUVEAU : Nom du lot pour affichage
-            categorie: lot ? 'Élevage' : 'Autre',  // Catégorie automatique selon le lot
+            lotId: lotId || null,
+            lotNom: lot ? lot.nom : null,
+            categorie: lot ? 'Élevage' : 'Autre',
             titre: document.getElementById('evt-titre').value,
             date: document.getElementById('evt-date').value,
             heure: document.getElementById('evt-heure').value || '',
             description: document.getElementById('evt-desc').value || '',
             valide: false
         });
-        saveData();
+        
+        await saveData();
         window.hideModal();
+        
+        // IMPORTANT : Rester sur l'onglet calendrier
+        state.activeTab = 'calendrier';
         render();
     };
 }

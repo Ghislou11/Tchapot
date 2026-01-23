@@ -4378,7 +4378,6 @@ window.editEvtAuto = (lotId, evtType, dateEvt) => {
     document.body.appendChild(overlay);
 };
 
-// Supprimer un événement automatique
 window.deleteEvtAuto = (lotId, evtType, dateEvt) => {
     const lot = state.data.lots.find(l => l.id === lotId);
     if (!lot || !lot.evenementsAuto) return;
@@ -4395,7 +4394,7 @@ window.deleteEvtAuto = (lotId, evtType, dateEvt) => {
                     const lot = state.data.lots.find(l => l.id === '${lotId}');
                     lot.evenementsAuto = lot.evenementsAuto.filter(e => !(e.type === '${evtType}' && e.date === '${dateEvt}'));
                     saveData();
-                    thisconst modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();;
+                    const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();
                     render();
                 ">Oui, supprimer</button>
                 <button class="custom-modal-btn bg-gray-400" onclick="const modal = this.closest('.custom-modal-overlay'); if(modal) modal.remove();">Annuler</button>

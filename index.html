@@ -4732,11 +4732,17 @@ window.prendreRdv = (lotId, typeRdv, dateRdv) => {
         titre: titreRdv + lot.nom
     });
     
-    saveData();
+	saveData();
     render();
     
     alert('✅ Rendez-vous fixé au ' + new Date(dateRdv).toLocaleDateString('fr-FR'));
 };
+
+// === INITIALISATION DU CALENDRIER ===
+if (!window.currentCalendarMonth) {
+    window.currentCalendarMonth = new Date().getMonth();
+    window.currentCalendarYear = new Date().getFullYear();
+}
 
 window.changeMonth = (delta) => {
     window.currentCalendarMonth += delta;

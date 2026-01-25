@@ -4459,39 +4459,77 @@ window.showCustomModal = (title, content) => {
 
 window.showModal = () => {
     const modal = document.getElementById('modal-evt');
-    if (modal) {
-        modal.classList.remove('hidden');
-        
-        // Attacher l'événement de soumission ICI
+    if (!modal) {
+        console.error('❌ Modal non trouvé');
+        return;
+    }
+    
+    modal.classList.remove('hidden');
+    
+    // Attendre que le modal soit visible avant d'attacher l'événement
+    setTimeout(() => {
         const formEvt = document.getElementById('form-evt');
-        if (formEvt) {
-            formEvt.onsubmit = async (e) => {
-                e.preventDefault();
-                
-                const lotId = document.getElementById('evt-lot').value;
-                const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
-                
-                state.data.evenements.push({
-                    id: Date.now().toString(),
-                    lotId: lotId || null,
-                    lotNom: lot ? lot.nom : null,
-                    categorie: lot ? 'Élevage' : 'Autre',
-                    titre: document.getElementById('evt-titre').value,
-                    date: document.getElementById('evt-date').value,
-                    heure: document.getElementById('evt-heure').value || '',
-                    description: document.getElementById('evt-desc').value || '',
-                    valide: false
-                });
-                
-                await saveData();
-                formEvt.reset(); // Réinitialiser le formulaire
-                window.hideModal();
-                render(); // Rafraîchir l'affichage
-            };
+        if (!formEvt) {
+            console.error('❌ Formulaire non trouvé');
+            return;
         }
+        
+        // Supprimer tout ancien event listener
+        const newForm = formEvt.cloneNode(true);
+        formEvt.parentNode.replaceChild(newForm, formEvt);
+        
+        // Attacher le nouvel événement
+        newForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('✅ Formulaire soumis');
+            
+            const lotId = document.getElementById('evt-lot').value;
+            const lot = lotId ? state.data.lots.find(l => l.id === lotId) : null;
+            
+            const newEvent = {
+                id: Date.now().toString(),
+                lotId: lotId || null,
+                lotNom: lot ? lot.nom : null,
+                categorie: lot ? 'Élevage' : 'Autre',
+                titre: document.getElementById('evt-titre').value,
+                date: document.getElementById('evt-date').value,
+                heure: document.getElementById('evt-heure').value || '',
+                description: document.getElementById('evt-desc').value || '',
+                valide: false
+            };
+            
+            console.log('✅ Événement créé:', newEvent);
+            
+            state.data.evenements.push(newEvent);
+            await saveData();
+            
+            console.log('✅ Sauvegardé');
+            
+            newForm.reset();
+            window.hideModal();
+            
+            console.log('✅ Avant render');
+            render();
+            console.log('✅ Après render');
+        });
+        
+        console.log('✅ Event listener attaché');
+    }, 100);
+};
+
+// AJOUTER CETTE FONCTION ICI
+window.hideModal = () => {
+    const modal = document.getElementById('modal-evt');
+    if (modal) {
+        modal.classList.add('hidden');
+        // Réinitialiser le formulaire quand on ferme
+        const formEvt = document.getElementById('form-evt');
+        if (formEvt) formEvt.reset();
     }
 };
-		
+	
 window.handleDayClick = (dateStr) => {
     const clickDate = dateStr.split('T')[0];
     

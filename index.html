@@ -878,6 +878,22 @@
         color: #111827;
         margin-bottom: 1.5rem;
     }
+	
+	/* === MENU NOTIFICATIONS === */
+#notifications-menu {
+    max-width: 90vw;
+}
+
+@media (max-width: 640px) {
+    #notifications-menu {
+        position: fixed;
+        top: 70px !important;
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+}
+
 </style>
 </head>
 <body class="bg-gray-50">
@@ -934,18 +950,22 @@ async function demanderPermissionNotifications() {
   }
 }
 
-// Écouter les messages en foreground
+// Écouter les messages en foreground (juste logger, pas afficher)
 messaging.onMessage((payload) => {
-  console.log('Message reçu:', payload);
+  console.log('📬 Notification reçue:', payload);
   
-  // Afficher une notification locale
-  if (Notification.permission === 'granted') {
-    new Notification(payload.notification.title, {
-      body: payload.notification.body,
-      icon: '/favicon.png'
-    });
-  }
+  // Ajouter au journal local
+  ajouterNotificationAuJournal({
+    titre: payload.notification.title,
+    message: payload.notification.body,
+    date: new Date().toISOString(),
+    lue: false
+  });
+  
+  // Rafraîchir le badge de la cloche
+  updateNotificationBadge();
 });
+
 let currentUser = null;
 
 const TYPES_BATIMENT = ['Élevage', 'Stockage fourrage', 'Silos'];
@@ -1028,6 +1048,176 @@ const EMOJIS = {
                 evenements: []
             }
         };
+		
+// === SYSTÈME DE NOTIFICATIONS ===
+let notifications = [];
+
+// Charger les notifications depuis le stockage local
+function chargerNotifications() {
+  const saved = localStorage.getItem('tchapot-notifications');
+  if (saved) {
+    notifications = JSON.parse(saved);
+  }
+}
+
+// Sauvegarder les notifications
+function sauvegarderNotifications() {
+  localStorage.setItem('tchapot-notifications', JSON.stringify(notifications));
+}
+
+// Ajouter une notification au journal
+function ajouterNotificationAuJournal(notif) {
+  notifications.unshift({
+    id: Date.now().toString(),
+    ...notif,
+    lue: false
+  });
+  
+  // Garder seulement les 50 dernières
+  if (notifications.length > 50) {
+    notifications = notifications.slice(0, 50);
+  }
+  
+  sauvegarderNotifications();
+  updateNotificationBadge();
+}
+
+// Mettre à jour le badge de notifications
+function updateNotificationBadge() {
+  const badge = document.getElementById('notif-badge');
+  const nonLues = notifications.filter(n => !n.lue).length;
+  
+  if (badge) {
+    if (nonLues > 0) {
+      badge.textContent = nonLues > 9 ? '9+' : nonLues;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+}
+
+// Marquer toutes comme lues
+window.marquerToutesCommeLues = () => {
+  notifications.forEach(n => n.lue = true);
+  sauvegarderNotifications();
+  updateNotificationBadge();
+  renderNotificationsMenu();
+};
+
+// Supprimer une notification
+window.supprimerNotification = (id) => {
+  notifications = notifications.filter(n => n.id !== id);
+  sauvegarderNotifications();
+  renderNotificationsMenu();
+  updateNotificationBadge();
+};
+
+// Vider tout l'historique
+window.viderNotifications = () => {
+  if (confirm('Supprimer tout l\'historique des notifications ?')) {
+    notifications = [];
+    sauvegarderNotifications();
+    renderNotificationsMenu();
+    updateNotificationBadge();
+  }
+};
+
+// Toggle du menu notifications
+window.toggleNotificationsMenu = () => {
+  const menu = document.getElementById('notifications-menu');
+  if (!menu) return;
+  
+  if (menu.classList.contains('hidden')) {
+    chargerNotifications();
+    renderNotificationsMenu();
+    menu.classList.remove('hidden');
+    window.marquerToutesCommeLues();
+  } else {
+    menu.classList.add('hidden');
+  }
+};
+
+// Fermer le menu si on clique ailleurs
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('notifications-menu');
+  const bellBtn = document.getElementById('notif-bell-btn');
+  
+  if (menu && bellBtn && !menu.contains(e.target) && !bellBtn.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
+
+// Activer/désactiver les notifications
+window.toggleNotificationsPush = async () => {
+  if (Notification.permission === 'granted') {
+    // Désactiver (on ne peut pas vraiment, mais on peut demander à l'utilisateur)
+    if (confirm('Pour désactiver les notifications, allez dans les paramètres de votre navigateur.\n\nVoulez-vous voir comment faire ?')) {
+      alert('Chrome/Edge: Paramètres > Confidentialité > Paramètres du site > Notifications\n\nFirefox: Paramètres > Vie privée et sécurité > Autorisations > Notifications\n\nSafari: Préférences > Sites web > Notifications');
+    }
+  } else {
+    // Activer
+    await demanderPermissionNotifications();
+  }
+};
+
+// Render du menu déroulant
+function renderNotificationsMenu() {
+  const menu = document.getElementById('notifications-menu');
+  if (!menu) return;
+  
+  let html = '<div class="p-4 border-b border-gray-200 flex justify-between items-center">';
+  html += '<h3 class="font-bold text-lg">🔔 Notifications</h3>';
+  html += '<div class="flex gap-2">';
+  
+  // Bouton toggle notifications push
+  const isEnabled = Notification.permission === 'granted';
+  html += '<button onclick="window.toggleNotificationsPush()" class="text-xs px-2 py-1 rounded ' + (isEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700') + '" title="' + (isEnabled ? 'Notifications activées' : 'Notifications désactivées') + '">';
+  html += isEnabled ? '🔔 ON' : '🔕 OFF';
+  html += '</button>';
+  
+  // Bouton vider
+  if (notifications.length > 0) {
+    html += '<button onclick="window.viderNotifications()" class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">🗑️ Vider</button>';
+  }
+  
+  html += '</div></div>';
+  
+  html += '<div class="max-h-96 overflow-y-auto">';
+  
+  if (notifications.length === 0) {
+    html += '<div class="p-8 text-center text-gray-500">';
+    html += '<div class="text-4xl mb-2">🔕</div>';
+    html += '<div>Aucune notification</div>';
+    html += '</div>';
+  } else {
+    notifications.forEach(n => {
+      const date = new Date(n.date);
+      const isToday = date.toDateString() === new Date().toDateString();
+      const dateStr = isToday ? 
+        date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) :
+        date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      
+      html += '<div class="p-3 border-b border-gray-100 hover:bg-gray-50 relative group">';
+      html += '<div class="flex justify-between items-start gap-2">';
+      html += '<div class="flex-1">';
+      html += '<div class="font-semibold text-sm ' + (n.lue ? 'text-gray-700' : 'text-green-700') + '">' + n.titre + '</div>';
+      html += '<div class="text-xs text-gray-600 mt-1">' + n.message + '</div>';
+      html += '<div class="text-xs text-gray-400 mt-1">' + dateStr + '</div>';
+      html += '</div>';
+      html += '<button onclick="window.supprimerNotification(\'' + n.id + '\')" class="opacity-0 group-hover:opacity-100 text-red-600 text-lg transition-opacity" title="Supprimer">×</button>';
+      html += '</div></div>';
+    });
+  }
+  
+  html += '</div>';
+  
+  menu.innerHTML = html;
+}
+
+// Charger au démarrage
+chargerNotifications();
+
 		function calculerEvenementsAutomatiques(lot, typeLutte, lutteDebut, lutteFin, premierNe, dernierNe) {
     const evenements = [];
     
@@ -3190,7 +3380,16 @@ window.annulerCopieTotale = () => {
     
     // Actions
     parts.push('<div class="flex gap-2 items-center">');
-    parts.push('<button onclick="window.demanderPermissionNotifications()" class="btn-secondary">🔔</button>');
+    // Bouton notifications avec badge et menu
+parts.push('<div class="relative">');
+parts.push('<button id="notif-bell-btn" onclick="window.toggleNotificationsMenu()" class="btn-secondary relative">');
+parts.push('🔔');
+parts.push('<span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"></span>');
+parts.push('</button>');
+
+// Menu déroulant
+parts.push('<div id="notifications-menu" class="hidden absolute right-0 top-12 w-96 bg-white rounded-lg shadow-2xl border-2 border-gray-200 z-50"></div>');
+parts.push('</div>');
     parts.push('<button onclick="window.logout()" class="btn-secondary">Déconnexion</button>');
     parts.push('</div>');
     
@@ -3237,6 +3436,10 @@ if (state.activeTab === 'calendrier') {
     }, 50);
 }
 attachEventListeners();
+// Mettre à jour le badge de notifications après le rendu
+setTimeout(() => {
+    updateNotificationBadge();
+}, 100);
 }
 
         function attachEventListeners() {

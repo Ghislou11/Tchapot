@@ -454,8 +454,11 @@ exports.envoyerRecapHebdomadaire = onSchedule({
           const stocks = stocksParSilo[siloNom];
           let body = '';
           
-          stocks.forEach((s, idx) => {
-            if (idx > 0) body += '\n';
+		  let ligneIndex = 0;
+          stocks.forEach((s) => {
+			if (s.stock <= 0) return;
+			
+            if (ligneIndex > 0) body += '\n';
             body += s.aliment + ' ' + s.stock.toFixed(0) + 'kg';
             
             if (s.jours >= 999) {
@@ -463,8 +466,12 @@ exports.envoyerRecapHebdomadaire = onSchedule({
             } else {
               body += ', rupture dans ' + s.jours + 'j';
             }
+			
+			ligneIndex++;
           });
           
+		  if (body === '') continue;
+		  
           try {
             await admin.messaging().send({
               notification: {

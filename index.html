@@ -3949,6 +3949,89 @@ if (rationAliment3 && rationAliment3.value && rationPoids3.value) {
     const tetes = parseFloat(lotSelect.options[lotSelect.selectedIndex].getAttribute('data-tetes'));
     const dateRation = document.getElementById('ration-date').value;
     const lotId = lotSelect.value;
+    const lot = state.data.lots.find(l => l.id === lotId);
+            
+            if (lot && lot.type === 'Poulet') {
+                // Date = hier
+                const hier = new Date();
+                hier.setDate(hier.getDate() - 1);
+                document.getElementById('ration-date').value = hier.toISOString().split('T')[0];
+                
+                // Chercher rations de avant-hier
+                const avantHier = new Date();
+                avantHier.setDate(avantHier.getDate() - 2);
+                const dateAvantHier = avantHier.toISOString().split('T')[0];
+                
+                const rationsAvantHier = state.data.rations
+                    .filter(r => r.lotId === lotId && r.date === dateAvantHier)
+                    .sort((a, b) => parseInt(a.id) - parseInt(b.id));
+                
+                if (rationsAvantHier.length > 0) {
+                    // Aliment 1
+                    const ration1 = rationsAvantHier[0];
+                    document.getElementById('ration-aliment1').value = ration1.typeAliment;
+                    
+                    // Remplir le silo correspondant
+                    const rationBat = document.getElementById('ration-bat');
+                    rationBat.innerHTML = '<option value="">Sélectionner...</option>';
+                    state.data.batiments
+                        .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === ration1.typeAliment))
+                        .forEach(b => {
+                            const selected = b.id === ration1.batimentId ? 'selected' : '';
+                            rationBat.innerHTML += '<option value="' + b.id + '" ' + selected + '>' + b.nom + '</option>';
+                        });
+                    
+                    document.getElementById('ration-mode1').value = 'total';
+                    document.getElementById('ration-label1').textContent = 'Poids total (kg)';
+                    document.getElementById('ration-poids1').value = ration1.quantiteTotale;
+                    
+                    // Aliment 2 si existe
+                    if (rationsAvantHier.length > 1) {
+                        const ration2 = rationsAvantHier[1];
+                        document.getElementById('ration-aliment2').value = ration2.typeAliment;
+                        document.getElementById('ration-fields2').classList.remove('hidden');
+                        
+                        const rationBat2 = document.getElementById('ration-bat2');
+                        rationBat2.innerHTML = '<option value="">Sélectionner...</option>';
+                        state.data.batiments
+                            .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === ration2.typeAliment))
+                            .forEach(b => {
+                                const selected = b.id === ration2.batimentId ? 'selected' : '';
+                                rationBat2.innerHTML += '<option value="' + b.id + '" ' + selected + '>' + b.nom + '</option>';
+                            });
+                        
+                        document.getElementById('ration-mode2').value = 'total';
+                        document.getElementById('ration-label2').textContent = 'Poids total (kg)';
+                        document.getElementById('ration-poids2').value = ration2.quantiteTotale;
+                    }
+                    
+                    // Aliment 3 si existe
+                    if (rationsAvantHier.length > 2) {
+                        const ration3 = rationsAvantHier[2];
+                        document.getElementById('ration-aliment3').value = ration3.typeAliment;
+                        document.getElementById('ration-fields3').classList.remove('hidden');
+                        
+                        const rationBat3 = document.getElementById('ration-bat3');
+                        rationBat3.innerHTML = '<option value="">Sélectionner...</option>';
+                        state.data.batiments
+                            .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === ration3.typeAliment))
+                            .forEach(b => {
+                                const selected = b.id === ration3.batimentId ? 'selected' : '';
+                                rationBat3.innerHTML += '<option value="' + b.id + '" ' + selected + '>' + b.nom + '</option>';
+                            });
+                        
+                        document.getElementById('ration-mode3').value = 'total';
+                        document.getElementById('ration-label3').textContent = 'Poids total (kg)';
+                        document.getElementById('ration-poids3').value = ration3.quantiteTotale;
+                    }
+                    
+                    updateTotaux();
+                }
+            } else {
+                // Pour les autres animaux : date = aujourd'hui (comportement actuel)
+                const aujourdhui = new Date().toISOString().split('T')[0];
+                document.getElementById('ration-date').value = aujourdhui;
+			}
     
     // === ALIMENT 1 ===
     const poids1 = parseFloat(document.getElementById('ration-poids1').value);

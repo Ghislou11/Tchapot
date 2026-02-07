@@ -3856,6 +3856,19 @@ if (rationLot) {
         }
     };
 }
+
+				if (rationLot) rationLot.onchange();
+                if (rationPoids1) rationPoids1.addEventListener('input', updateTotaux);
+                if (rationPoids2) rationPoids2.addEventListener('input', updateTotaux);
+				if (rationPoids3) rationPoids3.addEventListener('input', updateTotaux);
+
+                formRation.onsubmit = (e) => {
+                    e.preventDefault();
+                    
+                    const lotSelect = document.getElementById('ration-lot');
+                    const tetes = parseFloat(lotSelect.options[lotSelect.selectedIndex].getAttribute('data-tetes'));
+                    const dateRation = document.getElementById('ration-date').value;
+                    const lotId = lotSelect.value;
     
     // === ALIMENT 1 ===
     const poids1 = parseFloat(document.getElementById('ration-poids1').value);
@@ -4048,9 +4061,11 @@ if (formFourrage) {
             nombreBalles: document.getElementById('cf-nombre').value
         });
         
-        saveData();
-        render();
-        
+					saveData();
+                    render();
+                };
+            }
+			
         // Message de confirmation
         const nbLots = lotsCoches.length;
         alert('✅ Consommation enregistrée pour ' + nbLots + ' lot' + (nbLots > 1 ? 's' : ''));

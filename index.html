@@ -3736,6 +3736,40 @@ if (formRation) {
     
     const rationTotal = document.getElementById('ration-total');
     const rationTotalVal = document.getElementById('ration-total-val');
+	
+	 const updateTotaux = () => {
+        const lotSelect = document.getElementById('ration-lot');
+        if (!lotSelect || !lotSelect.value) return;
+        
+        const tetes = parseFloat(lotSelect.options[lotSelect.selectedIndex].getAttribute('data-tetes')) || 0;
+        let total = 0;
+        
+        // Aliment 1
+        const poids1 = parseFloat(rationPoids1?.value) || 0;
+        const mode1 = rationMode1?.value;
+        if (poids1 > 0) {
+            total += mode1 === 'partete' ? (poids1 * tetes) : poids1;
+        }
+        
+        // Aliment 2
+        const poids2 = parseFloat(rationPoids2?.value) || 0;
+        const mode2 = rationMode2?.value;
+        if (poids2 > 0) {
+            total += mode2 === 'partete' ? (poids2 * tetes) : poids2;
+        }
+        
+        // Aliment 3
+        const poids3 = parseFloat(rationPoids3?.value) || 0;
+        const mode3 = rationMode3?.value;
+        if (poids3 > 0) {
+            total += mode3 === 'partete' ? (poids3 * tetes) : poids3;
+        }
+        
+        // Afficher le total
+        if (rationTotalVal) {
+            rationTotalVal.textContent = total.toFixed(2) + ' kg';
+        }
+    };
     
     // Filtrer les silos selon l'aliment 1 choisi
     const rationAliment1 = document.getElementById('ration-aliment1');

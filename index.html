@@ -4060,16 +4060,18 @@ if (formFourrage) {
             typeFourrage: document.getElementById('cf-type').value,
             nombreBalles: document.getElementById('cf-nombre').value
         });
+		
+		// Message de confirmation
+        const nbLots = lotsCoches.length;
+        alert('✅ Consommation enregistrée pour ' + nbLots + ' lot' + (nbLots > 1 ? 's' : ''));
+    };
         
 					saveData();
                     render();
                 };
             }
 			
-        // Message de confirmation
-        const nbLots = lotsCoches.length;
-        alert('✅ Consommation enregistrée pour ' + nbLots + ' lot' + (nbLots > 1 ? 's' : ''));
-    };
+        
 
 const formEvt = document.getElementById('form-evt');
 if (formEvt) {

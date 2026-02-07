@@ -4,6 +4,154 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
+// ============================================================================
+// FONCTIONS UTILITAIRES POUR ESTIMATION RUPTURE AMÉLIORÉE
+// ============================================================================
+
+/**
+ * Calcule la tendance de consommation pour les poulets (régression linéaire)
+ * @param {Array} rations - Rations triées par date
+ * @returns {number} - kg/jour d'augmentation
+ */
+function calculerTendancePoulet(rations) {
+  if (rations.length < 3) return 0;
+  
+  // Préparer les données : x = jour (0, 1, 2...), y = quantité
+  const n = rations.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  
+  rations.forEach((r, i) => {
+    const x = i;
+    const y = parseFloat(r.quantiteTotale || 0);
+    sumX += x;
+    sumY += y;
+    sumXY += x * y;
+    sumX2 += x * x;
+  });
+  
+  // Calcul de la pente (tendance)
+  const tendance = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  return tendance || 0;
+}
+
+/**
+ * Calcule l'estimation de rupture améliorée pour un silo/aliment
+ * @param {Object} params - {batimentId, typeAliment, data, lots}
+ * @returns {Object} - {stockActuel, estimationJours, warning}
+ */
+function calculerEstimationRuptureAmelioree(params) {
+  const { batimentId, typeAliment, data, lots } = params;
+  
+  // 1. Calculer le stock actuel
+  const silo = (data.batiments || []).find(b => b.id === batimentId);
+  if (!silo || !silo.stocks) return { stockActuel: 0, estimationJours: 0, warning: null };
+  
+  const stockConfig = silo.stocks.find(s => s.type === typeAliment);
+  if (!stockConfig) return { stockActuel: 0, estimationJours: 0, warning: null };
+  
+  const stockInitial = stockConfig.quantite || 0;
+  const entrees = (data.entreesBat || [])
+    .filter(e => e.batimentId === batimentId && e.typeStock === typeAliment)
+    .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
+  const sorties = (data.sortiesBat || [])
+    .filter(s => s.batimentId === batimentId && s.typeStock === typeAliment)
+    .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
+  const rations = (data.rations || [])
+    .filter(r => r.batimentId === batimentId && r.typeAliment === typeAliment)
+    .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
+  
+  let stockActuel = stockInitial + entrees - sorties - rations;
+  
+  // 2. Récupérer les rations des 15 derniers jours
+  const aujourdhui = new Date();
+  aujourdhui.setHours(0, 0, 0, 0);
+  const quinzeJoursAvant = new Date(aujourdhui);
+  quinzeJoursAvant.setDate(quinzeJoursAvant.getDate() - 15);
+  const dateQuinzeJours = quinzeJoursAvant.toISOString().split('T')[0];
+  
+  const rationsRecentes = (data.rations || [])
+    .filter(r => r.batimentId === batimentId && r.typeAliment === typeAliment && r.date >= dateQuinzeJours)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  if (rationsRecentes.length === 0) {
+    return { stockActuel, estimationJours: 999, warning: null };
+  }
+  
+  // 3. Calculer le gap (jours manquants entre aujourd'hui et dernière ration)
+  const derniereRation = rationsRecentes[rationsRecentes.length - 1];
+  const dateDerniereRation = new Date(derniereRation.date);
+  dateDerniereRation.setHours(0, 0, 0, 0);
+  const gapJours = Math.floor((aujourdhui - dateDerniereRation) / (1000 * 60 * 60 * 24));
+  
+  // 4. Warning si gap > 3 jours
+  let warning = null;
+  if (gapJours > 3) {
+    warning = 'Données trop anciennes (' + gapJours + 'j)';
+  }
+  
+  // 5. Séparer les rations en 2 périodes : 7 derniers jours et 8-15 jours
+  const septJoursAvant = new Date(aujourdhui);
+  septJoursAvant.setDate(septJoursAvant.getDate() - 7);
+  const dateSeptJours = septJoursAvant.toISOString().split('T')[0];
+  
+  const rationsPeriode1 = rationsRecentes.filter(r => r.date >= dateSeptJours); // 7 derniers jours
+  const rationsPeriode2 = rationsRecentes.filter(r => r.date < dateSeptJours);  // 8-15 jours
+  
+  // 6. Calculer les moyennes par période
+  const joursDistincts1 = [...new Set(rationsPeriode1.map(r => r.date))].length;
+  const joursDistincts2 = [...new Set(rationsPeriode2.map(r => r.date))].length;
+  
+  const totalPeriode1 = rationsPeriode1.reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
+  const totalPeriode2 = rationsPeriode2.reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
+  
+  const moyPeriode1 = joursDistincts1 > 0 ? totalPeriode1 / joursDistincts1 : 0;
+  const moyPeriode2 = joursDistincts2 > 0 ? totalPeriode2 / joursDistincts2 : 0;
+  
+  // 7. Moyenne pondérée (ratio 2:1)
+  let moyenneQuotidienne = 0;
+  if (moyPeriode1 > 0 && moyPeriode2 > 0) {
+    moyenneQuotidienne = (moyPeriode1 * 2 + moyPeriode2 * 1) / 3;
+  } else if (moyPeriode1 > 0) {
+    moyenneQuotidienne = moyPeriode1;
+  } else if (moyPeriode2 > 0) {
+    moyenneQuotidienne = moyPeriode2;
+  }
+  
+  // 8. Gestion spéciale pour les poulets
+  if (gapJours > 0) {
+    // Trouver si c'est un lot de poulets
+    const lotsPoulet = (lots || []).filter(l => l.type === 'Poulet');
+    const rationsPoulet = rationsPeriode1.filter(r => 
+      lotsPoulet.some(lot => lot.id === r.lotId)
+    );
+    
+    if (rationsPoulet.length >= 3) {
+      // Calculer la tendance (augmentation quotidienne)
+      const tendance = calculerTendancePoulet(rationsPoulet);
+      
+      if (tendance > 0) {
+        // Extrapoler la consommation pour les jours manquants
+        let consoExtrapolee = 0;
+        for (let i = 1; i <= gapJours; i++) {
+          const consoJour = moyenneQuotidienne + (tendance * (rationsPoulet.length + i - 1));
+          consoExtrapolee += consoJour;
+        }
+        
+        // Corriger le stock actuel
+        stockActuel -= consoExtrapolee;
+        
+        // Ajuster la moyenne avec la tendance
+        moyenneQuotidienne = moyenneQuotidienne + (tendance * rationsPoulet.length);
+      }
+    }
+  }
+  
+  // 9. Calculer l'estimation en jours
+  const estimationJours = moyenneQuotidienne > 0 ? Math.floor(stockActuel / moyenneQuotidienne) : 999;
+  
+  return { stockActuel, estimationJours, warning, moyenneQuotidienne };
+}
+
 // ===== FONCTION PRINCIPALE - TOUS LES JOURS À 8H =====
 exports.envoyerNotificationsQuotidiennes = onSchedule({
   schedule: '0 8 * * *',
@@ -134,7 +282,7 @@ eventsAujourdhui.forEach(evt => {
         });
       });
       
-      // ===== 4. VÉRIFICATION STOCKS SILOS =====
+      // ===== 4. VÉRIFICATION STOCKS SILOS (VERSION AMÉLIORÉE) =====
       const silos = (data.batiments || []).filter(b => b.type === 'Silos');
       
       for (const silo of silos) {
@@ -143,39 +291,26 @@ eventsAujourdhui.forEach(evt => {
         for (const stock of silo.stocks) {
           const typeAliment = stock.type;
           
-          // Calculer stock actuel
-          const stockInitial = stock.quantite || 0;
-          const entrees = (data.entreesBat || [])
-            .filter(e => e.batimentId === silo.id && e.typeStock === typeAliment)
-            .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
-          const sorties = (data.sortiesBat || [])
-            .filter(s => s.batimentId === silo.id && s.typeStock === typeAliment)
-            .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
-          const rations = (data.rations || [])
-            .filter(r => r.batimentId === silo.id && r.typeAliment === typeAliment)
-            .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
-          
-          const stockActuel = stockInitial + entrees - sorties - rations;
-          
-          // Calculer moyenne des 5 derniers jours
-          const cinqJoursAvant = new Date(Date.now() - 5 * 86400000).toISOString().split('T')[0];
-          const rationsRecentes = (data.rations || [])
-            .filter(r => r.batimentId === silo.id && r.typeAliment === typeAliment && r.date >= cinqJoursAvant)
-            .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
-          
-          const nombreJours = Math.min(5, (data.rations || [])
-            .filter(r => r.batimentId === silo.id && r.typeAliment === typeAliment && r.date >= cinqJoursAvant)
-            .map(r => r.date)
-            .filter((v, i, a) => a.indexOf(v) === i).length);
-          
-          const moyenneQuotidienne = nombreJours > 0 ? rationsRecentes / nombreJours : 0;
-          const estimationJours = moyenneQuotidienne > 0 ? Math.floor(stockActuel / moyenneQuotidienne) : 999;
+          // Utiliser la nouvelle fonction améliorée
+          const estimation = calculerEstimationRuptureAmelioree({
+            batimentId: silo.id,
+            typeAliment: typeAliment,
+            data: data,
+            lots: data.lots || []
+          });
           
           // Alerte si stock < 5 jours de consommation
-          if (estimationJours <= 5 && moyenneQuotidienne > 0) {
+          if (estimation.estimationJours <= 5 && estimation.moyenneQuotidienne > 0) {
+            let body = 'Rupture estimée dans ' + estimation.estimationJours + ' jour' + (estimation.estimationJours > 1 ? 's' : '') + ' (stock: ' + estimation.stockActuel.toFixed(0) + ' kg)';
+            
+            // Ajouter le warning si présent
+            if (estimation.warning) {
+              body += ' ⚠️ ' + estimation.warning;
+            }
+            
             notifications.push({
               title: '⚠️ ' + silo.nom + ' - ' + typeAliment,
-              body: 'Rupture estimée dans ' + estimationJours + ' jour' + (estimationJours > 1 ? 's' : '') + ' (stock: ' + stockActuel.toFixed(0) + ' kg)'
+              body: body
             });
           }
         }
@@ -349,7 +484,7 @@ exports.envoyerRecapHebdomadaire = onSchedule({
       // Trier par date
       evenementsSemaine.sort((a, b) => new Date(a.date) - new Date(b.date));
       
-      // ===== CALCULER STOCKS SILOS =====
+      // ===== CALCULER STOCKS SILOS (VERSION AMÉLIORÉE) =====
       const stocksInfo = [];
       const silos = (data.batiments || []).filter(b => b.type === 'Silos');
       
@@ -359,40 +494,21 @@ exports.envoyerRecapHebdomadaire = onSchedule({
         for (const stock of silo.stocks) {
           const typeAliment = stock.type;
           
-          // Calculer stock actuel
-          const stockInitial = stock.quantite || 0;
-          const entrees = (data.entreesBat || [])
-            .filter(e => e.batimentId === silo.id && e.typeStock === typeAliment)
-            .reduce((sum, e) => sum + parseFloat(e.quantite || 0), 0);
-          const sorties = (data.sortiesBat || [])
-            .filter(s => s.batimentId === silo.id && s.typeStock === typeAliment)
-            .reduce((sum, s) => sum + parseFloat(s.quantite || 0), 0);
-          const rations = (data.rations || [])
-            .filter(r => r.batimentId === silo.id && r.typeAliment === typeAliment)
-            .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
-          
-          const stockActuel = stockInitial + entrees - sorties - rations;
-          
-          // Calculer moyenne des 7 derniers jours
-          const septJoursAvant = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
-          const rationsRecentes = (data.rations || [])
-            .filter(r => r.batimentId === silo.id && r.typeAliment === typeAliment && r.date >= septJoursAvant)
-            .reduce((sum, r) => sum + parseFloat(r.quantiteTotale || 0), 0);
-          
-          const nombreJours = Math.min(7, (data.rations || [])
-            .filter(r => r.batimentId === silo.id && r.typeAliment === typeAliment && r.date >= septJoursAvant)
-            .map(r => r.date)
-            .filter((v, i, a) => a.indexOf(v) === i).length);
-          
-          const moyenneQuotidienne = nombreJours > 0 ? rationsRecentes / nombreJours : 0;
-          const estimationJours = moyenneQuotidienne > 0 ? Math.floor(stockActuel / moyenneQuotidienne) : 999;
+          // Utiliser la nouvelle fonction améliorée
+          const estimation = calculerEstimationRuptureAmelioree({
+            batimentId: silo.id,
+            typeAliment: typeAliment,
+            data: data,
+            lots: data.lots || []
+          });
           
           stocksInfo.push({
             silo: silo.nom,
             aliment: typeAliment,
-            stock: stockActuel,
-            moyenne: moyenneQuotidienne,
-            jours: estimationJours
+            stock: estimation.stockActuel,
+            moyenne: estimation.moyenneQuotidienne || 0,
+            jours: estimation.estimationJours,
+            warning: estimation.warning
           });
         }
       }
@@ -465,6 +581,11 @@ exports.envoyerRecapHebdomadaire = onSchedule({
               body += ', pas de conso récente';
             } else {
               body += ', rupture dans ' + s.jours + 'j';
+            }
+            
+            // Ajouter le warning si présent
+            if (s.warning) {
+              body += ' ⚠️ ' + s.warning;
             }
 			
 			ligneIndex++;

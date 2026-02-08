@@ -3779,30 +3779,6 @@ if (formRation) {
             remplirSelectSilo('ration-bat', rationAliment1.value, null);
         };
     }
-    
-    // Afficher/masquer les champs aliment 2
-    if (rationAliment2 && rationFields2) {
-        rationAliment2.onchange = () => {
-            if (rationAliment2.value) {
-                rationFields2.classList.remove('hidden');
-                remplirSelectSilo('ration-bat2', rationAliment2.value, null);
-            } else {
-                rationFields2.classList.add('hidden');
-            }
-        };
-    }
-    
-    // Afficher/masquer les champs aliment 3
-    if (rationAliment3 && rationFields3) {
-        rationAliment3.onchange = () => {
-            if (rationAliment3.value) {
-                rationFields3.classList.remove('hidden');
-                remplirSelectSilo('ration-bat3', rationAliment3.value, null);
-            } else {
-                rationFields3.classList.add('hidden');
-            }
-        };
-    }
 
 // Préremplir avec ration de la veille
 if (rationLot) {
@@ -4057,7 +4033,7 @@ if (rationLot) {
     saveData();
     render();
 };
-}
+            }
 
 const formFourrage = document.getElementById('form-fourrage');
 if (formFourrage) {
@@ -5748,6 +5724,51 @@ window.validateAndClose = function(button, callback) {
 };
 
 // L'initialisation se fait via onAuthStateChanged
+// === CORRECTIF - Gestionnaires aliment 2 et 3 ===
+document.addEventListener('DOMContentLoaded', function() {
+    const rationAliment2 = document.getElementById('ration-aliment2');
+    const rationFields2 = document.getElementById('ration-fields2');
+    const rationAliment3 = document.getElementById('ration-aliment3');
+    const rationFields3 = document.getElementById('ration-fields3');
+    
+    if (rationAliment2 && rationFields2) {
+        rationAliment2.addEventListener('change', function() {
+            if (this.value) {
+                rationFields2.classList.remove('hidden');
+                const select = document.getElementById('ration-bat2');
+                if (select && state && state.data) {
+                    select.innerHTML = '<option value="">Sélectionner...</option>';
+                    state.data.batiments
+                        .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === this.value))
+                        .forEach(b => {
+                            select.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                        });
+                }
+            } else {
+                rationFields2.classList.add('hidden');
+            }
+        });
+    }
+    
+    if (rationAliment3 && rationFields3) {
+        rationAliment3.addEventListener('change', function() {
+            if (this.value) {
+                rationFields3.classList.remove('hidden');
+                const select = document.getElementById('ration-bat3');
+                if (select && state && state.data) {
+                    select.innerHTML = '<option value="">Sélectionner...</option>';
+                    state.data.batiments
+                        .filter(b => b.type === 'Silos' && b.stocks && b.stocks.some(s => s.type === this.value))
+                        .forEach(b => {
+                            select.innerHTML += '<option value="' + b.id + '">' + b.nom + '</option>';
+                        });
+                }
+            } else {
+                rationFields3.classList.add('hidden');
+            }
+        });
+    }
+});
 </script>
 </body>
 </html>

@@ -3779,6 +3779,30 @@ if (formRation) {
             remplirSelectSilo('ration-bat', rationAliment1.value, null);
         };
     }
+    
+    // Afficher/masquer les champs aliment 2
+    if (rationAliment2 && rationFields2) {
+        rationAliment2.onchange = () => {
+            if (rationAliment2.value) {
+                rationFields2.classList.remove('hidden');
+                remplirSelectSilo('ration-bat2', rationAliment2.value, null);
+            } else {
+                rationFields2.classList.add('hidden');
+            }
+        };
+    }
+    
+    // Afficher/masquer les champs aliment 3
+    if (rationAliment3 && rationFields3) {
+        rationAliment3.onchange = () => {
+            if (rationAliment3.value) {
+                rationFields3.classList.remove('hidden');
+                remplirSelectSilo('ration-bat3', rationAliment3.value, null);
+            } else {
+                rationFields3.classList.add('hidden');
+            }
+        };
+    }
 
 // Préremplir avec ration de la veille
 if (rationLot) {
@@ -4033,7 +4057,7 @@ if (rationLot) {
     saveData();
     render();
 };
-            }
+}
 
 const formFourrage = document.getElementById('form-fourrage');
 if (formFourrage) {
@@ -4098,11 +4122,14 @@ if (formFourrage) {
 		// Message de confirmation
         const nbLots = lotsCoches.length;
         alert('✅ Consommation enregistrée pour ' + nbLots + ' lot' + (nbLots > 1 ? 's' : ''));
+    };
+        
 					saveData();
-                    render();    
-					};
+                    render();
                 };
-            }      
+            }
+			
+        
 
 const formEvt = document.getElementById('form-evt');
 if (formEvt) {
